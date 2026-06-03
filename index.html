@@ -205,27 +205,30 @@ body{background:#0a0e1a;color:#fff;}
 }
 .cl-tile{
   background:#fff;border:2px solid #e8e3da;
-  border-radius:14px;padding:14px 12px;
+  border-radius:14px;padding:12px 10px 10px;
   display:flex;flex-direction:column;align-items:center;
-  gap:8px;cursor:pointer;
-  transition:all 0.12s;
+  gap:6px;
+  transition:border-color 0.12s, background 0.12s;
   box-shadow:0 1px 4px rgba(0,0,0,0.05);
-  min-height:100px;justify-content:center;
   position:relative;text-align:center;
 }
-.cl-tile:active{transform:scale(0.94);}
-.cl-tile .ct-icon{font-size:26px;line-height:1;}
-.cl-tile .ct-name{font-size:12px;font-weight:600;color:#3a3530;line-height:1.3;}
-.cl-tile .ct-status{
-  font-size:10px;font-weight:700;letter-spacing:0.5px;
-  padding:2px 8px;border-radius:10px;margin-top:2px;
+.cl-tile .ct-icon{font-size:24px;line-height:1;}
+.cl-tile .ct-name{font-size:12px;font-weight:600;color:#3a3530;line-height:1.3;min-height:32px;display:flex;align-items:center;justify-content:center;}
+.cl-tile .ct-btns{display:flex;gap:6px;width:100%;margin-top:4px;}
+.ct-ok,.ct-iss{
+  flex:1;padding:7px 4px;border:none;border-radius:8px;
+  font-size:11px;font-weight:700;cursor:pointer;
+  transition:all 0.1s;letter-spacing:0.3px;
 }
-.cl-tile.ok{border-color:#27ae60;background:#f0faf4;}
+.ct-ok:active,.ct-iss:active{transform:scale(0.93);}
+.ct-ok{background:#e8f8ef;color:#27ae60;}
+.ct-ok.sel{background:#27ae60;color:#fff;}
+.ct-iss{background:#fef0ef;color:#e74c3c;}
+.ct-iss.sel{background:#e74c3c;color:#fff;}
+.cl-tile.ok{border-color:#27ae60;background:#f5fdf8;}
 .cl-tile.ok .ct-name{color:#1e8449;}
-.cl-tile.ok .ct-status{background:#c8f0da;color:#1e8449;}
-.cl-tile.iss{border-color:#e74c3c;background:#fef5f5;}
+.cl-tile.iss{border-color:#e74c3c;background:#fff8f8;}
 .cl-tile.iss .ct-name{color:#c0392b;}
-.cl-tile.iss .ct-status{background:#fdd;color:#c0392b;}
 
 /* NOTE MODAL for issue */
 .note-modal-bg{
@@ -819,42 +822,38 @@ function renderClGrid(){
   grid.innerHTML='';
   lsCL.forEach(item=>{
     const tile=document.createElement('div');
-    tile.className='cl-tile';
-    tile.id='ct-'+eid(item);
-    const icon=getIcon(item);
     const s=clState[item]?clState[item].status:null;
-    if(s==='ok')tile.classList.add('ok');
-    if(s==='iss')tile.classList.add('iss');
-    const statusLabel=s==='ok'?T('ok'):s==='iss'?T('iss'):'';
-    tile.innerHTML=
-      '<div class="ct-icon">'+icon+'</div>'
-      +'<div class="ct-name">'+item+'</div>'
-      +(statusLabel?'<div class="ct-status">'+statusLabel+'</div>':'');
-    tile.onclick=()=>tileTap(item);
+    tile.className='cl-tile'+(s==='ok'?' ok':s==='iss'?' iss':'');
+    tile.id='ct-'+eid(item);
+    tile.innerHTML=buildTileHTML(item,s);
     grid.appendChild(tile);
   });
   updateProg();
 }
 
-function tileTap(item){
-  const s=clState[item]?clState[item].status:null;
-  if(s===null||s==='iss'){
-    // Cycle: null→ok, iss→ok
-    if(s==='iss'){
-      clState[item]={status:'ok',note:''};
-      updateTile(item);
-      updateProg();
-    }else{
-      // First tap — show OK immediately, second tap on OK shows issue option
-      clState[item]={status:'ok',note:''};
-      updateTile(item);
-      updateProg();
-    }
-  }else if(s==='ok'){
-    // Tapping OK tile → open issue modal
-    openNoteModal(item);
-  }
+function buildTileHTML(item,s){
+  const icon=getIcon(item);
+  return '<div class="ct-icon">'+icon+'</div>'
+    +'<div class="ct-name">'+item+'</div>'
+    +'<div class="ct-btns">'
+    +'<button class="ct-ok'+(s==='ok'?' sel':'')+'" onpointerdown="setOK(\''+escJs(item)+'\')" >✓ '+T('ok')+'</button>'
+    +'<button class="ct-iss'+(s==='iss'?' sel':'')+'" onpointerdown="setISS(\''+escJs(item)+'\')">! '+T('iss')+'</button>'
+    +'</div>';
 }
+
+function escJs(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+function setOK(item){
+  clState[item]={status:'ok',note:''};
+  updateTile(item);
+  updateProg();
+}
+
+function setISS(item){
+  openNoteModal(item);
+}
+
+function tileTap(item){} // kept for safety, no longer used
 
 function openNoteModal(item){
   noteItem=item;
@@ -883,13 +882,7 @@ function updateTile(item){
   if(!tile)return;
   const s=clState[item]?clState[item].status:null;
   tile.className='cl-tile'+(s==='ok'?' ok':s==='iss'?' iss':'');
-  const icon=getIcon(item);
-  const statusLabel=s==='ok'?T('ok'):s==='iss'?T('iss'):'';
-  tile.innerHTML=
-    '<div class="ct-icon">'+icon+'</div>'
-    +'<div class="ct-name">'+item+'</div>'
-    +(statusLabel?'<div class="ct-status">'+statusLabel+'</div>':'');
-  tile.onclick=()=>tileTap(item);
+  tile.innerHTML=buildTileHTML(item,s);
 }
 
 function updateProg(){
