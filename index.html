@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hotel De KOKA — Maintenance</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2a5a8c;
+    --accent: #c9a84c;
+    --accent-light: #f0d080;
+    --bg: #f4f1eb;
+    --bg-card: #ffffff;
+    --bg-secondary: #eee9df;
+    --text: #1a1a1a;
+    --text-muted: #6b6b6b;
+    --border: #d8d2c8;
+    --success: #2d7a4f;
+    --success-bg: #e8f5ee;
+    --danger: #c0392b;
+    --danger-bg: #fdecea;
+    --warning: #c07a00;
+    --warning-bg: #fff4e0;
+    --radius: 10px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  .topbar-logo { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .topbar-logo span { color: var(--accent); }
+  .topbar-role {
+    font-size: 12px;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .topbar-role .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .btn-logout {
+    background: none; border: 1px solid rgba(255,255,255,0.3);
+    color: #fff; padding: 5px 10px; border-radius: 6px;
+    font-size: 12px; cursor: pointer;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; padding: 16px; max-width: 900px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ── LOGIN ── */
+  #screen-login {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 100vh; padding: 32px 24px;
+    gap: 0;
+  }
+  #screen-login.active { display: flex; }
+  .login-logo {
+    text-align: center; margin-bottom: 32px;
+  }
+  .login-logo h1 { font-size: 28px; color: var(--primary); font-weight: 800; }
+  .login-logo h1 span { color: var(--accent); }
+  .login-logo p { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+
+  .login-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 32px 28px;
+    width: 100%; max-width: 360px;
+  }
+  .login-card h2 { font-size: 17px; margin-bottom: 20px; color: var(--primary); }
+
+  .role-tabs {
+    display: flex; gap: 8px; margin-bottom: 24px;
+  }
+  .role-tab {
+    flex: 1; padding: 10px; border: 2px solid var(--border);
+    border-radius: var(--radius); background: none; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .role-tab.active {
+    border-color: var(--primary); background: var(--primary); color: #fff;
+  }
+
+  .pin-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+  .pin-display {
+    display: flex; gap: 10px; justify-content: center; margin-bottom: 24px;
+  }
+  .pin-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--border); background: transparent;
+    transition: background 0.1s;
+  }
+  .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
+
+  .pin-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .pin-btn {
+    padding: 16px; font-size: 20px; font-weight: 600;
+    background: var(--bg-secondary); border: none; border-radius: var(--radius);
+    cursor: pointer; transition: background 0.1s; color: var(--text);
+    touch-action: manipulation;
+  }
+  .pin-btn:active { background: var(--border); }
+  .pin-btn.del { font-size: 16px; color: var(--danger); }
+  .pin-error {
+    color: var(--danger); font-size: 13px; text-align: center;
+    margin-top: 12px; min-height: 20px;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .section-header h2 { font-size: 18px; color: var(--primary); font-weight: 700; }
+  .section-header .lang-toggle {
+    font-size: 12px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 12px; cursor: pointer; color: var(--text-muted);
+  }
+
+  /* ── TABS (housekeeper nav) ── */
+  .tab-bar {
+    display: flex; gap: 0; background: var(--bg-card);
+    border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--border); margin-bottom: 18px;
+  }
+  .tab-btn {
+    flex: 1; padding: 11px 6px; background: none; border: none;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .tab-btn.active { background: var(--primary); color: #fff; }
+
+  /* ── FLOOR SECTIONS ── */
+  .floor-section { margin-bottom: 20px; }
+  .floor-label {
+    font-size: 12px; font-weight: 700; color: var(--text-muted);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .room-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px;
+  }
+  .room-btn {
+    aspect-ratio: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: var(--bg-card); border: 2px solid var(--border);
+    border-radius: var(--radius); cursor: pointer; transition: all 0.15s;
+    font-size: 15px; font-weight: 700; color: var(--primary);
+    position: relative;
+  }
+  .room-btn:active { transform: scale(0.96); }
+  .room-btn .room-sub { font-size: 10px; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
+  .room-btn.status-clean { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .room-btn.status-issue { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .room-btn.status-inprogress { border-color: var(--warning); background: var(--warning-bg); color: var(--warning); }
+  .room-btn .badge {
+    position: absolute; top: -5px; right: -5px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--danger); color: #fff;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── CHECKLIST VIEW ── */
+  .back-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: none; border: none; color: var(--primary);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    margin-bottom: 16px; padding: 4px 0;
+  }
+  .back-btn svg { width: 20px; height: 20px; }
+
+  .room-title-bar {
+    background: var(--primary);
+    color: #fff; border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .room-title-bar h2 { font-size: 20px; font-weight: 800; }
+  .room-title-bar .room-status-pill {
+    font-size: 12px; padding: 4px 10px; border-radius: 20px;
+    background: rgba(255,255,255,0.2); font-weight: 600;
+  }
+
+  .checklist-item {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .checklist-row {
+    display: flex; align-items: center; gap: 12px; padding: 14px 14px;
+    cursor: pointer;
+  }
+  .checklist-check {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .checklist-check.ok { background: var(--success); border-color: var(--success); }
+  .checklist-check.ok::after { content: '✓'; color: #fff; font-size: 14px; font-weight: 700; }
+  .checklist-check.issue { background: var(--danger); border-color: var(--danger); }
+  .checklist-check.issue::after { content: '!'; color: #fff; font-size: 14px; font-weight: 700; }
+
+  .checklist-name { flex: 1; font-size: 15px; font-weight: 500; }
+  .checklist-actions {
+    display: flex; gap: 6px;
+  }
+  .btn-ok, .btn-issue {
+    padding: 7px 14px; border: none; border-radius: 6px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    touch-action: manipulation;
+  }
+  .btn-ok { background: var(--success-bg); color: var(--success); }
+  .btn-ok.selected { background: var(--success); color: #fff; }
+  .btn-issue { background: var(--danger-bg); color: var(--danger); }
+  .btn-issue.selected { background: var(--danger); color: #fff; }
+
+  .issue-note-area {
+    padding: 0 14px 14px; display: none;
+  }
+  .issue-note-area.visible { display: block; }
+  .issue-note-area textarea {
+    width: 100%; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px; font-size: 14px;
+    resize: none; background: var(--bg-secondary);
+    font-family: inherit; color: var(--text);
+  }
+
+  .submit-bar {
+    position: sticky; bottom: 0;
+    background: var(--bg); border-top: 1px solid var(--border);
+    padding: 12px 16px; margin: 0 -16px;
+  }
+  .btn-submit {
+    width: 100%; padding: 15px; background: var(--primary);
+    color: #fff; border: none; border-radius: var(--radius);
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-submit:active { background: var(--primary-light); }
+  .btn-submit:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+
+  /* ── MANAGE CHECKLIST ── */
+  .manage-item {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .manage-item span { font-size: 15px; }
+  .btn-del {
+    background: var(--danger-bg); color: var(--danger);
+    border: none; border-radius: 6px; padding: 6px 12px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .add-item-row {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .add-item-row input {
+    flex: 1; padding: 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 15px; background: var(--bg-card);
+    color: var(--text);
+  }
+  .btn-add {
+    padding: 12px 20px; background: var(--primary);
+    color: #fff; border: none; border-radius: var(--radius);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+
+  /* ── MAINTENANCE VIEW ── */
+  .report-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .report-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .report-room { font-size: 18px; font-weight: 800; color: var(--primary); }
+  .report-time { font-size: 12px; color: var(--text-muted); }
+  .report-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-top: 1px solid var(--bg-secondary);
+  }
+  .report-item-name { font-size: 14px; font-weight: 600; flex: 1; }
+  .report-item-note { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .btn-resolve {
+    background: var(--success-bg); color: var(--success);
+    border: 1px solid var(--success); border-radius: 6px;
+    padding: 6px 12px; font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+  }
+  .btn-resolve.resolved {
+    background: var(--success); color: #fff;
+  }
+  .report-card.all-resolved { opacity: 0.5; }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 20px;
+  }
+  .status-badge.open { background: var(--danger-bg); color: var(--danger); }
+  .status-badge.resolved { background: var(--success-bg); color: var(--success); }
+
+  /* ── STATUS OVERVIEW ── */
+  .legend {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 3px;
+  }
+  .legend-dot.clean { background: var(--success); }
+  .legend-dot.issue { background: var(--danger); }
+  .legend-dot.inprogress { background: var(--warning); }
+  .legend-dot.unchecked { background: var(--border); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 48px 16px; color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .filter-chip {
+    padding: 6px 14px; border: 1px solid var(--border);
+    border-radius: 20px; background: var(--bg-card);
+    font-size: 13px; cursor: pointer; color: var(--text-muted);
+  }
+  .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--primary); color: #fff; padding: 12px 24px;
+    border-radius: 24px; font-size: 14px; font-weight: 600;
+    transition: transform 0.3s ease; z-index: 9999; white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── FIREBASE CONFIG NOTICE ── */
+  .firebase-notice {
+    background: var(--warning-bg); border: 1px solid var(--accent);
+    border-radius: var(--radius); padding: 12px 14px;
+    font-size: 13px; color: var(--warning); margin-bottom: 16px;
+    display: none;
+  }
+  .firebase-notice.visible { display: block; }
+
+  /* ── LOADING ── */
+  .spinner {
+    display: inline-block; width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── CONFIG MODAL ── */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 500; display: none; align-items: center; justify-content: center; padding: 24px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--bg-card); border-radius: 16px;
+    padding: 24px; width: 100%; max-width: 480px;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal h3 { font-size: 17px; color: var(--primary); margin-bottom: 8px; }
+  .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+  .modal input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 14px; margin-bottom: 10px;
+    background: var(--bg-secondary); color: var(--text); font-family: monospace;
+  }
+  .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
+  .btn-save { flex: 1; padding: 11px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-demo { flex: 1; padding: 11px; background: var(--bg-secondary); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; }
+
+  @media (max-width: 480px) {
+    .checklist-actions { flex-direction: column; gap: 4px; }
+    .btn-ok, .btn-issue { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- FIREBASE CONFIG MODAL -->
+<div class="modal-bg" id="modal-firebase">
+  <div class="modal">
+    <h3>🔥 Firebase Configuration</h3>
+    <p>Enter your Firebase project credentials to enable real-time sync. You can skip this now and use <strong>Demo Mode</strong> (local storage only, no sync between devices).</p>
+    <input id="cfg-apiKey" placeholder="apiKey" />
+    <input id="cfg-projectId" placeholder="projectId" />
+    <input id="cfg-appId" placeholder="appId" />
+    <div class="modal-btns">
+      <button class="btn-demo" onclick="startDemoMode()">Demo Mode</button>
+      <button class="btn-save" onclick="saveFirebaseConfig()">Connect Firebase</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="topbar-logo">Hotel De <span>KOKA</span></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="topbar-role" id="topbar-role"><div class="dot"></div><span id="role-label">—</span></div>
+    <button class="btn-logout" onclick="logout()" id="btn-lang-top" style="margin-right:4px" onclick="toggleLang()">EN/МК</button>
+    <button class="btn-logout" onclick="logout()">✕</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SCREEN: LOGIN -->
+<!-- ════════════════════════════════════════ -->
+<div id="screen-login" class="active">
+  <div class="login-logo">
+    <h1>Hotel De <span>KOKA</span></h1>
+    <p id="txt-login-sub">Room Maintenance System</p>
+  </div>
+  <div class="login-card">
+    <h2 id="txt-select-role">Select role</h2>
+    <div class="role-tabs">
+      <button class="role-tab active" id="tab-hk" onclick="selectRole('housekeeper')">🧹 <span id="txt-hk-tab">Housekeeper</span></button>
+      <button class="role-tab" id="tab-mt" onclick="selectRole('maintenance')">🔧 <span id="txt-mt-tab">Maintenance</span></button>
+    </div>
+    <div class="pin-label" id="txt-enter-pin">Enter PIN</div>
+    <div class="pin-display" id="pin-display">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" onclick="pinPress('0')" style="grid-column:2">0</button>
+      <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+  <p style="text-align:center;margin-top:20px;font-size:12px;color:#aaa" onclick="openFirebaseConfig()" id="txt-cfg-link">⚙ Configure Firebase</p>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SCREEN: HOUSEKEEPER -->
+<!-- ════════════════════════════════════════ -->
+<div id="screen-housekeeper" class="screen">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="hk-tab-rooms" onclick="hkTab('rooms')">🏨 <span id="txt-rooms-tab">Rooms</span></button>
+    <button class="tab-btn" id="hk-tab-status" onclick="hkTab('status')">📊 <span id="txt-status-tab">Status</span></button>
+    <button class="tab-btn" id="hk-tab-manage" onclick="hkTab('manage')">⚙ <span id="txt-manage-tab">Checklist</span></button>
+  </div>
+
+  <!-- ROOMS VIEW -->
+  <div id="hk-view-rooms">
+    <div id="room-overview"></div>
+  </div>
+
+  <!-- CHECKLIST VIEW -->
+  <div id="hk-view-checklist" style="display:none">
+    <button class="back-btn" onclick="closeChecklist()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span id="txt-back">Back</span>
+    </button>
+    <div class="room-title-bar">
+      <h2 id="checklist-room-title">Room 101</h2>
+      <div class="room-status-pill" id="checklist-progress">0/0</div>
+    </div>
+    <div id="firebase-notice" class="firebase-notice">
+      ⚠ <span id="txt-demo-notice">Demo mode — data saved locally only</span>
+    </div>
+    <div id="checklist-items"></div>
+    <div style="height:80px"></div>
+    <div class="submit-bar">
+      <button class="btn-submit" id="btn-submit-checklist" onclick="submitChecklist()">
+        <span id="txt-submit">Submit Room Report</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STATUS OVERVIEW -->
+  <div id="hk-view-status" style="display:none">
+    <div class="section-header">
+      <h2 id="txt-overview-title">Room Overview</h2>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot clean"></div><span id="txt-leg-clean">Clean</span></div>
+      <div class="legend-item"><div class="legend-dot issue"></div><span id="txt-leg-issue">Has Issues</span></div>
+      <div class="legend-item"><div class="legend-dot inprogress"></div><span id="txt-leg-prog">In Progress</span></div>
+      <div class="legend-item"><div class="legend-dot unchecked"></div><span id="txt-leg-unch">Not checked</span></div>
+    </div>
+    <div id="status-overview"></div>
+  </div>
+
+  <!-- MANAGE CHECKLIST -->
+  <div id="hk-view-manage" style="display:none">
+    <div class="section-header">
+      <h2 id="txt-manage-title">Manage Checklist</h2>
+    </div>
+    <div class="add-item-row">
+      <input id="new-item-input" placeholder="Add new item..." id="txt-add-placeholder" />
+      <button class="btn-add" onclick="addChecklistItem()" id="txt-add-btn">+ Add</button>
+    </div>
+    <div id="manage-list"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SCREEN: MAINTENANCE -->
+<!-- ════════════════════════════════════════ -->
+<div id="screen-maintenance" class="screen">
+  <div class="section-header">
+    <h2 id="txt-maint-title">Maintenance Reports</h2>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-chip active" id="flt-all" onclick="setFilter('all')" id="txt-flt-all">All</button>
+    <button class="filter-chip" id="flt-open" onclick="setFilter('open')" id="txt-flt-open">Open</button>
+    <button class="filter-chip" id="flt-resolved" onclick="setFilter('resolved')" id="txt-flt-res">Resolved</button>
+  </div>
+  <div id="maintenance-list"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════════
+const PINS = { housekeeper: '1234', maintenance: '5678' };
+
+const ROOMS = {
+  '1st Floor': ['101','102','103','104','105','106','107'],
+  '2nd Floor': ['208','209','210','211','212','213','214'],
+  '3rd Floor': ['302','303','304','305','306','307','308','309','310','311','312','313','314','315','316','317','318','319','320','321','322','323','324'],
+  '4th Floor': ['400','401','402','403','404','405','406','407','408','409','410','411','412','413','414','415','416','417','418']
+};
+
+const DEFAULT_CHECKLIST = [
+  'Linens / Postelnina', 'Pillows / Jastuci', 'Blanket / Ќebe',
+  'Floor / Pod', 'TV', 'AC / Klima', 'Curtains / Zavesi',
+  'Dusting / Prashina', 'Shower / Tush', 'Bathtub / Kada',
+  'Toilet / WC', 'Shampoo', 'Soap / Sapun', 'Towels / Peshot',
+  'Mirror / Ogledalo', 'Mini-bar', 'Safe / Sef',
+  'Remote controls / Daljineci', 'Door lock / Brava'
+];
+
+const T = {
+  en: {
+    loginSub:'Room Maintenance System', selectRole:'Select role',
+    hkTab:'Housekeeper', mtTab:'Maintenance', enterPin:'Enter PIN',
+    back:'Back', roomsTab:'Rooms', statusTab:'Status', manageTab:'Checklist',
+    overviewTitle:'Room Overview', manageTitle:'Manage Checklist',
+    maintTitle:'Maintenance Reports', demoNotice:'Demo mode — data saved locally only',
+    submit:'Submit Room Report', ok:'OK', issue:'Issue',
+    addPlaceholder:'Add new item...', addBtn:'+ Add',
+    delete:'Delete', resolve:'Resolve', resolved:'Resolved',
+    fltAll:'All', fltOpen:'Open', fltResolved:'Resolved',
+    legClean:'Clean', legIssue:'Has Issues', legProg:'In Progress', legUnch:'Not checked',
+    toastSubmitted:'Room report submitted!', toastResolved:'Marked as resolved',
+    toastAdded:'Item added', toastDeleted:'Item deleted',
+    noReports:'No reports found.', wrongPin:'Wrong PIN — try again',
+    inProgress:'In progress', clean:'Clean', hasIssues:'Has issues',
+    cfgLink:'⚙ Configure Firebase', roleHK:'Housekeeper', roleMT:'Maintenance'
+  },
+  mk: {
+    loginSub:'Систем за одржување на соби', selectRole:'Изберете улога',
+    hkTab:'Собарица', mtTab:'Одржување', enterPin:'Внесете PIN',
+    back:'Назад', roomsTab:'Соби', statusTab:'Статус', manageTab:'Листа',
+    overviewTitle:'Преглед на соби', manageTitle:'Управување со листата',
+    maintTitle:'Пријави за одржување', demoNotice:'Демо режим — податоците се зачувани локално',
+    submit:'Поднеси извештај за собата', ok:'ОК', issue:'Проблем',
+    addPlaceholder:'Додај нова ставка...', addBtn:'+ Додај',
+    delete:'Избриши', resolve:'Реши', resolved:'Решено',
+    fltAll:'Сите', fltOpen:'Отворени', fltResolved:'Решени',
+    legClean:'Чисто', legIssue:'Проблеми', legProg:'Во тек', legUnch:'Непроверено',
+    toastSubmitted:'Извештајот е поднесен!', toastResolved:'Означено како решено',
+    toastAdded:'Ставката е додадена', toastDeleted:'Ставката е избришана',
+    noReports:'Нема пронајдени пријави.', wrongPin:'Погрешен PIN — обидете се повторно',
+    inProgress:'Во тек', clean:'Чисто', hasIssues:'Има проблеми',
+    cfgLink:'⚙ Конфигурација на Firebase', roleHK:'Собарица', roleMT:'Одржување'
+  }
+};
+
+let lang = localStorage.getItem('hdk_lang') || 'en';
+let currentRole = 'housekeeper';
+let currentPin = '';
+let currentRoom = null;
+let checklistState = {}; // { itemName: { status: 'ok'|'issue'|null, note: '' } }
+let db = null;
+let demoMode = false;
+let maintenanceFilter = 'all';
+
+// In-memory cache for demo mode
+let localReports = JSON.parse(localStorage.getItem('hdk_reports') || '[]');
+let localChecklist = JSON.parse(localStorage.getItem('hdk_checklist') || 'null') || DEFAULT_CHECKLIST;
+let localRoomStatus = JSON.parse(localStorage.getItem('hdk_roomstatus') || '{}');
+
+// ═══════════════════════════════════════════════════
+// TRANSLATIONS
+// ═══════════════════════════════════════════════════
+function t(key) { return (T[lang] && T[lang][key]) || T.en[key] || key; }
+
+function applyTranslations() {
+  document.getElementById('txt-login-sub').textContent = t('loginSub');
+  document.getElementById('txt-select-role').textContent = t('selectRole');
+  document.getElementById('txt-hk-tab').textContent = t('hkTab');
+  document.getElementById('txt-mt-tab').textContent = t('mtTab');
+  document.getElementById('txt-enter-pin').textContent = t('enterPin');
+  document.getElementById('txt-back').textContent = t('back');
+  document.getElementById('txt-rooms-tab').textContent = t('roomsTab');
+  document.getElementById('txt-status-tab').textContent = t('statusTab');
+  document.getElementById('txt-manage-tab').textContent = t('manageTab');
+  document.getElementById('txt-overview-title').textContent = t('overviewTitle');
+  document.getElementById('txt-manage-title').textContent = t('manageTitle');
+  document.getElementById('txt-maint-title').textContent = t('maintTitle');
+  document.getElementById('txt-demo-notice').textContent = t('demoNotice');
+  document.getElementById('txt-submit').textContent = t('submit');
+  document.getElementById('txt-leg-clean').textContent = t('legClean');
+  document.getElementById('txt-leg-issue').textContent = t('legIssue');
+  document.getElementById('txt-leg-prog').textContent = t('legProg');
+  document.getElementById('txt-leg-unch').textContent = t('legUnch');
+  document.getElementById('txt-cfg-link').textContent = t('cfgLink');
+  document.getElementById('new-item-input').placeholder = t('addPlaceholder');
+  document.getElementById('flt-all').textContent = t('fltAll');
+  document.getElementById('flt-open').textContent = t('fltOpen');
+  document.getElementById('flt-resolved').textContent = t('fltResolved');
+  if (currentRole === 'housekeeper') document.getElementById('role-label').textContent = t('roleHK');
+  else document.getElementById('role-label').textContent = t('roleMT');
+}
+
+function toggleLang() {
+  lang = lang === 'en' ? 'mk' : 'en';
+  localStorage.setItem('hdk_lang', lang);
+  applyTranslations();
+  if (currentRole === 'housekeeper') renderRoomOverview();
+}
+
+document.getElementById('btn-lang-top').onclick = toggleLang;
+
+// ═══════════════════════════════════════════════════
+// FIREBASE SETUP
+// ═══════════════════════════════════════════════════
+function openFirebaseConfig() {
+  const saved = JSON.parse(localStorage.getItem('hdk_firebase') || '{}');
+  document.getElementById('cfg-apiKey').value = saved.apiKey || '';
+  document.getElementById('cfg-projectId').value = saved.projectId || '';
+  document.getElementById('cfg-appId').value = saved.appId || '';
+  document.getElementById('modal-firebase').classList.add('open');
+}
+
+function saveFirebaseConfig() {
+  const cfg = {
+    apiKey: document.getElementById('cfg-apiKey').value.trim(),
+    projectId: document.getElementById('cfg-projectId').value.trim(),
+    appId: document.getElementById('cfg-appId').value.trim()
+  };
+  if (!cfg.apiKey || !cfg.projectId || !cfg.appId) {
+    alert('Please fill all 3 fields, or use Demo Mode.');
+    return;
+  }
+  localStorage.setItem('hdk_firebase', JSON.stringify(cfg));
+  document.getElementById('modal-firebase').classList.remove('open');
+  initFirebase(cfg);
+}
+
+function startDemoMode() {
+  demoMode = true;
+  document.getElementById('modal-firebase').classList.remove('open');
+  showToast('Demo mode — local storage only');
+}
+
+function initFirebase(cfg) {
+  try {
+    if (firebase.apps.length) firebase.app().delete();
+    firebase.initializeApp({
+      apiKey: cfg.apiKey,
+      projectId: cfg.projectId,
+      appId: cfg.appId
+    });
+    db = firebase.firestore();
+    demoMode = false;
+    showToast('Firebase connected ✓');
+  } catch(e) {
+    demoMode = true;
+    showToast('Firebase error — Demo mode');
+  }
+}
+
+// Auto-init if config saved
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = JSON.parse(localStorage.getItem('hdk_firebase') || '{}');
+  if (saved.apiKey) {
+    initFirebase(saved);
+  } else {
+    // Show config modal on first load
+    setTimeout(() => document.getElementById('modal-firebase').classList.add('open'), 600);
+  }
+  applyTranslations();
+});
+
+// ═══════════════════════════════════════════════════
+// LOGIN / PIN
+// ═══════════════════════════════════════════════════
+function selectRole(role) {
+  currentRole = role;
+  currentPin = '';
+  updatePinDisplay();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('tab-hk').classList.toggle('active', role === 'housekeeper');
+  document.getElementById('tab-mt').classList.toggle('active', role === 'maintenance');
+}
+
+function pinPress(d) {
+  if (currentPin.length >= 4) return;
+  currentPin += d;
+  updatePinDisplay();
+  if (currentPin.length === 4) checkPin();
+}
+
+function pinDel() {
+  currentPin = currentPin.slice(0, -1);
+  updatePinDisplay();
+  document.getElementById('pin-error').textContent = '';
+}
+
+function updatePinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('pd' + i).classList.toggle('filled', i < currentPin.length);
+  }
+}
+
+function checkPin() {
+  if (currentPin === PINS[currentRole]) {
+    enterApp(currentRole);
+  } else {
+    document.getElementById('pin-error').textContent = t('wrongPin');
+    currentPin = '';
+    updatePinDisplay();
+    setTimeout(() => document.getElementById('pin-error').textContent = '', 2000);
+  }
+}
+
+function enterApp(role) {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('role-label').textContent = role === 'housekeeper' ? t('roleHK') : t('roleMT');
+  if (demoMode) document.getElementById('firebase-notice').classList.add('visible');
+  if (role === 'housekeeper') {
+    document.getElementById('screen-housekeeper').classList.add('active');
+    hkTab('rooms');
+  } else {
+    document.getElementById('screen-maintenance').classList.add('active');
+    loadMaintenanceReports();
+  }
+}
+
+function logout() {
+  currentPin = '';
+  updatePinDisplay();
+  document.getElementById('screen-housekeeper').classList.remove('active');
+  document.getElementById('screen-maintenance').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('hk-view-checklist').style.display = 'none';
+  document.getElementById('hk-view-rooms').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+// HOUSEKEEPER TABS
+// ═══════════════════════════════════════════════════
+function hkTab(tab) {
+  ['rooms','status','manage'].forEach(t => {
+    document.getElementById('hk-view-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('hk-tab-' + t).classList.toggle('active', t === tab);
+  });
+  document.getElementById('hk-view-checklist').style.display = 'none';
+  if (tab === 'rooms') renderRoomOverview();
+  if (tab === 'status') renderStatusOverview();
+  if (tab === 'manage') renderManageChecklist();
+}
+
+// ═══════════════════════════════════════════════════
+// ROOM OVERVIEW
+// ═══════════════════════════════════════════════════
+function getRoomStatus(room) {
+  if (db && !demoMode) return null; // will be loaded from Firestore
+  return localRoomStatus[room] || null;
+}
+
+function renderRoomOverview() {
+  const container = document.getElementById('room-overview');
+  container.innerHTML = '';
+  Object.entries(ROOMS).forEach(([floor, rooms]) => {
+    const sec = document.createElement('div');
+    sec.className = 'floor-section';
+    sec.innerHTML = `<div class="floor-label">${floor}</div>`;
+    const grid = document.createElement('div');
+    grid.className = 'room-grid';
+    rooms.forEach(room => {
+      const btn = document.createElement('button');
+      btn.className = 'room-btn';
+      const status = localRoomStatus[room] || null;
+      if (status === 'clean') btn.classList.add('status-clean');
+      else if (status === 'issue') btn.classList.add('status-issue');
+      else if (status === 'inprogress') btn.classList.add('status-inprogress');
+      const issueCount = getOpenIssueCount(room);
+      btn.innerHTML = `${room}${issueCount > 0 ? `<div class="badge">${issueCount}</div>` : ''}`;
+      btn.onclick = () => openChecklist(room);
+      grid.appendChild(btn);
+    });
+    sec.appendChild(grid);
+    container.appendChild(sec);
+  });
+}
+
+function getOpenIssueCount(room) {
+  const reports = localReports.filter(r => r.room === room);
+  let count = 0;
+  reports.forEach(r => {
+    r.issues.forEach(i => { if (!i.resolved) count++; });
+  });
+  return count;
+}
+
+// ═══════════════════════════════════════════════════
+// CHECKLIST
+// ═══════════════════════════════════════════════════
+function getChecklist() {
+  return localChecklist;
+}
+
+function openChecklist(room) {
+  currentRoom = room;
+  checklistState = {};
+  document.getElementById('hk-view-rooms').style.display = 'none';
+  document.getElementById('hk-view-checklist').style.display = 'block';
+  document.getElementById('checklist-room-title').textContent = 'Room ' + room;
+  renderChecklist();
+}
+
+function closeChecklist() {
+  document.getElementById('hk-view-checklist').style.display = 'none';
+  document.getElementById('hk-view-rooms').style.display = 'block';
+  renderRoomOverview();
+}
+
+function renderChecklist() {
+  const items = getChecklist();
+  const container = document.getElementById('checklist-items');
+  container.innerHTML = '';
+  items.forEach(item => {
+    if (!checklistState[item]) checklistState[item] = { status: null, note: '' };
+    const div = document.createElement('div');
+    div.className = 'checklist-item';
+    div.id = 'ci-' + CSS.escape(item);
+    div.innerHTML = `
+      <div class="checklist-row">
+        <div class="checklist-check" id="chk-${CSS.escape(item)}"></div>
+        <div class="checklist-name">${item}</div>
+        <div class="checklist-actions">
+          <button class="btn-ok" id="bok-${CSS.escape(item)}" onclick="setItemStatus('${item.replace(/'/g,"\\'")}','ok')">${t('ok')}</button>
+          <button class="btn-issue" id="bis-${CSS.escape(item)}" onclick="setItemStatus('${item.replace(/'/g,"\\'")}','issue')">${t('issue')}</button>
+        </div>
+      </div>
+      <div class="issue-note-area" id="note-area-${CSS.escape(item)}">
+        <textarea rows="2" placeholder="Describe the issue..." onchange="setItemNote('${item.replace(/'/g,"\\'")}', this.value)">${checklistState[item].note}</textarea>
+      </div>`;
+    container.appendChild(div);
+    updateChecklistItemUI(item);
+  });
+  updateProgress();
+}
+
+function setItemStatus(item, status) {
+  if (!checklistState[item]) checklistState[item] = { status: null, note: '' };
+  checklistState[item].status = checklistState[item].status === status ? null : status;
+  updateChecklistItemUI(item);
+  updateProgress();
+}
+
+function setItemNote(item, val) {
+  if (!checklistState[item]) checklistState[item] = { status: null, note: '' };
+  checklistState[item].note = val;
+}
+
+function updateChecklistItemUI(item) {
+  const s = checklistState[item] ? checklistState[item].status : null;
+  const chk = document.getElementById('chk-' + CSS.escape(item));
+  const bok = document.getElementById('bok-' + CSS.escape(item));
+  const bis = document.getElementById('bis-' + CSS.escape(item));
+  const noteArea = document.getElementById('note-area-' + CSS.escape(item));
+  if (!chk) return;
+  chk.className = 'checklist-check' + (s === 'ok' ? ' ok' : s === 'issue' ? ' issue' : '');
+  bok.className = 'btn-ok' + (s === 'ok' ? ' selected' : '');
+  bis.className = 'btn-issue' + (s === 'issue' ? ' selected' : '');
+  noteArea.className = 'issue-note-area' + (s === 'issue' ? ' visible' : '');
+}
+
+function updateProgress() {
+  const items = getChecklist();
+  const checked = items.filter(i => checklistState[i] && checklistState[i].status !== null).length;
+  document.getElementById('checklist-progress').textContent = checked + '/' + items.length;
+  document.getElementById('btn-submit-checklist').disabled = checked === 0;
+}
+
+function submitChecklist() {
+  const items = getChecklist();
+  const issues = items
+    .filter(i => checklistState[i] && checklistState[i].status === 'issue')
+    .map(i => ({ item: i, note: checklistState[i].note || '', resolved: false }));
+
+  const allStatus = items.filter(i => checklistState[i] && checklistState[i].status !== null);
+  const roomStatus = issues.length > 0 ? 'issue' : (allStatus.length === items.length ? 'clean' : 'inprogress');
+
+  const report = {
+    room: currentRoom,
+    timestamp: new Date().toISOString(),
+    issues: issues,
+    status: roomStatus,
+    checkedBy: 'Housekeeper',
+    id: Date.now().toString()
+  };
+
+  if (db && !demoMode) {
+    // Save to Firestore
+    const batch = db.batch();
+    const repRef = db.collection('reports').doc(report.id);
+    batch.set(repRef, report);
+    const roomRef = db.collection('roomStatus').doc(currentRoom);
+    batch.set(roomRef, { room: currentRoom, status: roomStatus, updatedAt: report.timestamp });
+    batch.commit().then(() => {
+      showToast(t('toastSubmitted'));
+      closeChecklist();
+    }).catch(e => {
+      // Fallback to local
+      saveReportLocally(report, roomStatus);
+    });
+  } else {
+    saveReportLocally(report, roomStatus);
+  }
+}
+
+function saveReportLocally(report, roomStatus) {
+  localReports.unshift(report);
+  localStorage.setItem('hdk_reports', JSON.stringify(localReports));
+  localRoomStatus[currentRoom] = roomStatus;
+  localStorage.setItem('hdk_roomstatus', JSON.stringify(localRoomStatus));
+  showToast(t('toastSubmitted'));
+  closeChecklist();
+}
+
+// ═══════════════════════════════════════════════════
+// STATUS OVERVIEW
+// ═══════════════════════════════════════════════════
+function renderStatusOverview() {
+  const container = document.getElementById('status-overview');
+  container.innerHTML = '';
+  const loadAndRender = (statusData) => {
+    Object.entries(ROOMS).forEach(([floor, rooms]) => {
+      const sec = document.createElement('div');
+      sec.className = 'floor-section';
+      sec.innerHTML = `<div class="floor-label">${floor}</div>`;
+      const grid = document.createElement('div');
+      grid.className = 'room-grid';
+      rooms.forEach(room => {
+        const btn = document.createElement('div');
+        btn.className = 'room-btn';
+        const status = statusData[room] || null;
+        if (status === 'clean') btn.classList.add('status-clean');
+        else if (status === 'issue') btn.classList.add('status-issue');
+        else if (status === 'inprogress') btn.classList.add('status-inprogress');
+        const statusLabel = status === 'clean' ? t('clean') : status === 'issue' ? t('hasIssues') : status === 'inprogress' ? t('inProgress') : '—';
+        btn.innerHTML = `${room}<div class="room-sub">${statusLabel}</div>`;
+        grid.appendChild(btn);
+      });
+      sec.appendChild(grid);
+      container.appendChild(sec);
+    });
+  };
+
+  if (db && !demoMode) {
+    db.collection('roomStatus').get().then(snap => {
+      const data = {};
+      snap.forEach(doc => { data[doc.id] = doc.data().status; });
+      loadAndRender(data);
+    }).catch(() => loadAndRender(localRoomStatus));
+  } else {
+    loadAndRender(localRoomStatus);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MANAGE CHECKLIST
+// ═══════════════════════════════════════════════════
+function renderManageChecklist() {
+  const container = document.getElementById('manage-list');
+  container.innerHTML = '';
+  localChecklist.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'manage-item';
+    div.innerHTML = `<span>${item}</span><button class="btn-del" onclick="deleteChecklistItem(${idx})">${t('delete')}</button>`;
+    container.appendChild(div);
+  });
+}
+
+function addChecklistItem() {
+  const inp = document.getElementById('new-item-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  localChecklist.push(val);
+  localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
+  if (db && !demoMode) {
+    db.collection('config').doc('checklist').set({ items: localChecklist });
+  }
+  inp.value = '';
+  renderManageChecklist();
+  showToast(t('toastAdded'));
+}
+
+function deleteChecklistItem(idx) {
+  localChecklist.splice(idx, 1);
+  localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
+  if (db && !demoMode) {
+    db.collection('config').doc('checklist').set({ items: localChecklist });
+  }
+  renderManageChecklist();
+  showToast(t('toastDeleted'));
+}
+
+// ═══════════════════════════════════════════════════
+// MAINTENANCE
+// ═══════════════════════════════════════════════════
+function setFilter(f) {
+  maintenanceFilter = f;
+  ['all','open','resolved'].forEach(x => {
+    document.getElementById('flt-' + x).classList.toggle('active', x === f);
+  });
+  loadMaintenanceReports();
+}
+
+function loadMaintenanceReports() {
+  if (db && !demoMode) {
+    db.collection('reports').orderBy('timestamp', 'desc').get().then(snap => {
+      const reports = [];
+      snap.forEach(doc => reports.push({ ...doc.data(), firestoreId: doc.id }));
+      renderMaintenanceReports(reports);
+    }).catch(() => renderMaintenanceReports(localReports));
+  } else {
+    renderMaintenanceReports(localReports);
+  }
+}
+
+function renderMaintenanceReports(reports) {
+  const container = document.getElementById('maintenance-list');
+  container.innerHTML = '';
+
+  // Filter to only reports with issues
+  let filtered = reports.filter(r => r.issues && r.issues.length > 0);
+
+  if (maintenanceFilter === 'open') {
+    filtered = filtered.filter(r => r.issues.some(i => !i.resolved));
+  } else if (maintenanceFilter === 'resolved') {
+    filtered = filtered.filter(r => r.issues.every(i => i.resolved));
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>${t('noReports')}</p></div>`;
+    return;
+  }
+
+  filtered.forEach(report => {
+    const allResolved = report.issues.every(i => i.resolved);
+    const card = document.createElement('div');
+    card.className = 'report-card' + (allResolved ? ' all-resolved' : '');
+    const dt = new Date(report.timestamp);
+    const dtStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    let issuesHTML = '';
+    report.issues.forEach((iss, idx) => {
+      const badge = iss.resolved
+        ? `<span class="status-badge resolved">✓ ${t('resolved')}</span>`
+        : `<span class="status-badge open">⚠ Open</span>`;
+      const resBtn = iss.resolved
+        ? `<button class="btn-resolve resolved" onclick="resolveIssue('${report.id}', ${idx}, this)">${t('resolved')}</button>`
+        : `<button class="btn-resolve" onclick="resolveIssue('${report.id}', ${idx}, this)">${t('resolve')}</button>`;
+      issuesHTML += `
+        <div class="report-item">
+          <div style="flex:1">
+            <div class="report-item-name">${iss.item} ${badge}</div>
+            ${iss.note ? `<div class="report-item-note">📝 ${iss.note}</div>` : ''}
+          </div>
+          ${resBtn}
+        </div>`;
+    });
+    card.innerHTML = `
+      <div class="report-card-header">
+        <div class="report-room">Room ${report.room}</div>
+        <div class="report-time">${dtStr}</div>
+      </div>
+      ${issuesHTML}`;
+    container.appendChild(card);
+  });
+}
+
+function resolveIssue(reportId, issueIdx, btn) {
+  // Find in localReports
+  const rep = localReports.find(r => r.id === reportId);
+  if (rep) {
+    rep.issues[issueIdx].resolved = !rep.issues[issueIdx].resolved;
+    localStorage.setItem('hdk_reports', JSON.stringify(localReports));
+    // Update room status
+    const anyOpen = rep.issues.some(i => !i.resolved);
+    if (!anyOpen) {
+      localRoomStatus[rep.room] = 'clean';
+      localStorage.setItem('hdk_roomstatus', JSON.stringify(localRoomStatus));
+    }
+  }
+
+  if (db && !demoMode) {
+    db.collection('reports').doc(reportId).get().then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        data.issues[issueIdx].resolved = !data.issues[issueIdx].resolved;
+        const anyOpen = data.issues.some(i => !i.resolved);
+        const p1 = db.collection('reports').doc(reportId).update({ issues: data.issues });
+        const p2 = anyOpen ? Promise.resolve() :
+          db.collection('roomStatus').doc(data.room).set({ status: 'clean', updatedAt: new Date().toISOString() });
+        return Promise.all([p1, p2]);
+      }
+    }).then(() => {
+      showToast(t('toastResolved'));
+      loadMaintenanceReports();
+    }).catch(() => {
+      showToast(t('toastResolved'));
+      loadMaintenanceReports();
+    });
+  } else {
+    showToast(t('toastResolved'));
+    loadMaintenanceReports();
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Load checklist from Firestore on init if connected
+function syncChecklistFromFirestore() {
+  if (db && !demoMode) {
+    db.collection('config').doc('checklist').get().then(doc => {
+      if (doc.exists && doc.data().items) {
+        localChecklist = doc.data().items;
+        localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
+      }
+    }).catch(() => {});
+  }
+}
+
+// Try syncing checklist after firebase init
+setTimeout(syncChecklistFromFirestore, 1500);
+</script>
+</body>
+</html>
