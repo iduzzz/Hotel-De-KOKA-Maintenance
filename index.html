@@ -278,14 +278,36 @@
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 12px 14px;
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 8px; gap: 10px;
   }
-  .manage-item span { font-size: 15px; }
+  .manage-item span { font-size: 15px; flex: 1; }
+  .manage-item-edit {
+    display: none; flex: 1; padding: 8px 10px;
+    border: 1px solid var(--primary); border-radius: 6px;
+    font-size: 15px; background: var(--bg-secondary); color: var(--text);
+    font-family: inherit;
+  }
+  .manage-item.editing span { display: none; }
+  .manage-item.editing .manage-item-edit { display: block; }
+  .manage-item-btns { display: flex; gap: 6px; flex-shrink: 0; }
   .btn-del {
     background: var(--danger-bg); color: var(--danger);
     border: none; border-radius: 6px; padding: 6px 12px;
     font-size: 13px; font-weight: 600; cursor: pointer;
   }
+  .btn-edit {
+    background: var(--bg-secondary); color: var(--primary);
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-save-edit {
+    background: var(--primary); color: #fff;
+    border: none; border-radius: 6px; padding: 6px 12px;
+    font-size: 13px; font-weight: 600; cursor: pointer; display: none;
+  }
+  .manage-item.editing .btn-edit { display: none; }
+  .manage-item.editing .btn-save-edit { display: block; }
+  .manage-item.editing .btn-del { display: none; }
   .add-item-row {
     display: flex; gap: 8px; margin-bottom: 16px;
   }
@@ -609,7 +631,8 @@ const T = {
     fltAll:'All', fltOpen:'Open', fltResolved:'Resolved',
     legClean:'Clean', legIssue:'Has Issues', legProg:'In Progress', legUnch:'Not checked',
     toastSubmitted:'Room report submitted!', toastResolved:'Marked as resolved',
-    toastAdded:'Item added', toastDeleted:'Item deleted',
+    toastAdded:'Item added', toastDeleted:'Item deleted', toastSaved:'Item saved',
+    edit:'Edit', save:'Save',
     noReports:'No reports found.', wrongPin:'Wrong PIN — try again',
     inProgress:'In progress', clean:'Clean', hasIssues:'Has issues',
     cfgLink:'⚙ Configure Firebase', roleHK:'Housekeeper', roleMT:'Maintenance'
@@ -626,7 +649,8 @@ const T = {
     fltAll:'Сите', fltOpen:'Отворени', fltResolved:'Решени',
     legClean:'Чисто', legIssue:'Проблеми', legProg:'Во тек', legUnch:'Непроверено',
     toastSubmitted:'Извештајот е поднесен!', toastResolved:'Означено како решено',
-    toastAdded:'Ставката е додадена', toastDeleted:'Ставката е избришана',
+    toastAdded:'Ставката е додадена', toastDeleted:'Ставката е избришана', toastSaved:'Ставката е зачувана',
+    edit:'Уреди', save:'Зачувај',
     noReports:'Нема пронајдени пријави.', wrongPin:'Погрешен PIN — обидете се повторно',
     inProgress:'Во тек', clean:'Чисто', hasIssues:'Има проблеми',
     cfgLink:'⚙ Конфигурација на Firebase', roleHK:'Собарица', roleMT:'Одржување'
@@ -1050,9 +1074,44 @@ function renderManageChecklist() {
   localChecklist.forEach((item, idx) => {
     const div = document.createElement('div');
     div.className = 'manage-item';
-    div.innerHTML = `<span>${item}</span><button class="btn-del" onclick="deleteChecklistItem(${idx})">${t('delete')}</button>`;
+    div.id = 'mi-' + idx;
+    div.innerHTML = `
+      <span>${item}</span>
+      <input class="manage-item-edit" id="mei-${idx}" value="${item.replace(/"/g,'&quot;')}" />
+      <div class="manage-item-btns">
+        <button class="btn-edit" onclick="startEditItem(${idx})">✏ ${t('edit')}</button>
+        <button class="btn-save-edit" onclick="saveEditItem(${idx})">✓ ${t('save')}</button>
+        <button class="btn-del" onclick="deleteChecklistItem(${idx})">${t('delete')}</button>
+      </div>`;
     container.appendChild(div);
   });
+}
+
+function startEditItem(idx) {
+  const div = document.getElementById('mi-' + idx);
+  div.classList.add('editing');
+  const inp = document.getElementById('mei-' + idx);
+  inp.focus();
+  inp.selectionStart = inp.selectionEnd = inp.value.length;
+  inp.onkeydown = (e) => { if (e.key === 'Enter') saveEditItem(idx); if (e.key === 'Escape') cancelEditItem(idx); };
+}
+
+function cancelEditItem(idx) {
+  const div = document.getElementById('mi-' + idx);
+  div.classList.remove('editing');
+  document.getElementById('mei-' + idx).value = localChecklist[idx];
+}
+
+function saveEditItem(idx) {
+  const val = document.getElementById('mei-' + idx).value.trim();
+  if (!val) return;
+  localChecklist[idx] = val;
+  localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
+  if (db && !demoMode) {
+    db.collection('config').doc('checklist').set({ items: localChecklist });
+  }
+  renderManageChecklist();
+  showToast(t('toastSaved'));
 }
 
 function addChecklistItem() {
