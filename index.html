@@ -212,8 +212,8 @@ body{background:#0a0e1a;color:#fff;}
   box-shadow:0 1px 4px rgba(0,0,0,0.05);
   position:relative;text-align:center;
 }
-.cl-tile .ct-icon{font-size:24px;line-height:1;}
-.cl-tile .ct-name{font-size:12px;font-weight:600;color:#3a3530;line-height:1.3;min-height:32px;display:flex;align-items:center;justify-content:center;}
+.cl-tile .ct-icon{display:none;}
+.cl-tile .ct-name{font-size:14px;font-weight:700;color:#3a3530;line-height:1.4;min-height:40px;display:flex;align-items:center;justify-content:center;}
 .cl-tile .ct-btns{display:flex;gap:6px;width:100%;margin-top:4px;}
 .ct-ok,.ct-iss{
   flex:1;padding:7px 4px;border:none;border-radius:8px;
@@ -333,37 +333,46 @@ body{background:#0a0e1a;color:#fff;}
   padding:14px 16px;background:#0d1628;
   display:flex;align-items:center;justify-content:space-between;
 }
-.rcard-top .rnum{font-size:19px;font-weight:800;color:#fff;}
+.rcard-top .rnum{font-size:22px;font-weight:800;color:#fff;}
 .rcard-top .rmeta{text-align:right;}
-.rcard-top .mlbl{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;}
-.rcard-top .mval{font-size:12px;color:rgba(255,255,255,0.65);font-weight:500;}
+.rcard-top .mlbl{font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;}
+.rcard-top .mval{font-size:14px;color:rgba(255,255,255,0.75);font-weight:600;}
 .rissues{padding:2px 0;}
 .rirow{
   display:flex;align-items:flex-start;gap:10px;
-  padding:12px 16px;border-top:1px solid #f0ede6;
+  padding:14px 16px;border-top:1px solid #f0ede6;
 }
 .rirow:first-child{border-top:none;}
 .riinfo{flex:1;}
-.riname{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:3px;}
-.rinote{font-size:12px;color:#6b6560;}
-.rits{margin-top:5px;display:flex;flex-direction:column;gap:2px;}
-.rit{font-size:11px;display:flex;align-items:center;gap:4px;}
-.rit.rep{color:#9a9690;}
-.rit.fix{color:#27ae60;font-weight:600;}
+.riname{font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:4px;}
+.rinote{font-size:14px;color:#4a4540;}
+.rits{margin-top:6px;display:flex;flex-direction:column;gap:4px;}
+.rit{font-size:13px;display:flex;align-items:center;gap:5px;}
+.rit.rep{color:#7a7570;}
+.rit.fix{color:#1e8449;font-weight:700;}
 .ribadge{
-  font-size:10px;font-weight:700;padding:2px 8px;
+  font-size:12px;font-weight:700;padding:4px 11px;
   border-radius:10px;white-space:nowrap;display:inline-block;margin-bottom:4px;
 }
 .ribadge.open{background:#fef0ef;color:#e74c3c;}
 .ribadge.res{background:#e8f8ef;color:#27ae60;}
 .resbtn{
-  padding:8px 14px;border-radius:9px;border:none;
-  font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;
+  padding:10px 18px;border-radius:10px;border:none;
+  font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;
   align-self:flex-start;margin-top:2px;transition:all 0.1s;
 }
 .resbtn:active{transform:scale(0.95);}
 .resbtn.open{background:#fef0ef;color:#e74c3c;border:1.5px solid #fdd;}
 .resbtn.done{background:#e8f8ef;color:#27ae60;border:1.5px solid #aed;}
+/* SUPER ADMIN DELETE BTN */
+.delbtn-report{
+  padding:8px 14px;border-radius:9px;border:none;
+  font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;
+  background:#fff0f0;color:#c0392b;border:1.5px solid #f5c6c6;
+  margin-top:4px;transition:all 0.1s;display:none;
+}
+.delbtn-report:active{transform:scale(0.95);}
+.super-admin-mode .delbtn-report{display:block;}
 
 .empty-s{text-align:center;padding:50px 20px;color:#9a9690;}
 .empty-s .ei{font-size:44px;margin-bottom:12px;}
@@ -418,6 +427,9 @@ body{background:#0a0e1a;color:#fff;}
       </div>
       <div class="role-card" id="rc-rc" onclick="selRole('reception')">
         <div class="ri">🛎</div><div class="rn" id="t-rrc">Reception</div>
+      </div>
+      <div class="role-card" id="rc-sa" onclick="selRole('superadmin')">
+        <div class="ri">🔑</div><div class="rn" id="t-rsa">Admin</div>
       </div>
     </div>
     <div class="pin-lbl" id="t-pinlbl">ENTER PIN</div>
@@ -535,7 +547,7 @@ function initFB(){
 // ══════════════════════
 // DATA
 // ══════════════════════
-const PINS={housekeeper:'1234',maintenance:'5678',reception:'9999'};
+const PINS={housekeeper:'1234',maintenance:'5678',reception:'9999',superadmin:'0000'};
 const ROOMS={
   '1st Floor':['101','102','103','104','105','106','107'],
   '2nd Floor':['208','209','210','211','212','213','214'],
@@ -565,7 +577,7 @@ const DEF_CL=[
 const TXT={
   en:{
     tagline:'Room Maintenance System',
-    rhk:'Housekeeper',rmt:'Maintenance',rrc:'Reception',
+    rhk:'Housekeeper',rmt:'Maintenance',rrc:'Reception',rsa:'Admin',
     pinlbl:'ENTER PIN',
     tabr:'Rooms',tabs:'Status',tabm:'Checklist',
     stitle:'Room Status Overview',mtitle:'Manage Checklist',
@@ -587,7 +599,7 @@ const TXT={
   },
   mk:{
     tagline:'Систем за одржување на соби',
-    rhk:'Собарица',rmt:'Одржување',rrc:'Рецепција',
+    rhk:'Собарица',rmt:'Одржување',rrc:'Рецепција',rsa:'Админ',
     pinlbl:'ВНЕСЕТЕ PIN',
     tabr:'Соби',tabs:'Статус',tabm:'Листа',
     stitle:'Преглед на статус на соби',mtitle:'Управување со листата',
@@ -705,8 +717,8 @@ function checkPin(){
 function selRole(r){
   role=r;pin='';updateDots();
   document.getElementById('pin-err').textContent='';
-  ['hk','mt','rc'].forEach(x=>document.getElementById('rc-'+x).classList.remove('sel'));
-  const map={housekeeper:'hk',maintenance:'mt',reception:'rc'};
+  ['hk','mt','rc','sa'].forEach(x=>document.getElementById('rc-'+x).classList.remove('sel'));
+  const map={housekeeper:'hk',maintenance:'mt',reception:'rc',superadmin:'sa'};
   document.getElementById('rc-'+map[r]).classList.add('sel');
 }
 
@@ -716,7 +728,7 @@ function selRole(r){
 function enterApp(r){
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-app').classList.add('active');
-  const lbl={housekeeper:T('rhk'),maintenance:T('rmt'),reception:T('rrc')};
+  const lbl={housekeeper:T('rhk'),maintenance:T('rmt'),reception:T('rrc'),superadmin:'⚙ Admin'};
   document.getElementById('t-trole').textContent=lbl[r]||r;
   if(r==='housekeeper'||r==='reception'){
     document.getElementById('shell-hk').style.display='flex';
@@ -725,6 +737,9 @@ function enterApp(r){
   }else{
     document.getElementById('shell-hk').style.display='none';
     document.getElementById('shell-mt').style.display='flex';
+    // Super admin gets delete buttons
+    if(r==='superadmin') document.body.classList.add('super-admin-mode');
+    else document.body.classList.remove('super-admin-mode');
     loadMaint();
   }
 }
@@ -733,6 +748,7 @@ function doLogout(){
   pin='';curRoom=null;clState={};pinLocked=false;
   updateDots();
   document.getElementById('pin-err').textContent='';
+  document.body.classList.remove('super-admin-mode');
   selRole('housekeeper');
   document.getElementById('page-app').classList.remove('active');
   document.getElementById('page-login').classList.add('active');
@@ -1083,10 +1099,24 @@ function renderMaint(reps){
     card.innerHTML=
       '<div class="rcard-top">'
       +'<div class="rnum">Room '+rep.room+'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
       +'<div class="rmeta"><div class="mlbl">REPORTED</div><div class="mval">'+fmtDT(rep.timestamp)+'</div></div>'
+      +'<button class="delbtn-report" onclick="deleteReport(\''+rep.id+'\')" title="Delete report">🗑</button>'
+      +'</div>'
       +'</div><div class="rissues">'+issH+'</div>';
     cont.appendChild(card);
   });
+}
+
+function deleteReport(repId){
+  if(!document.body.classList.contains('super-admin-mode'))return;
+  lsReps=lsReps.filter(r=>r.id!==repId);
+  localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+  if(db&&!demoMode){
+    db.collection('reports').doc(repId).delete().catch(()=>{});
+  }
+  toast('🗑 Report deleted');
+  loadMaint();
 }
 
 function resolveIss(repId,issIdx){
