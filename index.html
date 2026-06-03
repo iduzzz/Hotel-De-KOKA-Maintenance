@@ -380,7 +380,72 @@ body{background:#0a0e1a;color:#fff;}
 
 .sec-title{font-size:19px;font-weight:800;color:#0d1628;margin-bottom:18px;letter-spacing:-0.3px;}
 
-/* ── TOAST ── */
+/* ── NOTIFICATIONS ── */
+.notif-bell{
+  position:relative;cursor:pointer;
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;margin-left:8px;
+  transition:background 0.1s;
+}
+.notif-bell:active{background:rgba(255,255,255,0.14);}
+.bell-icon{font-size:18px;line-height:1;}
+.notif-badge{
+  position:absolute;top:-5px;right:-5px;
+  min-width:18px;height:18px;border-radius:9px;
+  background:#e74c3c;color:#fff;
+  font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4px;
+  box-shadow:0 2px 6px rgba(231,76,60,0.5);
+  animation:notif-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes notif-pop{from{transform:scale(0);}to{transform:scale(1);}}
+
+.notif-panel{
+  position:absolute;top:68px;right:16px;
+  width:340px;max-width:calc(100vw - 32px);
+  background:#fff;border-radius:16px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.18);
+  border:1px solid #e8e3da;
+  z-index:200;overflow:hidden;
+}
+.notif-panel-header{
+  background:#0d1628;padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.notif-panel-header span{color:#fff;font-size:14px;font-weight:700;}
+.notif-clear{
+  background:rgba(255,255,255,0.12);border:none;
+  color:rgba(255,255,255,0.7);border-radius:8px;
+  padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;
+}
+.notif-item{
+  padding:14px 16px;border-bottom:1px solid #f0ede6;
+  display:flex;gap:12px;align-items:flex-start;
+}
+.notif-item:last-child{border-bottom:none;}
+.notif-item.unread{background:#fffbf0;}
+.notif-dot{
+  width:9px;height:9px;border-radius:50%;
+  background:#e74c3c;flex-shrink:0;margin-top:5px;
+}
+.notif-dot.read{background:#c8c3bc;}
+.notif-text{flex:1;}
+.notif-text strong{font-size:14px;color:#0d1628;display:block;margin-bottom:2px;}
+.notif-text span{font-size:12px;color:#9a9690;}
+.notif-empty{padding:24px;text-align:center;color:#9a9690;font-size:14px;}
+
+/* pulse animation on bell when new notif arrives */
+@keyframes bell-shake{
+  0%,100%{transform:rotate(0);}
+  20%{transform:rotate(-15deg);}
+  40%{transform:rotate(15deg);}
+  60%{transform:rotate(-10deg);}
+  80%{transform:rotate(10deg);}
+}
+.bell-shake{animation:bell-shake 0.5s ease;}
+#page-app{position:relative;}
 #toast{
   position:fixed;bottom:28px;left:50%;
   transform:translateX(-50%) translateY(100px);
@@ -460,9 +525,22 @@ body{background:#0a0e1a;color:#fff;}
   <div class="topbar">
     <div class="tlogo">Hotel De <em>KOKA</em></div>
     <div class="tsep"></div>
+    <div class="notif-bell" id="notif-bell" onclick="openNotifPanel()" style="display:none">
+      <span class="bell-icon">🔔</span>
+      <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+    </div>
     <div class="trole"><div class="dot"></div><span id="t-trole">—</span></div>
     <button class="tbtn" onclick="toggleLang()" style="margin-left:8px">EN/МК</button>
     <button class="tbtn" onclick="doLogout()" id="t-logout" style="margin-left:6px">Sign out</button>
+  </div>
+
+  <!-- NOTIFICATION PANEL -->
+  <div id="notif-panel" class="notif-panel" style="display:none">
+    <div class="notif-panel-header">
+      <span id="t-notif-title">New Reports</span>
+      <button class="notif-clear" onclick="clearNotifs()">✓ Clear all</button>
+    </div>
+    <div id="notif-list"></div>
   </div>
   <div class="demo-bar" id="demo-bar">⚠ Demo mode — local storage only</div>
   <div class="app-body">
@@ -726,11 +804,22 @@ function selRole(r){
 // APP ENTER / LOGOUT
 // ══════════════════════
 function enterApp(r){
+  currentUserRole = r;
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-app').classList.add('active');
   const lbl={housekeeper:T('rhk'),maintenance:T('rmt'),reception:T('rrc'),superadmin:'⚙ Admin'};
   document.getElementById('t-trole').textContent=lbl[r]||r;
-  // Always sync from Firebase on login
+
+  // Show bell for maintenance and admin
+  const bell = document.getElementById('notif-bell');
+  if(isNotifRole(r)){
+    bell.style.display = 'flex';
+    requestNotifPermission();
+    updateBadge();
+  } else {
+    bell.style.display = 'none';
+  }
+
   syncFromFirebase(()=>{
     if(r==='housekeeper'||r==='reception'){
       document.getElementById('shell-hk').style.display='flex';
@@ -743,6 +832,8 @@ function enterApp(r){
       else document.body.classList.remove('super-admin-mode');
       loadMaint();
     }
+    // Start real-time listener for maintenance/admin
+    if(isNotifRole(r)) startRealtimeListener();
   });
 }
 
@@ -771,8 +862,13 @@ function syncFromFirebase(callback){
 
 function doLogout(){
   pin='';curRoom=null;clState={};pinLocked=false;
+  currentUserRole=null;
+  stopRealtimeListener();
   updateDots();
   document.getElementById('pin-err').textContent='';
+  document.getElementById('notif-bell').style.display='none';
+  document.getElementById('notif-panel').style.display='none';
+  notifPanelOpen=false;
   document.body.classList.remove('super-admin-mode');
   selRole('housekeeper');
   document.getElementById('page-app').classList.remove('active');
@@ -1178,6 +1274,164 @@ function resolveIss(repId,issIdx){
       return Promise.all([p1,p2]);
     }).catch(()=>{}).finally(()=>loadMaint());
   }else loadMaint();
+}
+
+// ══════════════════════
+// NOTIFICATIONS
+// ══════════════════════
+let notifList = JSON.parse(localStorage.getItem('hdk_notifs') || '[]');
+let unsubscribeSnapshot = null;
+let notifPanelOpen = false;
+let currentUserRole = null;
+
+function isNotifRole(r){ return r === 'maintenance' || r === 'superadmin'; }
+
+function requestNotifPermission(){
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+
+function startRealtimeListener(){
+  if(!db || demoMode) return;
+  if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  const knownIds = new Set(lsReps.map(r => r.id));
+  unsubscribeSnapshot = db.collection('reports')
+    .orderBy('timestamp','desc')
+    .onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if(change.type === 'added'){
+          const rep = change.doc.data();
+          if(!knownIds.has(rep.id)){
+            knownIds.add(rep.id);
+            // Only notify if there are issues
+            if(rep.issues && rep.issues.length > 0){
+              addNotification(rep);
+              sendBrowserNotif(rep);
+            }
+            // Update local data
+            if(!lsReps.find(r => r.id === rep.id)){
+              lsReps.unshift(rep);
+              localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
+            }
+            if(rep.status) lsRSt[rep.room] = rep.status;
+          }
+        }
+      });
+    }, () => {});
+}
+
+function stopRealtimeListener(){
+  if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+}
+
+function addNotification(rep){
+  const notif = {
+    id: rep.id,
+    room: rep.room,
+    count: rep.issues.length,
+    timestamp: rep.timestamp,
+    read: false
+  };
+  // Avoid duplicates
+  if(notifList.find(n => n.id === rep.id)) return;
+  notifList.unshift(notif);
+  if(notifList.length > 50) notifList = notifList.slice(0, 50);
+  localStorage.setItem('hdk_notifs', JSON.stringify(notifList));
+  updateBadge();
+  shakeBell();
+  // Also refresh maintenance list if already viewing it
+  if(currentUserRole === 'maintenance' || currentUserRole === 'superadmin'){
+    loadMaint();
+  }
+}
+
+function sendBrowserNotif(rep){
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  const issCount = rep.issues.length;
+  new Notification('🔔 Hotel De KOKA — New Report', {
+    body: 'Room ' + rep.room + ': ' + issCount + ' issue' + (issCount > 1 ? 's' : '') + ' reported',
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%230d1628"/><text y="44" x="8" font-size="40" fill="%23c4a046">K</text></svg>',
+    tag: 'hdk-report-' + rep.id,
+    requireInteraction: false
+  });
+}
+
+function updateBadge(){
+  const unread = notifList.filter(n => !n.read).length;
+  const badge = document.getElementById('notif-badge');
+  const bell = document.getElementById('notif-bell');
+  if(!badge || !bell) return;
+  if(unread > 0){
+    badge.textContent = unread > 99 ? '99+' : unread;
+    badge.style.display = 'flex';
+    bell.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function shakeBell(){
+  const bell = document.getElementById('notif-bell');
+  if(!bell) return;
+  bell.classList.remove('bell-shake');
+  void bell.offsetWidth;
+  bell.classList.add('bell-shake');
+  setTimeout(() => bell.classList.remove('bell-shake'), 600);
+}
+
+function openNotifPanel(){
+  notifPanelOpen = !notifPanelOpen;
+  const panel = document.getElementById('notif-panel');
+  if(notifPanelOpen){
+    panel.style.display = 'block';
+    renderNotifPanel();
+    // Mark all as read
+    notifList.forEach(n => n.read = true);
+    localStorage.setItem('hdk_notifs', JSON.stringify(notifList));
+    updateBadge();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notif-panel');
+  const bell = document.getElementById('notif-bell');
+  if(notifPanelOpen && panel && bell && !panel.contains(e.target) && !bell.contains(e.target)){
+    notifPanelOpen = false;
+    panel.style.display = 'none';
+  }
+});
+
+function renderNotifPanel(){
+  const list = document.getElementById('notif-list');
+  if(!list) return;
+  if(notifList.length === 0){
+    list.innerHTML = '<div class="notif-empty">No notifications</div>';
+    return;
+  }
+  list.innerHTML = notifList.slice(0, 20).map(n => {
+    const dt = new Date(n.timestamp);
+    const dtStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    return '<div class="notif-item' + (n.read ? '' : ' unread') + '">'
+      + '<div class="notif-dot' + (n.read ? ' read' : '') + '"></div>'
+      + '<div class="notif-text">'
+      + '<strong>Room ' + n.room + ' — ' + n.count + ' issue' + (n.count > 1 ? 's' : '') + '</strong>'
+      + '<span>' + dtStr + '</span>'
+      + '</div></div>';
+  }).join('');
+}
+
+function clearNotifs(){
+  notifList = [];
+  localStorage.setItem('hdk_notifs', JSON.stringify(notifList));
+  updateBadge();
+  renderNotifPanel();
+  notifPanelOpen = false;
+  document.getElementById('notif-panel').style.display = 'none';
 }
 
 // ══════════════════════
