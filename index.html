@@ -162,12 +162,12 @@ body{background:#0a0e1a;color:#fff;}
 .rtile:active{transform:scale(0.92);}
 .rtile .rn{font-size:18px;font-weight:800;color:#0d1628;}
 .rtile .rs{font-size:9px;color:#b0aaa0;margin-top:1px;font-weight:500;text-align:center;padding:0 4px;}
-.rtile.clean{border-color:#27ae60;background:#f0faf4;}
-.rtile.clean .rn{color:#1e8449;}
+.rtile.clean{border-color:#7fb3d3;background:#f0f6fb;}
+.rtile.clean .rn{color:#2471a3;}
 .rtile.issue{border-color:#e74c3c;background:#fef5f5;}
 .rtile.issue .rn{color:#c0392b;}
-.rtile.inprogress{border-color:#f39c12;background:#fffbf0;}
-.rtile.inprogress .rn{color:#d68910;}
+.rtile.inprogress{border-color:#7fb3d3;background:#f0f6fb;}
+.rtile.inprogress .rn{color:#2471a3;}
 .rtile .ibadge{
   position:absolute;top:-5px;right:-5px;
   width:18px;height:18px;border-radius:50%;
@@ -258,20 +258,8 @@ body{background:#0a0e1a;color:#fff;}
 .note-btn-cancel{background:#f0ede6;color:#6b6560;}
 .note-btn-ok{background:#e74c3c;color:#fff;}
 
-.cl-submit-bar{
-  position:fixed;bottom:0;left:0;right:0;
-  padding:14px 20px;
-  background:rgba(240,237,230,0.96);
-  backdrop-filter:blur(12px);
-  border-top:1px solid #e0dbd0;z-index:100;
-}
-.cl-submit-btn{
-  width:100%;padding:16px;background:#0d1628;color:#fff;
-  border:none;border-radius:14px;font-size:16px;font-weight:700;
-  cursor:pointer;letter-spacing:0.3px;transition:all 0.12s;
-}
-.cl-submit-btn:active{background:#1a3a5c;}
-.cl-submit-btn:disabled{background:#c8c3bc;cursor:not-allowed;}
+.cl-submit-bar{display:none;}
+.cl-submit-btn{display:none;}
 
 /* ════════════════════════════════
    STATUS
@@ -279,9 +267,10 @@ body{background:#0a0e1a;color:#fff;}
 .legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
 .lchip{display:flex;align-items:center;gap:5px;font-size:12px;color:#6b6560;font-weight:500;}
 .ldot{width:9px;height:9px;border-radius:3px;}
-.ldot.clean{background:#27ae60;}
+.ldot.clean{background:#7fb3d3;}
+.ldot.checked{background:#7fb3d3;}
 .ldot.issue{background:#e74c3c;}
-.ldot.inprogress{background:#f39c12;}
+.ldot.inprogress{background:#7fb3d3;}
 .ldot.nc{background:#c8c3bc;}
 
 /* ════════════════════════════════
@@ -492,9 +481,8 @@ body{background:#0a0e1a;color:#fff;}
       <div class="view" id="v-status">
         <div class="sec-title" id="t-stitle">Room Status Overview</div>
         <div class="legend-row">
-          <div class="lchip"><div class="ldot clean"></div><span id="t-lc">Clean</span></div>
           <div class="lchip"><div class="ldot issue"></div><span id="t-li">Has issues</span></div>
-          <div class="lchip"><div class="ldot inprogress"></div><span id="t-lp">In progress</span></div>
+          <div class="lchip"><div class="ldot checked"></div><span id="t-lc">Checked</span></div>
           <div class="lchip"><div class="ldot nc"></div><span id="t-ln">Not checked</span></div>
         </div>
         <div id="status-cont"></div>
@@ -591,9 +579,9 @@ const TXT={
     repAt:'Reported',fixAt:'Fixed',logout:'Sign out',
     wrongPin:'Incorrect PIN — try again',
     tSubmit:'Report submitted!',tResolve:'Marked resolved',tUnresolve:'Marked open',
-    tAdd:'Item added',tDel:'Item deleted',tSave:'Item saved',
+    tAdd:'Item added',tDel:'Item deleted',tSave:'Item saved',tIssReported:'Issue reported',
     noRep:'No reports found',
-    clean:'Clean',hasIssues:'Issues',inProgress:'In progress',
+    clean:'Checked',hasIssues:'Issues',inProgress:'Checked',checked:'Checked',
     noteDesc:'Describe the issue (optional)',noteCancel:'Cancel',noteConfirm:'Report Issue',
     demoBanner:'⚠ Demo mode — data saved locally, no sync between devices'
   },
@@ -613,9 +601,9 @@ const TXT={
     repAt:'Пријавено',fixAt:'Поправено',logout:'Одјава',
     wrongPin:'Погрешен PIN — обидете се повторно',
     tSubmit:'Извештајот е поднесен!',tResolve:'Означено решено',tUnresolve:'Означено отворено',
-    tAdd:'Ставката е додадена',tDel:'Ставката е избришана',tSave:'Ставката е зачувана',
+    tAdd:'Ставката е додадена',tDel:'Ставката е избришана',tSave:'Ставката е зачувана',tIssReported:'Проблемот е пријавен',
     noRep:'Нема пријави',
-    clean:'Чисто',hasIssues:'Проблеми',inProgress:'Во тек',
+    clean:'Проверено',hasIssues:'Проблеми',inProgress:'Проверено',checked:'Проверено',
     noteDesc:'Опишете го проблемот (незадолжително)',noteCancel:'Откажи',noteConfirm:'Пријави проблем',
     demoBanner:'⚠ Демо режим — само локално зачувување'
   }
@@ -646,8 +634,8 @@ function applyLang(){
     't-tagline':'tagline','t-rhk':'rhk','t-rmt':'rmt','t-rrc':'rrc',
     't-pinlbl':'pinlbl','t-tabr':'tabr','t-tabs':'tabs','t-tabm':'tabm',
     't-stitle':'stitle','t-mtitle':'mtitle','t-mttitle':'mttitle',
-    't-addbtn':'addbtn','t-submit':'submit','t-logout':'logout',
-    't-lc':'lc','t-li':'li','t-lp':'lp','t-ln':'ln',
+    't-addbtn':'addbtn','t-logout':'logout',
+    't-lc':'lc','t-li':'li','t-ln':'ln',
     't-fall':'fall','t-fopen':'fopen','t-fres':'fres',
     't-trole':'role_label_skip',
     't-note-desc':'noteDesc','t-note-cancel':'noteCancel','t-note-confirm':'noteConfirm',
@@ -793,7 +781,7 @@ function renderRooms(){
       const st=lsRSt[room]||null;
       if(st)tile.classList.add(st);
       const ic=issCount(room);
-      const stlbl=st?T(st==='issue'?'hasIssues':st==='inprogress'?'inProgress':'clean'):'';
+      const stlbl=st?T(st==='issue'?'hasIssues':'checked'):'';
       tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
       tile.onclick=()=>openChecklist(room);
       grid.appendChild(tile);
@@ -847,10 +835,52 @@ function setOK(item){
   clState[item]={status:'ok',note:''};
   updateTile(item);
   updateProg();
+  saveItemInstant(item);
 }
 
 function setISS(item){
   openNoteModal(item);
+}
+
+function saveItemInstant(item){
+  // Build a lightweight per-item report entry for this room session
+  // We save the full room state every time any item changes
+  saveRoomState();
+}
+
+function saveRoomState(){
+  if(!curRoom)return;
+  const issues=lsCL
+    .filter(i=>clState[i]&&clState[i].status==='iss')
+    .map(i=>({item:i,note:clState[i].note||'',resolved:false,resolvedAt:null}));
+  const checkedCount=lsCL.filter(i=>clState[i]&&clState[i].status!==null).length;
+  if(checkedCount===0)return; // nothing to save yet
+
+  const rst=issues.length>0?'issue':'checked';
+
+  // Update or create today's report for this room
+  const today=new Date().toDateString();
+  let rep=lsReps.find(r=>r.room===curRoom&&new Date(r.timestamp).toDateString()===today);
+  if(rep){
+    rep.issues=issues;rep.status=rst;rep.updatedAt=new Date().toISOString();
+  }else{
+    rep={
+      id:curRoom+'_'+Date.now().toString(),
+      room:curRoom,
+      timestamp:new Date().toISOString(),
+      updatedAt:new Date().toISOString(),
+      issues:issues,status:rst
+    };
+    lsReps.unshift(rep);
+  }
+  localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+  lsRSt[curRoom]=rst;
+  localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+
+  if(db&&!demoMode){
+    db.collection('reports').doc(rep.id).set(rep);
+    db.collection('roomStatus').doc(curRoom).set({status:rst,updatedAt:rep.updatedAt||rep.timestamp});
+  }
 }
 
 function tileTap(item){} // kept for safety, no longer used
@@ -874,6 +904,8 @@ function confirmIssue(){
   clState[noteItem]={status:'iss',note:note};
   updateTile(noteItem);
   updateProg();
+  saveRoomState();
+  toast('⚠ '+noteItem+' — '+T('tIssReported'));
   closeNoteModal();
 }
 
@@ -889,10 +921,11 @@ function updateProg(){
   const total=lsCL.length;
   const done=lsCL.filter(i=>clState[i]&&clState[i].status!==null).length;
   document.getElementById('cl-prog').textContent=done+' / '+total;
-  document.getElementById('sub-btn').disabled=done===0;
 }
 
 function eid(s){return btoa(unescape(encodeURIComponent(s))).replace(/[^a-zA-Z0-9]/g,'');}
+
+function submitChecklist(){} // no longer needed — auto-save on every tap
 
 function submitChecklist(){
   const issues=lsCL
@@ -934,7 +967,7 @@ function renderStatus(){
         tile.className='rtile';
         const st=data[room]||null;
         if(st)tile.classList.add(st);
-        const stlbl=st?T(st==='issue'?'hasIssues':st==='inprogress'?'inProgress':'clean'):'—';
+        const stlbl=st?T(st==='issue'?'hasIssues':'checked'):'—';
         tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>';
         grid.appendChild(tile);
       });
@@ -1063,7 +1096,7 @@ function resolveIss(repId,issIdx){
     const was=rep.issues[issIdx].resolved;
     rep.issues[issIdx].resolved=!was;
     rep.issues[issIdx].resolvedAt=was?null:now;
-    if(!rep.issues.some(i=>!i.resolved)){lsRSt[rep.room]='clean';localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));}
+    if(!rep.issues.some(i=>!i.resolved)){lsRSt[rep.room]='checked';localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));}
     localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
     toast(rep.issues[issIdx].resolved?T('tResolve'):T('tUnresolve'));
   }
@@ -1074,7 +1107,7 @@ function resolveIss(repId,issIdx){
       data.issues[issIdx].resolved=!was;data.issues[issIdx].resolvedAt=was?null:now;
       const p1=db.collection('reports').doc(repId).update({issues:data.issues});
       const p2=!data.issues.some(i=>!i.resolved)
-        ?db.collection('roomStatus').doc(data.room).set({status:'clean',updatedAt:now})
+        ?db.collection('roomStatus').doc(data.room).set({status:'checked',updatedAt:now})
         :Promise.resolve();
       return Promise.all([p1,p2]);
     }).catch(()=>{}).finally(()=>loadMaint());
