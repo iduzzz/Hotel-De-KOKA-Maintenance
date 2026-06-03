@@ -322,6 +322,8 @@ body{background:#0a0e1a;color:#fff;}
   font-size:13px;font-weight:600;color:#6b6560;cursor:pointer;
 }
 .fbtn.on{background:#0d1628;border-color:#0d1628;color:#fff;}
+.fbtn-wipe{background:#fef0ef!important;color:#c0392b!important;border-color:#fadadd!important;}
+.super-admin-mode .super-admin-only{display:flex!important;}
 
 .rcard{
   background:#fff;border-radius:15px;
@@ -594,6 +596,7 @@ body{background:#0a0e1a;color:#fff;}
           <button class="fbtn on" id="flt-all" onclick="setFlt('all')"><span id="t-fall">All</span></button>
           <button class="fbtn" id="flt-open" onclick="setFlt('open')"><span id="t-fopen">Open</span></button>
           <button class="fbtn" id="flt-res" onclick="setFlt('resolved')"><span id="t-fres">Resolved</span></button>
+          <button class="fbtn fbtn-wipe super-admin-only" id="btn-wipe-all" onclick="wipeAllReports()" style="display:none">🗑 Delete ALL</button>
         </div>
         <div id="mt-cont"></div>
       </div>
@@ -1237,23 +1240,44 @@ function deleteReport(repId){
   const rep=lsReps.find(r=>r.id===repId);
   const room=rep?rep.room:null;
   lsReps=lsReps.filter(r=>r.id!==repId);
-  if(room){
-    const hasMoreIssues=lsReps.some(r=>r.room===room&&r.issues&&r.issues.some(i=>!i.resolved));
-    if(!hasMoreIssues) delete lsRSt[room];
-  }
+  // Always delete roomStatus for this room — force full re-check
+  if(room) delete lsRSt[room];
   localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
   localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
   if(db&&!demoMode){
     db.collection('reports').doc(repId).delete().catch(()=>{});
-    if(room){
-      // Only delete roomStatus if no other issues remain for this room in Firestore
-      const stillHasIssues=lsReps.some(r=>r.room===room&&r.issues&&r.issues.some(i=>!i.resolved));
-      if(!stillHasIssues){
-        db.collection('roomStatus').doc(room).delete().catch(()=>{});
-      }
-    }
+    // Always delete roomStatus — housekeeper will re-set it when they re-check the room
+    if(room) db.collection('roomStatus').doc(room).delete().catch(()=>{});
   }
   toast('🗑 Report deleted');
+  loadMaint();
+}
+
+function wipeAllReports(){
+  if(!document.body.classList.contains('super-admin-mode'))return;
+  if(!confirm('Delete ALL reports and reset ALL room statuses? This cannot be undone.'))return;
+  const repsCopy=[...lsReps];
+  const roomsCopy=Object.keys(lsRSt);
+  lsReps=[];
+  lsRSt={};
+  localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+  localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+  if(db&&!demoMode){
+    // Delete all reports from Firestore
+    const batch=db.batch();
+    repsCopy.forEach(r=>{
+      batch.delete(db.collection('reports').doc(r.id));
+    });
+    roomsCopy.forEach(room=>{
+      batch.delete(db.collection('roomStatus').doc(room));
+    });
+    batch.commit().catch(()=>{
+      // If batch fails, delete one by one
+      repsCopy.forEach(r=>db.collection('reports').doc(r.id).delete().catch(()=>{}));
+      roomsCopy.forEach(room=>db.collection('roomStatus').doc(room).delete().catch(()=>{}));
+    });
+  }
+  toast('🗑 All reports deleted');
   loadMaint();
 }
 
