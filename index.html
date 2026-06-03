@@ -3,603 +3,686 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Hotel De KOKA — Maintenance</title>
-
-<!-- Firebase SDK -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Hotel De KOKA</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
 <style>
-  :root {
-    --primary: #1a3a5c;
-    --primary-light: #2a5a8c;
-    --accent: #c9a84c;
-    --accent-light: #f0d080;
-    --bg: #f4f1eb;
-    --bg-card: #ffffff;
-    --bg-secondary: #eee9df;
-    --text: #1a1a1a;
-    --text-muted: #6b6b6b;
-    --border: #d8d2c8;
-    --success: #2d7a4f;
-    --success-bg: #e8f5ee;
-    --danger: #c0392b;
-    --danger-bg: #fdecea;
-    --warning: #c07a00;
-    --warning-bg: #fff4e0;
-    --radius: 10px;
-    --shadow: 0 2px 8px rgba(0,0,0,0.08);
-    --shadow-lg: 0 4px 20px rgba(0,0,0,0.12);
-  }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+  background:#0a0e1a;
+  color:#fff;
+}
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 15px;
-  }
+/* ── PAGES ── */
+.page{position:fixed;inset:0;display:none;flex-direction:column;}
+.page.active{display:flex;}
 
-  /* ── TOP BAR ── */
-  .topbar {
-    background: var(--primary);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    height: 56px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: var(--shadow);
-  }
-  .topbar-logo { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
-  .topbar-logo span { color: var(--accent); }
-  .topbar-role {
-    font-size: 12px;
-    background: rgba(255,255,255,0.15);
-    padding: 4px 10px;
-    border-radius: 20px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .topbar-role .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-  .btn-logout {
-    background: none; border: 1px solid rgba(255,255,255,0.3);
-    color: #fff; padding: 5px 10px; border-radius: 6px;
-    font-size: 12px; cursor: pointer;
-  }
+/* ════════════════════════════════
+   LOGIN PAGE
+════════════════════════════════ */
+#page-login{
+  background:linear-gradient(145deg,#0d1628 0%,#0a1520 40%,#0d1a2e 100%);
+  align-items:center;justify-content:center;
+}
 
-  /* ── SCREENS ── */
-  .screen { display: none; padding: 16px; max-width: 900px; margin: 0 auto; }
-  .screen.active { display: block; }
+.login-bg-decoration{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;
+}
+.login-bg-decoration .circle{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(196,160,70,0.08) 0%,transparent 70%);
+}
+.login-bg-decoration .circle:nth-child(1){width:600px;height:600px;top:-200px;right:-200px;}
+.login-bg-decoration .circle:nth-child(2){width:400px;height:400px;bottom:-100px;left:-100px;}
 
-  /* ── LOGIN ── */
-  #screen-login {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; min-height: 100vh; padding: 32px 24px;
-    gap: 0;
-  }
-  #screen-login.active { display: flex; }
-  .login-logo {
-    text-align: center; margin-bottom: 32px;
-  }
-  .login-logo h1 { font-size: 28px; color: var(--primary); font-weight: 800; }
-  .login-logo h1 span { color: var(--accent); }
-  .login-logo p { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+.login-container{
+  position:relative;z-index:1;
+  width:100%;max-width:460px;
+  padding:40px 32px;
+  display:flex;flex-direction:column;align-items:center;gap:0;
+}
 
-  .login-card {
-    background: var(--bg-card);
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    padding: 32px 28px;
-    width: 100%; max-width: 360px;
-  }
-  .login-card h2 { font-size: 17px; margin-bottom: 20px; color: var(--primary); }
+.login-hotel-name{
+  text-align:center;margin-bottom:40px;
+}
+.login-hotel-name .hotel-pre{
+  font-size:13px;letter-spacing:4px;text-transform:uppercase;
+  color:rgba(196,160,70,0.7);margin-bottom:8px;
+}
+.login-hotel-name h1{
+  font-size:42px;font-weight:800;letter-spacing:-1px;
+  color:#fff;line-height:1;
+}
+.login-hotel-name h1 span{color:#c4a046;}
+.login-hotel-name .tagline{
+  font-size:13px;color:rgba(255,255,255,0.35);
+  margin-top:10px;letter-spacing:1px;
+}
 
-  .role-tabs {
-    display: flex; gap: 8px; margin-bottom: 24px;
-  }
-  .role-tab {
-    flex: 1; padding: 10px; border: 2px solid var(--border);
-    border-radius: var(--radius); background: none; cursor: pointer;
-    font-size: 13px; font-weight: 600; color: var(--text-muted);
-    transition: all 0.15s;
-  }
-  .role-tab.active {
-    border-color: var(--primary); background: var(--primary); color: #fff;
-  }
+.role-selector{
+  display:flex;gap:10px;width:100%;margin-bottom:32px;
+}
+.role-card{
+  flex:1;padding:16px 12px;
+  background:rgba(255,255,255,0.04);
+  border:1.5px solid rgba(255,255,255,0.08);
+  border-radius:16px;cursor:pointer;
+  transition:all 0.2s;text-align:center;
+}
+.role-card:active{transform:scale(0.97);}
+.role-card.selected{
+  background:rgba(196,160,70,0.12);
+  border-color:rgba(196,160,70,0.5);
+}
+.role-card .role-icon{font-size:26px;margin-bottom:6px;}
+.role-card .role-name{
+  font-size:14px;font-weight:600;color:rgba(255,255,255,0.6);
+}
+.role-card.selected .role-name{color:#c4a046;}
 
-  .pin-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-  .pin-display {
-    display: flex; gap: 10px; justify-content: center; margin-bottom: 24px;
-  }
-  .pin-dot {
-    width: 18px; height: 18px; border-radius: 50%;
-    border: 2px solid var(--border); background: transparent;
-    transition: background 0.1s;
-  }
-  .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
+.pin-label{
+  font-size:12px;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,0.3);margin-bottom:20px;
+  align-self:flex-start;
+}
 
-  .pin-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-  }
-  .pin-btn {
-    padding: 16px; font-size: 20px; font-weight: 600;
-    background: var(--bg-secondary); border: none; border-radius: var(--radius);
-    cursor: pointer; transition: background 0.1s; color: var(--text);
-    touch-action: manipulation;
-  }
-  .pin-btn:active { background: var(--border); }
-  .pin-btn.del { font-size: 16px; color: var(--danger); }
-  .pin-error {
-    color: var(--danger); font-size: 13px; text-align: center;
-    margin-top: 12px; min-height: 20px;
-  }
+.pin-dots{
+  display:flex;gap:16px;margin-bottom:36px;
+}
+.pin-dot{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.2);
+  background:transparent;
+  transition:all 0.15s;
+}
+.pin-dot.filled{
+  background:#c4a046;border-color:#c4a046;
+  transform:scale(1.1);
+}
+.pin-dot.error{background:#e74c3c;border-color:#e74c3c;}
 
-  /* ── SECTION HEADER ── */
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .section-header h2 { font-size: 18px; color: var(--primary); font-weight: 700; }
-  .section-header .lang-toggle {
-    font-size: 12px; background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 20px; padding: 4px 12px; cursor: pointer; color: var(--text-muted);
-  }
+.pin-pad{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:12px;width:100%;
+}
+.pin-key{
+  aspect-ratio:1.4;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;
+  font-size:24px;font-weight:300;color:#fff;
+  cursor:pointer;
+  transition:all 0.1s;
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;
+}
+.pin-key:active{
+  background:rgba(196,160,70,0.2);
+  border-color:rgba(196,160,70,0.4);
+  transform:scale(0.95);
+}
+.pin-key.key-del{font-size:20px;color:rgba(255,255,255,0.4);}
+.pin-key.key-empty{background:transparent;border:none;cursor:default;}
+.pin-key.key-empty:active{background:transparent;transform:none;}
 
-  /* ── TABS (housekeeper nav) ── */
-  .tab-bar {
-    display: flex; gap: 0; background: var(--bg-card);
-    border-radius: var(--radius); overflow: hidden;
-    border: 1px solid var(--border); margin-bottom: 18px;
-  }
-  .tab-btn {
-    flex: 1; padding: 11px 6px; background: none; border: none;
-    font-size: 13px; font-weight: 600; color: var(--text-muted);
-    cursor: pointer; transition: all 0.15s; text-align: center;
-  }
-  .tab-btn.active { background: var(--primary); color: #fff; }
+.pin-error-msg{
+  margin-top:16px;font-size:13px;
+  color:#e74c3c;min-height:20px;text-align:center;
+}
 
-  /* ── FLOOR SECTIONS ── */
-  .floor-section { margin-bottom: 20px; }
-  .floor-label {
-    font-size: 12px; font-weight: 700; color: var(--text-muted);
-    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
-  }
-  .room-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px;
-  }
-  .room-btn {
-    aspect-ratio: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: var(--bg-card); border: 2px solid var(--border);
-    border-radius: var(--radius); cursor: pointer; transition: all 0.15s;
-    font-size: 15px; font-weight: 700; color: var(--primary);
-    position: relative;
-  }
-  .room-btn:active { transform: scale(0.96); }
-  .room-btn .room-sub { font-size: 10px; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
-  .room-btn.status-clean { border-color: var(--success); background: var(--success-bg); color: var(--success); }
-  .room-btn.status-issue { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
-  .room-btn.status-inprogress { border-color: var(--warning); background: var(--warning-bg); color: var(--warning); }
-  .room-btn .badge {
-    position: absolute; top: -5px; right: -5px;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: var(--danger); color: #fff;
-    font-size: 10px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-  }
+.lang-switch-login{
+  position:absolute;top:24px;right:24px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+  color:rgba(255,255,255,0.5);
+  border-radius:20px;padding:8px 16px;
+  font-size:12px;font-weight:600;letter-spacing:1px;
+  cursor:pointer;
+}
 
-  /* ── CHECKLIST VIEW ── */
-  .back-btn {
-    display: flex; align-items: center; gap: 8px;
-    background: none; border: none; color: var(--primary);
-    font-size: 15px; font-weight: 600; cursor: pointer;
-    margin-bottom: 16px; padding: 4px 0;
-  }
-  .back-btn svg { width: 20px; height: 20px; }
+/* ════════════════════════════════
+   MAIN APP SHELL
+════════════════════════════════ */
+#page-app{
+  background:#f0ede6;
+}
 
-  .room-title-bar {
-    background: var(--primary);
-    color: #fff; border-radius: var(--radius);
-    padding: 14px 16px; margin-bottom: 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .room-title-bar h2 { font-size: 20px; font-weight: 800; }
-  .room-title-bar .room-status-pill {
-    font-size: 12px; padding: 4px 10px; border-radius: 20px;
-    background: rgba(255,255,255,0.2); font-weight: 600;
-  }
+.app-topbar{
+  height:64px;min-height:64px;
+  background:#0d1628;
+  display:flex;align-items:center;
+  padding:0 24px;gap:16px;
+  box-shadow:0 2px 16px rgba(0,0,0,0.2);
+  z-index:50;flex-shrink:0;
+}
+.topbar-logo{
+  font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.5px;
+}
+.topbar-logo span{color:#c4a046;}
+.topbar-spacer{flex:1;}
+.topbar-role-badge{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px;padding:6px 14px;
+}
+.topbar-role-badge .dot{
+  width:8px;height:8px;border-radius:50%;background:#c4a046;
+}
+.topbar-role-badge span{font-size:13px;color:rgba(255,255,255,0.8);font-weight:500;}
 
-  .checklist-item {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius); margin-bottom: 8px;
-    overflow: hidden;
-  }
-  .checklist-row {
-    display: flex; align-items: center; gap: 12px; padding: 14px 14px;
-    cursor: pointer;
-  }
-  .checklist-check {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 2px solid var(--border); flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .checklist-check.ok { background: var(--success); border-color: var(--success); }
-  .checklist-check.ok::after { content: '✓'; color: #fff; font-size: 14px; font-weight: 700; }
-  .checklist-check.issue { background: var(--danger); border-color: var(--danger); }
-  .checklist-check.issue::after { content: '!'; color: #fff; font-size: 14px; font-weight: 700; }
+.topbar-btn{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+  color:rgba(255,255,255,0.6);
+  border-radius:10px;padding:8px 14px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  transition:all 0.15s;
+}
+.topbar-btn:active{background:rgba(255,255,255,0.15);}
 
-  .checklist-name { flex: 1; font-size: 15px; font-weight: 500; }
-  .checklist-actions {
-    display: flex; gap: 6px;
-  }
-  .btn-ok, .btn-issue {
-    padding: 7px 14px; border: none; border-radius: 6px;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-    touch-action: manipulation;
-  }
-  .btn-ok { background: var(--success-bg); color: var(--success); }
-  .btn-ok.selected { background: var(--success); color: #fff; }
-  .btn-issue { background: var(--danger-bg); color: var(--danger); }
-  .btn-issue.selected { background: var(--danger); color: #fff; }
+.app-body{
+  flex:1;overflow:hidden;display:flex;flex-direction:column;
+}
 
-  .issue-note-area {
-    padding: 0 14px 14px; display: none;
-  }
-  .issue-note-area.visible { display: block; }
-  .issue-note-area textarea {
-    width: 100%; border: 1px solid var(--border);
-    border-radius: 6px; padding: 10px; font-size: 14px;
-    resize: none; background: var(--bg-secondary);
-    font-family: inherit; color: var(--text);
-  }
+/* ── TAB BAR (Housekeeper) ── */
+.hk-tabs{
+  display:flex;background:#fff;
+  border-bottom:1px solid #e0dbd0;
+  padding:0 24px;gap:0;flex-shrink:0;
+}
+.hk-tab{
+  padding:16px 24px;font-size:14px;font-weight:600;
+  color:#9a9690;border-bottom:3px solid transparent;
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;
+  background:none;border-left:none;border-right:none;border-top:none;
+}
+.hk-tab.active{color:#0d1628;border-bottom-color:#c4a046;}
 
-  .submit-bar {
-    position: sticky; bottom: 0;
-    background: var(--bg); border-top: 1px solid var(--border);
-    padding: 12px 16px; margin: 0 -16px;
-  }
-  .btn-submit {
-    width: 100%; padding: 15px; background: var(--primary);
-    color: #fff; border: none; border-radius: var(--radius);
-    font-size: 16px; font-weight: 700; cursor: pointer;
-    transition: background 0.15s;
-  }
-  .btn-submit:active { background: var(--primary-light); }
-  .btn-submit:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+/* ── SCROLLABLE CONTENT ── */
+.view{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px;}
+.view.active{display:block;}
 
-  /* ── MANAGE CHECKLIST ── */
-  .manage-item {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 12px 14px;
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px; gap: 10px;
-  }
-  .manage-item span { font-size: 15px; flex: 1; }
-  .manage-item-edit {
-    display: none; flex: 1; padding: 8px 10px;
-    border: 1px solid var(--primary); border-radius: 6px;
-    font-size: 15px; background: var(--bg-secondary); color: var(--text);
-    font-family: inherit;
-  }
-  .manage-item.editing span { display: none; }
-  .manage-item.editing .manage-item-edit { display: block; }
-  .manage-item-btns { display: flex; gap: 6px; flex-shrink: 0; }
-  .btn-del {
-    background: var(--danger-bg); color: var(--danger);
-    border: none; border-radius: 6px; padding: 6px 12px;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  .btn-edit {
-    background: var(--bg-secondary); color: var(--primary);
-    border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  .btn-save-edit {
-    background: var(--primary); color: #fff;
-    border: none; border-radius: 6px; padding: 6px 12px;
-    font-size: 13px; font-weight: 600; cursor: pointer; display: none;
-  }
-  .manage-item.editing .btn-edit { display: none; }
-  .manage-item.editing .btn-save-edit { display: block; }
-  .manage-item.editing .btn-del { display: none; }
-  .add-item-row {
-    display: flex; gap: 8px; margin-bottom: 16px;
-  }
-  .add-item-row input {
-    flex: 1; padding: 12px; border: 1px solid var(--border);
-    border-radius: var(--radius); font-size: 15px; background: var(--bg-card);
-    color: var(--text);
-  }
-  .btn-add {
-    padding: 12px 20px; background: var(--primary);
-    color: #fff; border: none; border-radius: var(--radius);
-    font-size: 15px; font-weight: 600; cursor: pointer;
-  }
+/* ════════════════════════════════
+   ROOM GRID
+════════════════════════════════ */
+.floor-block{margin-bottom:28px;}
+.floor-heading{
+  font-size:11px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:#9a9690;
+  margin-bottom:12px;padding-bottom:8px;
+  border-bottom:1px solid #e0dbd0;
+}
+.room-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+  gap:10px;
+}
+.room-tile{
+  aspect-ratio:1;
+  background:#fff;
+  border:2px solid #e0dbd0;
+  border-radius:16px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.15s;
+  position:relative;
+  box-shadow:0 1px 4px rgba(0,0,0,0.04);
+}
+.room-tile:active{transform:scale(0.94);}
+.room-tile .rnum{font-size:20px;font-weight:800;color:#0d1628;}
+.room-tile .rsub{font-size:10px;color:#b0aaa0;margin-top:2px;font-weight:500;}
+.room-tile.clean{border-color:#27ae60;background:#f0faf4;}
+.room-tile.clean .rnum{color:#1e8449;}
+.room-tile.issue{border-color:#e74c3c;background:#fef5f5;}
+.room-tile.issue .rnum{color:#c0392b;}
+.room-tile.inprogress{border-color:#f39c12;background:#fffbf0;}
+.room-tile.inprogress .rnum{color:#d68910;}
+.room-tile .issue-badge{
+  position:absolute;top:-6px;right:-6px;
+  width:20px;height:20px;border-radius:50%;
+  background:#e74c3c;color:#fff;
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 6px rgba(231,76,60,0.4);
+}
 
-  /* ── MAINTENANCE VIEW ── */
-  .report-card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px 16px;
-    margin-bottom: 10px;
-  }
-  .report-card-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  .report-room { font-size: 18px; font-weight: 800; color: var(--primary); }
-  .report-time { font-size: 12px; color: var(--text-muted); }
-  .report-item {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 8px 0; border-top: 1px solid var(--bg-secondary);
-  }
-  .report-item-name { font-size: 14px; font-weight: 600; flex: 1; }
-  .report-item-note { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-  .btn-resolve {
-    background: var(--success-bg); color: var(--success);
-    border: 1px solid var(--success); border-radius: 6px;
-    padding: 6px 12px; font-size: 12px; font-weight: 600;
-    cursor: pointer; white-space: nowrap;
-  }
-  .btn-resolve.resolved {
-    background: var(--success); color: #fff;
-  }
-  .report-card.all-resolved { opacity: 0.5; }
-  .status-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11px; font-weight: 600; padding: 3px 8px;
-    border-radius: 20px;
-  }
-  .status-badge.open { background: var(--danger-bg); color: var(--danger); }
-  .status-badge.resolved { background: var(--success-bg); color: var(--success); }
+/* ════════════════════════════════
+   CHECKLIST VIEW
+════════════════════════════════ */
+.checklist-header{
+  display:flex;align-items:center;gap:14px;margin-bottom:20px;
+}
+.back-btn{
+  width:44px;height:44px;border-radius:12px;
+  background:#fff;border:1.5px solid #e0dbd0;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+  font-size:20px;color:#0d1628;
+}
+.room-header-card{
+  flex:1;background:#0d1628;border-radius:16px;
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+}
+.room-header-card h2{font-size:22px;font-weight:800;color:#fff;}
+.room-header-card .progress-pill{
+  background:rgba(255,255,255,0.12);
+  border-radius:20px;padding:6px 14px;
+  font-size:13px;font-weight:600;color:rgba(255,255,255,0.8);
+}
 
-  /* ── STATUS OVERVIEW ── */
-  .legend {
-    display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
-  }
-  .legend-item {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px; color: var(--text-muted);
-  }
-  .legend-dot {
-    width: 12px; height: 12px; border-radius: 3px;
-  }
-  .legend-dot.clean { background: var(--success); }
-  .legend-dot.issue { background: var(--danger); }
-  .legend-dot.inprogress { background: var(--warning); }
-  .legend-dot.unchecked { background: var(--border); }
+.checklist-list{display:flex;flex-direction:column;gap:8px;padding-bottom:100px;}
 
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    text-align: center; padding: 48px 16px; color: var(--text-muted);
-  }
-  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
-  .empty-state p { font-size: 14px; }
+.cl-item{
+  background:#fff;border-radius:14px;
+  border:1.5px solid #e8e3da;
+  overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,0.04);
+}
+.cl-row{
+  display:flex;align-items:center;gap:14px;padding:16px 16px;
+}
+.cl-status-icon{
+  width:36px;height:36px;border-radius:10px;
+  border:2px solid #e0dbd0;background:#f8f5f0;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:16px;transition:all 0.15s;
+}
+.cl-status-icon.ok{background:#e8f8ef;border-color:#27ae60;}
+.cl-status-icon.issue{background:#fef0ef;border-color:#e74c3c;}
+.cl-name{flex:1;font-size:15px;font-weight:500;color:#1a1a1a;}
+.cl-actions{display:flex;gap:8px;}
+.cl-btn{
+  padding:9px 18px;border-radius:10px;border:none;
+  font-size:13px;font-weight:700;cursor:pointer;
+  transition:all 0.15s;
+}
+.cl-btn:active{transform:scale(0.95);}
+.cl-btn.ok{background:#f0faf4;color:#27ae60;}
+.cl-btn.ok.sel{background:#27ae60;color:#fff;}
+.cl-btn.iss{background:#fef5f5;color:#e74c3c;}
+.cl-btn.iss.sel{background:#e74c3c;color:#fff;}
 
-  /* ── FILTER BAR ── */
-  .filter-bar {
-    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
-  }
-  .filter-chip {
-    padding: 6px 14px; border: 1px solid var(--border);
-    border-radius: 20px; background: var(--bg-card);
-    font-size: 13px; cursor: pointer; color: var(--text-muted);
-  }
-  .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.cl-note-area{
+  display:none;padding:0 16px 14px;
+}
+.cl-note-area.show{display:block;}
+.cl-note-area textarea{
+  width:100%;padding:10px 12px;
+  border:1.5px solid #e0dbd0;border-radius:10px;
+  font-size:14px;background:#f8f5f0;color:#1a1a1a;
+  font-family:inherit;resize:none;
+}
+.cl-note-area textarea:focus{outline:none;border-color:#c4a046;}
 
-  /* ── TOAST ── */
-  .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: var(--primary); color: #fff; padding: 12px 24px;
-    border-radius: 24px; font-size: 14px; font-weight: 600;
-    transition: transform 0.3s ease; z-index: 9999; white-space: nowrap;
-    box-shadow: var(--shadow-lg);
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
+.submit-footer{
+  position:fixed;bottom:0;left:0;right:0;
+  padding:16px 24px;
+  background:rgba(240,237,230,0.95);
+  backdrop-filter:blur(10px);
+  border-top:1px solid #e0dbd0;
+  z-index:40;
+}
+.submit-btn{
+  width:100%;padding:18px;
+  background:#0d1628;color:#fff;
+  border:none;border-radius:16px;
+  font-size:16px;font-weight:700;cursor:pointer;
+  transition:all 0.15s;letter-spacing:0.3px;
+}
+.submit-btn:active{background:#1a3a5c;transform:scale(0.99);}
+.submit-btn:disabled{background:#c8c3bc;cursor:not-allowed;}
 
-  /* ── FIREBASE CONFIG NOTICE ── */
-  .firebase-notice {
-    background: var(--warning-bg); border: 1px solid var(--accent);
-    border-radius: var(--radius); padding: 12px 14px;
-    font-size: 13px; color: var(--warning); margin-bottom: 16px;
-    display: none;
-  }
-  .firebase-notice.visible { display: block; }
+/* ════════════════════════════════
+   STATUS OVERVIEW
+════════════════════════════════ */
+.legend-row{
+  display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;
+}
+.legend-chip{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:#6b6560;font-weight:500;
+}
+.legend-dot{width:10px;height:10px;border-radius:3px;}
+.legend-dot.clean{background:#27ae60;}
+.legend-dot.issue{background:#e74c3c;}
+.legend-dot.inprogress{background:#f39c12;}
+.legend-dot.unchecked{background:#c8c3bc;}
 
-  /* ── LOADING ── */
-  .spinner {
-    display: inline-block; width: 20px; height: 20px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #fff; border-radius: 50%;
-    animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ════════════════════════════════
+   MANAGE CHECKLIST
+════════════════════════════════ */
+.add-row{display:flex;gap:10px;margin-bottom:20px;}
+.add-row input{
+  flex:1;padding:14px 16px;
+  background:#fff;border:1.5px solid #e0dbd0;
+  border-radius:14px;font-size:15px;color:#1a1a1a;
+  font-family:inherit;
+}
+.add-row input:focus{outline:none;border-color:#c4a046;}
+.add-row button{
+  padding:14px 20px;background:#0d1628;color:#fff;
+  border:none;border-radius:14px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  white-space:nowrap;
+}
 
-  /* ── CONFIG MODAL ── */
-  .modal-bg {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    z-index: 500; display: none; align-items: center; justify-content: center; padding: 24px;
-  }
-  .modal-bg.open { display: flex; }
-  .modal {
-    background: var(--bg-card); border-radius: 16px;
-    padding: 24px; width: 100%; max-width: 480px;
-    box-shadow: var(--shadow-lg);
-  }
-  .modal h3 { font-size: 17px; color: var(--primary); margin-bottom: 8px; }
-  .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
-  .modal input {
-    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
-    border-radius: var(--radius); font-size: 14px; margin-bottom: 10px;
-    background: var(--bg-secondary); color: var(--text); font-family: monospace;
-  }
-  .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
-  .btn-save { flex: 1; padding: 11px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; }
-  .btn-demo { flex: 1; padding: 11px; background: var(--bg-secondary); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; }
+.manage-list{display:flex;flex-direction:column;gap:8px;}
+.manage-item{
+  background:#fff;border:1.5px solid #e8e3da;
+  border-radius:14px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.04);
+}
+.manage-item .mi-name{flex:1;font-size:15px;color:#1a1a1a;}
+.manage-item .mi-input{
+  flex:1;padding:8px 10px;border:1.5px solid #c4a046;
+  border-radius:8px;font-size:15px;color:#1a1a1a;
+  font-family:inherit;background:#fffbf0;display:none;
+}
+.manage-item.editing .mi-name{display:none;}
+.manage-item.editing .mi-input{display:block;}
+.manage-item.editing .btn-edit{display:none;}
+.manage-item.editing .btn-del{display:none;}
+.manage-item.editing .btn-save{display:flex;}
+.btn-edit,.btn-del,.btn-save{
+  padding:8px 14px;border-radius:9px;border:none;
+  font-size:13px;font-weight:600;cursor:pointer;
+  white-space:nowrap;
+}
+.btn-edit{background:#f0ede6;color:#0d1628;}
+.btn-del{background:#fef5f5;color:#e74c3c;}
+.btn-save{background:#27ae60;color:#fff;display:none;}
 
-  @media (max-width: 480px) {
-    .checklist-actions { flex-direction: column; gap: 4px; }
-    .btn-ok, .btn-issue { padding: 8px 10px; }
-  }
+/* ════════════════════════════════
+   MAINTENANCE VIEW
+════════════════════════════════ */
+.maint-filter{
+  display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;
+}
+.flt-btn{
+  padding:9px 20px;border-radius:20px;
+  background:#fff;border:1.5px solid #e0dbd0;
+  font-size:13px;font-weight:600;color:#6b6560;
+  cursor:pointer;transition:all 0.15s;
+}
+.flt-btn.active{background:#0d1628;border-color:#0d1628;color:#fff;}
+
+.report-card{
+  background:#fff;border-radius:16px;
+  border:1.5px solid #e8e3da;
+  margin-bottom:14px;overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+.report-card.all-resolved{opacity:0.6;}
+.report-card-top{
+  padding:16px 18px;
+  background:#0d1628;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.report-card-top .room-num{font-size:20px;font-weight:800;color:#fff;}
+.report-card-top .report-meta{text-align:right;}
+.report-card-top .meta-label{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.5px;}
+.report-card-top .meta-val{font-size:12px;color:rgba(255,255,255,0.7);font-weight:500;}
+
+.report-issues{padding:4px 0;}
+.report-issue-row{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 18px;border-top:1px solid #f0ede6;
+}
+.report-issue-row:first-child{border-top:none;}
+.iss-info{flex:1;}
+.iss-name{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:4px;}
+.iss-note{font-size:13px;color:#6b6560;}
+.iss-timestamps{margin-top:6px;display:flex;flex-direction:column;gap:3px;}
+.iss-ts{font-size:11px;display:flex;align-items:center;gap:5px;}
+.iss-ts.reported{color:#9a9690;}
+.iss-ts.fixed{color:#27ae60;font-weight:600;}
+.iss-badge{
+  font-size:11px;font-weight:700;padding:3px 9px;
+  border-radius:20px;white-space:nowrap;flex-shrink:0;
+  margin-bottom:6px;display:inline-block;
+}
+.iss-badge.open{background:#fef0ef;color:#e74c3c;}
+.iss-badge.resolved{background:#e8f8ef;color:#27ae60;}
+.resolve-btn{
+  padding:9px 16px;border-radius:10px;border:none;
+  font-size:13px;font-weight:700;cursor:pointer;
+  transition:all 0.15s;flex-shrink:0;align-self:flex-start;
+  margin-top:2px;
+}
+.resolve-btn:active{transform:scale(0.95);}
+.resolve-btn.open{background:#fef0ef;color:#e74c3c;border:1.5px solid #fadadd;}
+.resolve-btn.done{background:#e8f8ef;color:#27ae60;border:1.5px solid #a9dfbf;}
+
+/* ── EMPTY STATE ── */
+.empty-state{
+  text-align:center;padding:60px 24px;color:#9a9690;
+}
+.empty-state .ei{font-size:48px;margin-bottom:16px;}
+.empty-state p{font-size:15px;}
+
+/* ── SECTION TITLE ── */
+.section-title{
+  font-size:20px;font-weight:800;color:#0d1628;
+  margin-bottom:20px;letter-spacing:-0.3px;
+}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:30px;left:50%;
+  transform:translateX(-50%) translateY(100px);
+  background:#0d1628;color:#fff;
+  padding:13px 28px;border-radius:30px;
+  font-size:14px;font-weight:600;
+  transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  z-index:9999;white-space:nowrap;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  pointer-events:none;
+}
+#toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── DEMO BANNER ── */
+.demo-banner{
+  background:#fff8e6;border-bottom:1px solid #f0d880;
+  padding:8px 24px;font-size:12px;color:#b8860b;
+  font-weight:600;text-align:center;flex-shrink:0;display:none;
+}
+.demo-banner.show{display:block;}
 </style>
 </head>
 <body>
 
-<!-- FIREBASE CONFIG MODAL -->
-<div class="modal-bg" id="modal-firebase">
-  <div class="modal">
-    <h3>🔥 Firebase Configuration</h3>
-    <p>Enter your Firebase project credentials to enable real-time sync. You can skip this now and use <strong>Demo Mode</strong> (local storage only, no sync between devices).</p>
-    <input id="cfg-apiKey" placeholder="apiKey" />
-    <input id="cfg-projectId" placeholder="projectId" />
-    <input id="cfg-appId" placeholder="appId" />
-    <div class="modal-btns">
-      <button class="btn-demo" onclick="startDemoMode()">Demo Mode</button>
-      <button class="btn-save" onclick="saveFirebaseConfig()">Connect Firebase</button>
+<!-- ════════════════════════════════
+     LOGIN PAGE
+════════════════════════════════ -->
+<div id="page-login" class="page active">
+  <div class="login-bg-decoration">
+    <div class="circle"></div>
+    <div class="circle"></div>
+  </div>
+
+  <button class="lang-switch-login" id="lang-btn-login" onclick="toggleLang()">EN / МК</button>
+
+  <div class="login-container">
+    <div class="login-hotel-name">
+      <div class="hotel-pre">Welcome to</div>
+      <h1>Hotel De <span>KOKA</span></h1>
+      <div class="tagline" id="t-tagline">Room Maintenance System</div>
     </div>
-  </div>
-</div>
 
-<!-- TOP BAR -->
-<div class="topbar" id="topbar" style="display:none">
-  <div class="topbar-logo">Hotel De <span>KOKA</span></div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <div class="topbar-role" id="topbar-role"><div class="dot"></div><span id="role-label">—</span></div>
-    <button class="btn-logout" id="btn-lang-top" style="margin-right:4px" onclick="toggleLang()">EN/МК</button>
-    <button class="btn-logout" onclick="logout()">✕</button>
-  </div>
-</div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<!-- ════════════════════════════════════════ -->
-<!-- SCREEN: LOGIN -->
-<!-- ════════════════════════════════════════ -->
-<div id="screen-login" class="active">
-  <div class="login-logo">
-    <h1>Hotel De <span>KOKA</span></h1>
-    <p id="txt-login-sub">Room Maintenance System</p>
-  </div>
-  <div class="login-card">
-    <h2 id="txt-select-role">Select role</h2>
-    <div class="role-tabs">
-      <button class="role-tab active" id="tab-hk" onclick="selectRole('housekeeper')">🧹 <span id="txt-hk-tab">Housekeeper</span></button>
-      <button class="role-tab" id="tab-mt" onclick="selectRole('maintenance')">🔧 <span id="txt-mt-tab">Maintenance</span></button>
+    <div class="role-selector">
+      <div class="role-card selected" id="rc-hk" onclick="selectRole('housekeeper')">
+        <div class="role-icon">🧹</div>
+        <div class="role-name" id="t-role-hk">Housekeeper</div>
+      </div>
+      <div class="role-card" id="rc-mt" onclick="selectRole('maintenance')">
+        <div class="role-icon">🔧</div>
+        <div class="role-name" id="t-role-mt">Maintenance</div>
+      </div>
     </div>
-    <div class="pin-label" id="txt-enter-pin">Enter PIN</div>
-    <div class="pin-display" id="pin-display">
+
+    <div class="pin-label" id="t-pin-label">ENTER PIN</div>
+    <div class="pin-dots">
       <div class="pin-dot" id="pd0"></div>
       <div class="pin-dot" id="pd1"></div>
       <div class="pin-dot" id="pd2"></div>
       <div class="pin-dot" id="pd3"></div>
     </div>
-    <div class="pin-grid">
-      <button class="pin-btn" onclick="pinPress('1')">1</button>
-      <button class="pin-btn" onclick="pinPress('2')">2</button>
-      <button class="pin-btn" onclick="pinPress('3')">3</button>
-      <button class="pin-btn" onclick="pinPress('4')">4</button>
-      <button class="pin-btn" onclick="pinPress('5')">5</button>
-      <button class="pin-btn" onclick="pinPress('6')">6</button>
-      <button class="pin-btn" onclick="pinPress('7')">7</button>
-      <button class="pin-btn" onclick="pinPress('8')">8</button>
-      <button class="pin-btn" onclick="pinPress('9')">9</button>
-      <button class="pin-btn" onclick="pinPress('0')" style="grid-column:2">0</button>
-      <button class="pin-btn del" onclick="pinDel()">⌫</button>
-    </div>
-    <div class="pin-error" id="pin-error"></div>
-  </div>
-  <p style="text-align:center;margin-top:20px;font-size:12px;color:#aaa" onclick="openFirebaseConfig()" id="txt-cfg-link">⚙ Configure Firebase</p>
-</div>
 
-<!-- ════════════════════════════════════════ -->
-<!-- SCREEN: HOUSEKEEPER -->
-<!-- ════════════════════════════════════════ -->
-<div id="screen-housekeeper" class="screen">
-  <div class="tab-bar">
-    <button class="tab-btn active" id="hk-tab-rooms" onclick="hkTab('rooms')">🏨 <span id="txt-rooms-tab">Rooms</span></button>
-    <button class="tab-btn" id="hk-tab-status" onclick="hkTab('status')">📊 <span id="txt-status-tab">Status</span></button>
-    <button class="tab-btn" id="hk-tab-manage" onclick="hkTab('manage')">⚙ <span id="txt-manage-tab">Checklist</span></button>
-  </div>
+    <div class="pin-pad">
+      <div class="pin-key" ontouchstart="" onclick="pinPress('1')">1</div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('2')">2</div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('3')">3</div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('4')">4</div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('5')">5</div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('6')">6</div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('7')">7</div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('8')">8</div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('9')">9</div>
+      <div class="pin-key key-empty"></div>
+      <div class="pin-key" ontouchstart="" onclick="pinPress('0')">0</div>
+      <div class="pin-key key-del" ontouchstart="" onclick="pinDel()">⌫</div>
+    </div>
 
-  <!-- ROOMS VIEW -->
-  <div id="hk-view-rooms">
-    <div id="room-overview"></div>
-  </div>
-
-  <!-- CHECKLIST VIEW -->
-  <div id="hk-view-checklist" style="display:none">
-    <button class="back-btn" onclick="closeChecklist()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      <span id="txt-back">Back</span>
-    </button>
-    <div class="room-title-bar">
-      <h2 id="checklist-room-title">Room 101</h2>
-      <div class="room-status-pill" id="checklist-progress">0/0</div>
-    </div>
-    <div id="firebase-notice" class="firebase-notice">
-      ⚠ <span id="txt-demo-notice">Demo mode — data saved locally only</span>
-    </div>
-    <div id="checklist-items"></div>
-    <div style="height:80px"></div>
-    <div class="submit-bar">
-      <button class="btn-submit" id="btn-submit-checklist" onclick="submitChecklist()">
-        <span id="txt-submit">Submit Room Report</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- STATUS OVERVIEW -->
-  <div id="hk-view-status" style="display:none">
-    <div class="section-header">
-      <h2 id="txt-overview-title">Room Overview</h2>
-    </div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot clean"></div><span id="txt-leg-clean">Clean</span></div>
-      <div class="legend-item"><div class="legend-dot issue"></div><span id="txt-leg-issue">Has Issues</span></div>
-      <div class="legend-item"><div class="legend-dot inprogress"></div><span id="txt-leg-prog">In Progress</span></div>
-      <div class="legend-item"><div class="legend-dot unchecked"></div><span id="txt-leg-unch">Not checked</span></div>
-    </div>
-    <div id="status-overview"></div>
-  </div>
-
-  <!-- MANAGE CHECKLIST -->
-  <div id="hk-view-manage" style="display:none">
-    <div class="section-header">
-      <h2 id="txt-manage-title">Manage Checklist</h2>
-    </div>
-    <div class="add-item-row">
-      <input id="new-item-input" placeholder="Add new item..." id="txt-add-placeholder" />
-      <button class="btn-add" onclick="addChecklistItem()" id="txt-add-btn">+ Add</button>
-    </div>
-    <div id="manage-list"></div>
+    <div class="pin-error-msg" id="pin-error"></div>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════ -->
-<!-- SCREEN: MAINTENANCE -->
-<!-- ════════════════════════════════════════ -->
-<div id="screen-maintenance" class="screen">
-  <div class="section-header">
-    <h2 id="txt-maint-title">Maintenance Reports</h2>
+<!-- ════════════════════════════════
+     APP PAGE
+════════════════════════════════ -->
+<div id="page-app" class="page">
+
+  <!-- TOP BAR -->
+  <div class="app-topbar">
+    <div class="topbar-logo">Hotel De <span>KOKA</span></div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-role-badge">
+      <div class="dot"></div>
+      <span id="topbar-role-label">—</span>
+    </div>
+    <button class="topbar-btn" onclick="toggleLang()" style="margin-left:8px">EN/МК</button>
+    <button class="topbar-btn" onclick="doLogout()" style="margin-left:8px" id="t-logout">Sign out</button>
   </div>
-  <div class="filter-bar">
-    <button class="filter-chip active" id="flt-all" onclick="setFilter('all')" id="txt-flt-all">All</button>
-    <button class="filter-chip" id="flt-open" onclick="setFilter('open')" id="txt-flt-open">Open</button>
-    <button class="filter-chip" id="flt-resolved" onclick="setFilter('resolved')" id="txt-flt-res">Resolved</button>
+
+  <div class="demo-banner" id="demo-banner">⚠ Demo mode — data is saved locally only, no sync between devices</div>
+
+  <div class="app-body">
+
+    <!-- HOUSEKEEPER SHELL -->
+    <div id="shell-hk" style="display:none;flex:1;overflow:hidden;display:none;flex-direction:column;">
+
+      <div class="hk-tabs" id="hk-tabs">
+        <button class="hk-tab active" id="tab-rooms" onclick="hkTab('rooms')"><span id="t-tab-rooms">Rooms</span></button>
+        <button class="hk-tab" id="tab-status" onclick="hkTab('status')"><span id="t-tab-status">Status</span></button>
+        <button class="hk-tab" id="tab-manage" onclick="hkTab('manage')"><span id="t-tab-manage">Checklist</span></button>
+      </div>
+
+      <!-- VIEW: ROOMS -->
+      <div class="view active" id="view-rooms">
+        <div id="rooms-content"></div>
+      </div>
+
+      <!-- VIEW: CHECKLIST -->
+      <div class="view" id="view-checklist">
+        <div class="checklist-header">
+          <div class="back-btn" onclick="closeChecklist()">←</div>
+          <div class="room-header-card">
+            <h2 id="cl-room-title">Room 101</h2>
+            <div class="progress-pill" id="cl-progress">0 / 0</div>
+          </div>
+        </div>
+        <div class="checklist-list" id="cl-list"></div>
+        <div class="submit-footer">
+          <button class="submit-btn" id="submit-btn" onclick="submitChecklist()" disabled>
+            <span id="t-submit">Submit Room Report</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW: STATUS -->
+      <div class="view" id="view-status">
+        <div class="section-title" id="t-status-title">Room Status Overview</div>
+        <div class="legend-row">
+          <div class="legend-chip"><div class="legend-dot clean"></div><span id="t-leg-clean">Clean</span></div>
+          <div class="legend-chip"><div class="legend-dot issue"></div><span id="t-leg-issue">Has issues</span></div>
+          <div class="legend-chip"><div class="legend-dot inprogress"></div><span id="t-leg-prog">In progress</span></div>
+          <div class="legend-chip"><div class="legend-dot unchecked"></div><span id="t-leg-unch">Not checked</span></div>
+        </div>
+        <div id="status-content"></div>
+      </div>
+
+      <!-- VIEW: MANAGE -->
+      <div class="view" id="view-manage">
+        <div class="section-title" id="t-manage-title">Manage Checklist</div>
+        <div class="add-row">
+          <input type="text" id="new-item-inp" placeholder="New checklist item..." />
+          <button onclick="addItem()" id="t-add-btn">+ Add</button>
+        </div>
+        <div class="manage-list" id="manage-content"></div>
+      </div>
+
+    </div>
+
+    <!-- MAINTENANCE SHELL -->
+    <div id="shell-mt" style="display:none;flex:1;overflow:hidden;flex-direction:column;">
+      <div class="view active" id="view-maint" style="display:block;">
+        <div class="section-title" id="t-maint-title">Maintenance Reports</div>
+        <div class="maint-filter">
+          <button class="flt-btn active" id="flt-all" onclick="setFilter('all')"><span id="t-flt-all">All</span></button>
+          <button class="flt-btn" id="flt-open" onclick="setFilter('open')"><span id="t-flt-open">Open</span></button>
+          <button class="flt-btn" id="flt-resolved" onclick="setFilter('resolved')"><span id="t-flt-res">Resolved</span></button>
+        </div>
+        <div id="maint-content"></div>
+      </div>
+    </div>
+
   </div>
-  <div id="maintenance-list"></div>
 </div>
+
+<!-- TOAST -->
+<div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// CONFIG & STATE
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// FIREBASE — credentials hardcoded
+// ══════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB8epHhc7bsGVx9WYe3akx_0x14lRYbkj4",
+  projectId: "hotel-de-koka-maintenance",
+  appId: "1:1027092134691:web:492a63a9cc16bdd1436a96"
+};
+
+let db = null;
+let demoMode = false;
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    db.collection('ping').doc('test').set({ t: Date.now() })
+      .then(() => { demoMode = false; })
+      .catch(() => { demoMode = true; showDemoBanner(); });
+  } catch(e) {
+    demoMode = true;
+    showDemoBanner();
+  }
+}
+
+function showDemoBanner() {
+  document.getElementById('demo-banner').classList.add('show');
+}
+
+// ══════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════
 const PINS = { housekeeper: '1234', maintenance: '5678' };
 
 const ROOMS = {
@@ -610,657 +693,602 @@ const ROOMS = {
 };
 
 const DEFAULT_CHECKLIST = [
-  'Linens / Postelnina', 'Pillows / Jastuci', 'Blanket / Ќebe',
-  'Floor / Pod', 'TV', 'AC / Klima', 'Curtains / Zavesi',
-  'Dusting / Prashina', 'Shower / Tush', 'Bathtub / Kada',
-  'Toilet / WC', 'Shampoo', 'Soap / Sapun', 'Towels / Peshot',
-  'Mirror / Ogledalo', 'Mini-bar', 'Safe / Sef',
-  'Remote controls / Daljineci', 'Door lock / Brava'
+  'Linens / Постелнина','Pillows / Јастуци','Blanket / Ќебе',
+  'Floor / Под','TV','AC / Клима','Curtains / Завеси',
+  'Dusting / Прашина','Shower / Туш','Bathtub / Када',
+  'Toilet / WC','Shampoo','Soap / Сапун','Towels / Пешкири',
+  'Mirror / Огледало','Mini-bar','Safe / Сеф',
+  'Remote controls / Далјинци','Door lock / Брава'
 ];
 
-const T = {
+const TRANSLATIONS = {
   en: {
-    loginSub:'Room Maintenance System', selectRole:'Select role',
-    hkTab:'Housekeeper', mtTab:'Maintenance', enterPin:'Enter PIN',
-    back:'Back', roomsTab:'Rooms', statusTab:'Status', manageTab:'Checklist',
-    overviewTitle:'Room Overview', manageTitle:'Manage Checklist',
-    maintTitle:'Maintenance Reports', demoNotice:'Demo mode — data saved locally only',
-    submit:'Submit Room Report', ok:'OK', issue:'Issue',
-    addPlaceholder:'Add new item...', addBtn:'+ Add',
-    delete:'Delete', resolve:'Resolve', resolved:'Resolved',
+    tagline:'Room Maintenance System',
+    roleHK:'Housekeeper', roleMT:'Maintenance',
+    pinLabel:'ENTER PIN',
+    tabRooms:'Rooms', tabStatus:'Status', tabManage:'Checklist',
+    statusTitle:'Room Status Overview',
+    manageTitle:'Manage Checklist',
+    maintTitle:'Maintenance Reports',
+    addPlaceholder:'New checklist item...',
+    addBtn:'+ Add',
+    submit:'Submit Room Report',
+    ok:'OK', issue:'Issue',
+    edit:'Edit', save:'Save', delete:'Delete',
+    resolve:'Resolve', resolved:'Resolved',
     fltAll:'All', fltOpen:'Open', fltResolved:'Resolved',
-    legClean:'Clean', legIssue:'Has Issues', legProg:'In Progress', legUnch:'Not checked',
-    toastSubmitted:'Room report submitted!', toastResolved:'Marked as resolved',
-    toastAdded:'Item added', toastDeleted:'Item deleted', toastSaved:'Item saved',
-    edit:'Edit', save:'Save', fixedAt:'Fixed at', reportedAt:'Reported at',
-    noReports:'No reports found.', wrongPin:'Wrong PIN — try again',
-    inProgress:'In progress', clean:'Clean', hasIssues:'Has issues',
-    cfgLink:'⚙ Configure Firebase', roleHK:'Housekeeper', roleMT:'Maintenance'
+    legClean:'Clean', legIssue:'Has issues', legProg:'In progress', legUnch:'Not checked',
+    reportedAt:'Reported', fixedAt:'Fixed',
+    logout:'Sign out',
+    wrongPin:'Incorrect PIN — please try again',
+    toastSubmitted:'Room report submitted!',
+    toastResolved:'Marked as resolved',
+    toastUnresolved:'Marked as open',
+    toastAdded:'Item added',
+    toastDeleted:'Item deleted',
+    toastSaved:'Item saved',
+    noReports:'No reports found',
+    clean:'Clean', hasIssues:'Issues', inProgress:'In progress',
+    notePlaceholder:'Describe the issue...',
+    demoBanner:'⚠ Demo mode — data is saved locally only, no sync between devices'
   },
   mk: {
-    loginSub:'Систем за одржување на соби', selectRole:'Изберете улога',
-    hkTab:'Собарица', mtTab:'Одржување', enterPin:'Внесете PIN',
-    back:'Назад', roomsTab:'Соби', statusTab:'Статус', manageTab:'Листа',
-    overviewTitle:'Преглед на соби', manageTitle:'Управување со листата',
-    maintTitle:'Пријави за одржување', demoNotice:'Демо режим — податоците се зачувани локално',
-    submit:'Поднеси извештај за собата', ok:'ОК', issue:'Проблем',
-    addPlaceholder:'Додај нова ставка...', addBtn:'+ Додај',
-    delete:'Избриши', resolve:'Реши', resolved:'Решено',
+    tagline:'Систем за одржување на соби',
+    roleHK:'Собарица', roleMT:'Одржување',
+    pinLabel:'ВНЕСЕТЕ PIN',
+    tabRooms:'Соби', tabStatus:'Статус', tabManage:'Листа',
+    statusTitle:'Преглед на статус на соби',
+    manageTitle:'Управување со листата',
+    maintTitle:'Пријави за одржување',
+    addPlaceholder:'Нова ставка...',
+    addBtn:'+ Додај',
+    submit:'Поднеси извештај',
+    ok:'ОК', issue:'Проблем',
+    edit:'Уреди', save:'Зачувај', delete:'Избриши',
+    resolve:'Реши', resolved:'Решено',
     fltAll:'Сите', fltOpen:'Отворени', fltResolved:'Решени',
     legClean:'Чисто', legIssue:'Проблеми', legProg:'Во тек', legUnch:'Непроверено',
-    toastSubmitted:'Извештајот е поднесен!', toastResolved:'Означено како решено',
-    toastAdded:'Ставката е додадена', toastDeleted:'Ставката е избришана', toastSaved:'Ставката е зачувана',
-    edit:'Уреди', save:'Зачувај', fixedAt:'Поправено во', reportedAt:'Пријавено во',
-    noReports:'Нема пронајдени пријави.', wrongPin:'Погрешен PIN — обидете се повторно',
-    inProgress:'Во тек', clean:'Чисто', hasIssues:'Има проблеми',
-    cfgLink:'⚙ Конфигурација на Firebase', roleHK:'Собарица', roleMT:'Одржување'
+    reportedAt:'Пријавено', fixedAt:'Поправено',
+    logout:'Одјава',
+    wrongPin:'Погрешен PIN — обидете се повторно',
+    toastSubmitted:'Извештајот е поднесен!',
+    toastResolved:'Означено како решено',
+    toastUnresolved:'Означено како отворено',
+    toastAdded:'Ставката е додадена',
+    toastDeleted:'Ставката е избришана',
+    toastSaved:'Ставката е зачувана',
+    noReports:'Нема пронајдени пријави',
+    clean:'Чисто', hasIssues:'Проблеми', inProgress:'Во тек',
+    notePlaceholder:'Опишете го проблемот...',
+    demoBanner:'⚠ Демо режим — податоците се зачувани локално'
   }
 };
 
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
 let lang = localStorage.getItem('hdk_lang') || 'en';
 let currentRole = 'housekeeper';
-let currentPin = '';
+let pinBuffer = '';
 let currentRoom = null;
-let checklistState = {}; // { itemName: { status: 'ok'|'issue'|null, note: '' } }
-let db = null;
-let demoMode = false;
-let maintenanceFilter = 'all';
+let clState = {};
 
-// In-memory cache for demo mode
-let localReports = JSON.parse(localStorage.getItem('hdk_reports') || '[]');
 let localChecklist = JSON.parse(localStorage.getItem('hdk_checklist') || 'null') || DEFAULT_CHECKLIST;
-let localRoomStatus = JSON.parse(localStorage.getItem('hdk_roomstatus') || '{}');
+let localReports   = JSON.parse(localStorage.getItem('hdk_reports')   || '[]');
+let localRoomSt    = JSON.parse(localStorage.getItem('hdk_roomst')    || '{}');
+let maintFilter    = 'all';
 
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // TRANSLATIONS
-// ═══════════════════════════════════════════════════
-function t(key) { return (T[lang] && T[lang][key]) || T.en[key] || key; }
+// ══════════════════════════════════════════════════════
+function T(k) { return (TRANSLATIONS[lang] && TRANSLATIONS[lang][k]) || TRANSLATIONS.en[k] || k; }
 
-function applyTranslations() {
-  document.getElementById('txt-login-sub').textContent = t('loginSub');
-  document.getElementById('txt-select-role').textContent = t('selectRole');
-  document.getElementById('txt-hk-tab').textContent = t('hkTab');
-  document.getElementById('txt-mt-tab').textContent = t('mtTab');
-  document.getElementById('txt-enter-pin').textContent = t('enterPin');
-  document.getElementById('txt-back').textContent = t('back');
-  document.getElementById('txt-rooms-tab').textContent = t('roomsTab');
-  document.getElementById('txt-status-tab').textContent = t('statusTab');
-  document.getElementById('txt-manage-tab').textContent = t('manageTab');
-  document.getElementById('txt-overview-title').textContent = t('overviewTitle');
-  document.getElementById('txt-manage-title').textContent = t('manageTitle');
-  document.getElementById('txt-maint-title').textContent = t('maintTitle');
-  document.getElementById('txt-demo-notice').textContent = t('demoNotice');
-  document.getElementById('txt-submit').textContent = t('submit');
-  document.getElementById('txt-leg-clean').textContent = t('legClean');
-  document.getElementById('txt-leg-issue').textContent = t('legIssue');
-  document.getElementById('txt-leg-prog').textContent = t('legProg');
-  document.getElementById('txt-leg-unch').textContent = t('legUnch');
-  document.getElementById('txt-cfg-link').textContent = t('cfgLink');
-  document.getElementById('new-item-input').placeholder = t('addPlaceholder');
-  document.getElementById('flt-all').textContent = t('fltAll');
-  document.getElementById('flt-open').textContent = t('fltOpen');
-  document.getElementById('flt-resolved').textContent = t('fltResolved');
-  if (currentRole === 'housekeeper') document.getElementById('role-label').textContent = t('roleHK');
-  else document.getElementById('role-label').textContent = t('roleMT');
+function applyLang() {
+  document.getElementById('t-tagline').textContent        = T('tagline');
+  document.getElementById('t-role-hk').textContent        = T('roleHK');
+  document.getElementById('t-role-mt').textContent        = T('roleMT');
+  document.getElementById('t-pin-label').textContent      = T('pinLabel');
+  document.getElementById('t-tab-rooms').textContent      = T('tabRooms');
+  document.getElementById('t-tab-status').textContent     = T('tabStatus');
+  document.getElementById('t-tab-manage').textContent     = T('tabManage');
+  document.getElementById('t-status-title').textContent   = T('statusTitle');
+  document.getElementById('t-manage-title').textContent   = T('manageTitle');
+  document.getElementById('t-maint-title').textContent    = T('maintTitle');
+  document.getElementById('t-submit').textContent         = T('submit');
+  document.getElementById('t-logout').textContent         = T('logout');
+  document.getElementById('t-leg-clean').textContent      = T('legClean');
+  document.getElementById('t-leg-issue').textContent      = T('legIssue');
+  document.getElementById('t-leg-prog').textContent       = T('legProg');
+  document.getElementById('t-leg-unch').textContent       = T('legUnch');
+  document.getElementById('t-flt-all').textContent        = T('fltAll');
+  document.getElementById('t-flt-open').textContent       = T('fltOpen');
+  document.getElementById('t-flt-res').textContent        = T('fltResolved');
+  document.getElementById('t-add-btn').textContent        = T('addBtn');
+  document.getElementById('new-item-inp').placeholder     = T('addPlaceholder');
+  document.getElementById('demo-banner').textContent      = T('demoBanner');
 }
 
 function toggleLang() {
   lang = lang === 'en' ? 'mk' : 'en';
   localStorage.setItem('hdk_lang', lang);
-  applyTranslations();
-  if (currentRole === 'housekeeper') renderRoomOverview();
+  applyLang();
 }
 
-document.getElementById('btn-lang-top').onclick = toggleLang;
-
-// ═══════════════════════════════════════════════════
-// FIREBASE SETUP
-// ═══════════════════════════════════════════════════
-function openFirebaseConfig() {
-  const saved = JSON.parse(localStorage.getItem('hdk_firebase') || '{}');
-  document.getElementById('cfg-apiKey').value = saved.apiKey || '';
-  document.getElementById('cfg-projectId').value = saved.projectId || '';
-  document.getElementById('cfg-appId').value = saved.appId || '';
-  document.getElementById('modal-firebase').classList.add('open');
-}
-
-function saveFirebaseConfig() {
-  const cfg = {
-    apiKey: document.getElementById('cfg-apiKey').value.trim(),
-    projectId: document.getElementById('cfg-projectId').value.trim(),
-    appId: document.getElementById('cfg-appId').value.trim()
-  };
-  if (!cfg.apiKey || !cfg.projectId || !cfg.appId) {
-    alert('Please fill all 3 fields, or use Demo Mode.');
-    return;
-  }
-  localStorage.setItem('hdk_firebase', JSON.stringify(cfg));
-  document.getElementById('modal-firebase').classList.remove('open');
-  initFirebase(cfg);
-}
-
-function startDemoMode() {
-  demoMode = true;
-  document.getElementById('modal-firebase').classList.remove('open');
-  showToast('Demo mode — local storage only');
-}
-
-function initFirebase(cfg) {
-  try {
-    if (firebase.apps.length) firebase.app().delete();
-    firebase.initializeApp({
-      apiKey: cfg.apiKey,
-      projectId: cfg.projectId,
-      appId: cfg.appId
-    });
-    db = firebase.firestore();
-    demoMode = false;
-    showToast('Firebase connected ✓');
-  } catch(e) {
-    demoMode = true;
-    showToast('Firebase error — Demo mode');
-  }
-}
-
-// Auto-init if config saved
-window.addEventListener('DOMContentLoaded', () => {
-  const saved = JSON.parse(localStorage.getItem('hdk_firebase') || '{}');
-  if (saved.apiKey) {
-    initFirebase(saved);
-  } else {
-    // Show config modal on first load
-    setTimeout(() => document.getElementById('modal-firebase').classList.add('open'), 600);
-  }
-  applyTranslations();
-});
-
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // LOGIN / PIN
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function selectRole(role) {
   currentRole = role;
-  currentPin = '';
-  updatePinDisplay();
+  pinBuffer = '';
+  updateDots();
   document.getElementById('pin-error').textContent = '';
-  document.getElementById('tab-hk').classList.toggle('active', role === 'housekeeper');
-  document.getElementById('tab-mt').classList.toggle('active', role === 'maintenance');
+  document.getElementById('rc-hk').classList.toggle('selected', role === 'housekeeper');
+  document.getElementById('rc-mt').classList.toggle('selected', role === 'maintenance');
 }
 
 function pinPress(d) {
-  if (currentPin.length >= 4) return;
-  currentPin += d;
-  updatePinDisplay();
-  if (currentPin.length === 4) checkPin();
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += d;
+  updateDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(checkPin, 100);
+  }
 }
 
 function pinDel() {
-  currentPin = currentPin.slice(0, -1);
-  updatePinDisplay();
+  pinBuffer = pinBuffer.slice(0, -1);
+  updateDots();
   document.getElementById('pin-error').textContent = '';
 }
 
-function updatePinDisplay() {
+function updateDots() {
   for (let i = 0; i < 4; i++) {
-    document.getElementById('pd' + i).classList.toggle('filled', i < currentPin.length);
+    const d = document.getElementById('pd' + i);
+    d.classList.remove('filled', 'error');
+    if (i < pinBuffer.length) d.classList.add('filled');
   }
 }
 
 function checkPin() {
-  if (currentPin === PINS[currentRole]) {
+  if (pinBuffer === PINS[currentRole]) {
     enterApp(currentRole);
   } else {
-    document.getElementById('pin-error').textContent = t('wrongPin');
-    currentPin = '';
-    updatePinDisplay();
-    setTimeout(() => document.getElementById('pin-error').textContent = '', 2000);
+    for (let i = 0; i < 4; i++) {
+      const d = document.getElementById('pd' + i);
+      d.classList.remove('filled');
+      d.classList.add('error');
+    }
+    document.getElementById('pin-error').textContent = T('wrongPin');
+    setTimeout(() => {
+      pinBuffer = '';
+      updateDots();
+      document.getElementById('pin-error').textContent = '';
+    }, 1000);
   }
 }
 
 function enterApp(role) {
-  document.getElementById('screen-login').classList.remove('active');
-  document.getElementById('topbar').style.display = 'flex';
-  document.getElementById('role-label').textContent = role === 'housekeeper' ? t('roleHK') : t('roleMT');
-  if (demoMode) document.getElementById('firebase-notice').classList.add('visible');
+  document.getElementById('page-login').classList.remove('active');
+  document.getElementById('page-app').classList.add('active');
+  document.getElementById('topbar-role-label').textContent = role === 'housekeeper' ? T('roleHK') : T('roleMT');
+
   if (role === 'housekeeper') {
-    document.getElementById('screen-housekeeper').classList.add('active');
+    document.getElementById('shell-hk').style.display = 'flex';
+    document.getElementById('shell-mt').style.display = 'none';
     hkTab('rooms');
   } else {
-    document.getElementById('screen-maintenance').classList.add('active');
-    loadMaintenanceReports();
+    document.getElementById('shell-hk').style.display = 'none';
+    document.getElementById('shell-mt').style.display = 'flex';
+    loadMaintenance();
   }
 }
 
-function logout() {
-  currentPin = '';
-  updatePinDisplay();
-  document.getElementById('screen-housekeeper').classList.remove('active');
-  document.getElementById('screen-maintenance').classList.remove('active');
-  document.getElementById('screen-login').classList.add('active');
-  document.getElementById('topbar').style.display = 'none';
-  document.getElementById('hk-view-checklist').style.display = 'none';
-  document.getElementById('hk-view-rooms').style.display = 'block';
+function doLogout() {
+  pinBuffer = '';
+  currentRoom = null;
+  clState = {};
+  updateDots();
+  document.getElementById('pin-error').textContent = '';
+  selectRole('housekeeper');
+  document.getElementById('page-app').classList.remove('active');
+  document.getElementById('page-login').classList.add('active');
 }
 
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // HOUSEKEEPER TABS
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function hkTab(tab) {
-  ['rooms','status','manage'].forEach(t => {
-    document.getElementById('hk-view-' + t).style.display = t === tab ? 'block' : 'none';
-    document.getElementById('hk-tab-' + t).classList.toggle('active', t === tab);
+  ['rooms','checklist','status','manage'].forEach(v => {
+    document.getElementById('view-' + v).classList.remove('active');
   });
-  document.getElementById('hk-view-checklist').style.display = 'none';
-  if (tab === 'rooms') renderRoomOverview();
-  if (tab === 'status') renderStatusOverview();
-  if (tab === 'manage') renderManageChecklist();
+  ['rooms','status','manage'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) el.classList.remove('active');
+  });
+
+  document.getElementById('view-' + tab).classList.add('active');
+  const tabEl = document.getElementById('tab-' + tab);
+  if (tabEl) tabEl.classList.add('active');
+
+  if (tab === 'rooms')   renderRooms();
+  if (tab === 'status')  renderStatus();
+  if (tab === 'manage')  renderManage();
 }
 
-// ═══════════════════════════════════════════════════
-// ROOM OVERVIEW
-// ═══════════════════════════════════════════════════
-function getRoomStatus(room) {
-  if (db && !demoMode) return null; // will be loaded from Firestore
-  return localRoomStatus[room] || null;
+// ══════════════════════════════════════════════════════
+// ROOMS
+// ══════════════════════════════════════════════════════
+function getIssueCount(room) {
+  let c = 0;
+  localReports.filter(r => r.room === room).forEach(r => {
+    r.issues.forEach(i => { if (!i.resolved) c++; });
+  });
+  return c;
 }
 
-function renderRoomOverview() {
-  const container = document.getElementById('room-overview');
-  container.innerHTML = '';
+function renderRooms() {
+  const cont = document.getElementById('rooms-content');
+  cont.innerHTML = '';
   Object.entries(ROOMS).forEach(([floor, rooms]) => {
-    const sec = document.createElement('div');
-    sec.className = 'floor-section';
-    sec.innerHTML = `<div class="floor-label">${floor}</div>`;
+    const block = document.createElement('div');
+    block.className = 'floor-block';
+    block.innerHTML = '<div class="floor-heading">' + floor + '</div>';
     const grid = document.createElement('div');
     grid.className = 'room-grid';
     rooms.forEach(room => {
-      const btn = document.createElement('button');
-      btn.className = 'room-btn';
-      const status = localRoomStatus[room] || null;
-      if (status === 'clean') btn.classList.add('status-clean');
-      else if (status === 'issue') btn.classList.add('status-issue');
-      else if (status === 'inprogress') btn.classList.add('status-inprogress');
-      const issueCount = getOpenIssueCount(room);
-      btn.innerHTML = `${room}${issueCount > 0 ? `<div class="badge">${issueCount}</div>` : ''}`;
-      btn.onclick = () => openChecklist(room);
-      grid.appendChild(btn);
+      const tile = document.createElement('div');
+      tile.className = 'room-tile';
+      const st = localRoomSt[room];
+      if (st) tile.classList.add(st);
+      const ic = getIssueCount(room);
+      const stLabel = st ? T(st === 'issue' ? 'hasIssues' : st === 'inprogress' ? 'inProgress' : 'clean') : '';
+      tile.innerHTML = '<div class="rnum">' + room + '</div>'
+        + '<div class="rsub">' + stLabel + '</div>'
+        + (ic > 0 ? '<div class="issue-badge">' + ic + '</div>' : '');
+      tile.onclick = () => openChecklist(room);
+      grid.appendChild(tile);
     });
-    sec.appendChild(grid);
-    container.appendChild(sec);
+    block.appendChild(grid);
+    cont.appendChild(block);
   });
 }
 
-function getOpenIssueCount(room) {
-  const reports = localReports.filter(r => r.room === room);
-  let count = 0;
-  reports.forEach(r => {
-    r.issues.forEach(i => { if (!i.resolved) count++; });
-  });
-  return count;
-}
-
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // CHECKLIST
-// ═══════════════════════════════════════════════════
-function getChecklist() {
-  return localChecklist;
-}
-
+// ══════════════════════════════════════════════════════
 function openChecklist(room) {
   currentRoom = room;
-  checklistState = {};
-  document.getElementById('hk-view-rooms').style.display = 'none';
-  document.getElementById('hk-view-checklist').style.display = 'block';
-  document.getElementById('checklist-room-title').textContent = 'Room ' + room;
+  clState = {};
+  localChecklist.forEach(item => { clState[item] = { status: null, note: '' }; });
+  document.getElementById('cl-room-title').textContent = 'Room ' + room;
+  hkTab('checklist');
   renderChecklist();
 }
 
 function closeChecklist() {
-  document.getElementById('hk-view-checklist').style.display = 'none';
-  document.getElementById('hk-view-rooms').style.display = 'block';
-  renderRoomOverview();
+  hkTab('rooms');
 }
 
 function renderChecklist() {
-  const items = getChecklist();
-  const container = document.getElementById('checklist-items');
-  container.innerHTML = '';
-  items.forEach(item => {
-    if (!checklistState[item]) checklistState[item] = { status: null, note: '' };
+  const list = document.getElementById('cl-list');
+  list.innerHTML = '';
+  localChecklist.forEach(item => {
     const div = document.createElement('div');
-    div.className = 'checklist-item';
-    div.id = 'ci-' + CSS.escape(item);
-    div.innerHTML = `
-      <div class="checklist-row">
-        <div class="checklist-check" id="chk-${CSS.escape(item)}"></div>
-        <div class="checklist-name">${item}</div>
-        <div class="checklist-actions">
-          <button class="btn-ok" id="bok-${CSS.escape(item)}" onclick="setItemStatus('${item.replace(/'/g,"\\'")}','ok')">${t('ok')}</button>
-          <button class="btn-issue" id="bis-${CSS.escape(item)}" onclick="setItemStatus('${item.replace(/'/g,"\\'")}','issue')">${t('issue')}</button>
-        </div>
-      </div>
-      <div class="issue-note-area" id="note-area-${CSS.escape(item)}">
-        <textarea rows="2" placeholder="Describe the issue..." onchange="setItemNote('${item.replace(/'/g,"\\'")}', this.value)">${checklistState[item].note}</textarea>
-      </div>`;
-    container.appendChild(div);
-    updateChecklistItemUI(item);
+    div.className = 'cl-item';
+    div.id = 'cli-' + encodeItem(item);
+    div.innerHTML =
+      '<div class="cl-row">'
+      + '<div class="cl-status-icon" id="csi-' + encodeItem(item) + '"></div>'
+      + '<div class="cl-name">' + item + '</div>'
+      + '<div class="cl-actions">'
+      + '<button class="cl-btn ok" id="cok-' + encodeItem(item) + '" onclick="setClStatus(\'' + escItem(item) + '\',\'ok\')">' + T('ok') + '</button>'
+      + '<button class="cl-btn iss" id="cis-' + encodeItem(item) + '" onclick="setClStatus(\'' + escItem(item) + '\',\'issue\')">' + T('issue') + '</button>'
+      + '</div></div>'
+      + '<div class="cl-note-area" id="cna-' + encodeItem(item) + '">'
+      + '<textarea rows="2" placeholder="' + T('notePlaceholder') + '" oninput="setClNote(\'' + escItem(item) + '\',this.value)"></textarea>'
+      + '</div>';
+    list.appendChild(div);
   });
   updateProgress();
 }
 
-function setItemStatus(item, status) {
-  if (!checklistState[item]) checklistState[item] = { status: null, note: '' };
-  checklistState[item].status = checklistState[item].status === status ? null : status;
-  updateChecklistItemUI(item);
+function encodeItem(s) { return btoa(unescape(encodeURIComponent(s))).replace(/[^a-zA-Z0-9]/g,''); }
+function escItem(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+function setClStatus(item, status) {
+  if (!clState[item]) clState[item] = { status: null, note: '' };
+  clState[item].status = clState[item].status === status ? null : status;
+  const id = encodeItem(item);
+  const icon = document.getElementById('csi-' + id);
+  const okBtn = document.getElementById('cok-' + id);
+  const isBtn = document.getElementById('cis-' + id);
+  const noteArea = document.getElementById('cna-' + id);
+  const s = clState[item].status;
+  icon.className = 'cl-status-icon' + (s === 'ok' ? ' ok' : s === 'issue' ? ' issue' : '');
+  icon.textContent = s === 'ok' ? '✓' : s === 'issue' ? '!' : '';
+  okBtn.className = 'cl-btn ok' + (s === 'ok' ? ' sel' : '');
+  isBtn.className = 'cl-btn iss' + (s === 'issue' ? ' sel' : '');
+  noteArea.className = 'cl-note-area' + (s === 'issue' ? ' show' : '');
   updateProgress();
 }
 
-function setItemNote(item, val) {
-  if (!checklistState[item]) checklistState[item] = { status: null, note: '' };
-  checklistState[item].note = val;
-}
-
-function updateChecklistItemUI(item) {
-  const s = checklistState[item] ? checklistState[item].status : null;
-  const chk = document.getElementById('chk-' + CSS.escape(item));
-  const bok = document.getElementById('bok-' + CSS.escape(item));
-  const bis = document.getElementById('bis-' + CSS.escape(item));
-  const noteArea = document.getElementById('note-area-' + CSS.escape(item));
-  if (!chk) return;
-  chk.className = 'checklist-check' + (s === 'ok' ? ' ok' : s === 'issue' ? ' issue' : '');
-  bok.className = 'btn-ok' + (s === 'ok' ? ' selected' : '');
-  bis.className = 'btn-issue' + (s === 'issue' ? ' selected' : '');
-  noteArea.className = 'issue-note-area' + (s === 'issue' ? ' visible' : '');
+function setClNote(item, val) {
+  if (clState[item]) clState[item].note = val;
 }
 
 function updateProgress() {
-  const items = getChecklist();
-  const checked = items.filter(i => checklistState[i] && checklistState[i].status !== null).length;
-  document.getElementById('checklist-progress').textContent = checked + '/' + items.length;
-  document.getElementById('btn-submit-checklist').disabled = checked === 0;
+  const total = localChecklist.length;
+  const done = localChecklist.filter(i => clState[i] && clState[i].status !== null).length;
+  document.getElementById('cl-progress').textContent = done + ' / ' + total;
+  document.getElementById('submit-btn').disabled = done === 0;
 }
 
 function submitChecklist() {
-  const items = getChecklist();
-  const issues = items
-    .filter(i => checklistState[i] && checklistState[i].status === 'issue')
-    .map(i => ({ item: i, note: checklistState[i].note || '', resolved: false }));
+  const issues = localChecklist
+    .filter(i => clState[i] && clState[i].status === 'issue')
+    .map(i => ({ item: i, note: clState[i].note || '', resolved: false, resolvedAt: null }));
 
-  const allStatus = items.filter(i => checklistState[i] && checklistState[i].status !== null);
-  const roomStatus = issues.length > 0 ? 'issue' : (allStatus.length === items.length ? 'clean' : 'inprogress');
+  const allDone = localChecklist.every(i => clState[i] && clState[i].status !== null);
+  const roomStatus = issues.length > 0 ? 'issue' : allDone ? 'clean' : 'inprogress';
 
   const report = {
+    id: Date.now().toString(),
     room: currentRoom,
     timestamp: new Date().toISOString(),
     issues: issues,
-    status: roomStatus,
-    checkedBy: 'Housekeeper',
-    id: Date.now().toString()
+    status: roomStatus
   };
 
-  if (db && !demoMode) {
-    // Save to Firestore
-    const batch = db.batch();
-    const repRef = db.collection('reports').doc(report.id);
-    batch.set(repRef, report);
-    const roomRef = db.collection('roomStatus').doc(currentRoom);
-    batch.set(roomRef, { room: currentRoom, status: roomStatus, updatedAt: report.timestamp });
-    batch.commit().then(() => {
-      showToast(t('toastSubmitted'));
-      closeChecklist();
-    }).catch(e => {
-      // Fallback to local
-      saveReportLocally(report, roomStatus);
-    });
-  } else {
-    saveReportLocally(report, roomStatus);
-  }
-}
-
-function saveReportLocally(report, roomStatus) {
   localReports.unshift(report);
   localStorage.setItem('hdk_reports', JSON.stringify(localReports));
-  localRoomStatus[currentRoom] = roomStatus;
-  localStorage.setItem('hdk_roomstatus', JSON.stringify(localRoomStatus));
-  showToast(t('toastSubmitted'));
+  localRoomSt[currentRoom] = roomStatus;
+  localStorage.setItem('hdk_roomst', JSON.stringify(localRoomSt));
+
+  if (db && !demoMode) {
+    db.collection('reports').doc(report.id).set(report);
+    db.collection('roomStatus').doc(currentRoom).set({ status: roomStatus, updatedAt: report.timestamp });
+  }
+
+  showToast(T('toastSubmitted'));
   closeChecklist();
 }
 
-// ═══════════════════════════════════════════════════
-// STATUS OVERVIEW
-// ═══════════════════════════════════════════════════
-function renderStatusOverview() {
-  const container = document.getElementById('status-overview');
-  container.innerHTML = '';
-  const loadAndRender = (statusData) => {
+// ══════════════════════════════════════════════════════
+// STATUS
+// ══════════════════════════════════════════════════════
+function renderStatus() {
+  const cont = document.getElementById('status-content');
+  cont.innerHTML = '';
+
+  const draw = (stData) => {
     Object.entries(ROOMS).forEach(([floor, rooms]) => {
-      const sec = document.createElement('div');
-      sec.className = 'floor-section';
-      sec.innerHTML = `<div class="floor-label">${floor}</div>`;
+      const block = document.createElement('div');
+      block.className = 'floor-block';
+      block.innerHTML = '<div class="floor-heading">' + floor + '</div>';
       const grid = document.createElement('div');
       grid.className = 'room-grid';
       rooms.forEach(room => {
-        const btn = document.createElement('div');
-        btn.className = 'room-btn';
-        const status = statusData[room] || null;
-        if (status === 'clean') btn.classList.add('status-clean');
-        else if (status === 'issue') btn.classList.add('status-issue');
-        else if (status === 'inprogress') btn.classList.add('status-inprogress');
-        const statusLabel = status === 'clean' ? t('clean') : status === 'issue' ? t('hasIssues') : status === 'inprogress' ? t('inProgress') : '—';
-        btn.innerHTML = `${room}<div class="room-sub">${statusLabel}</div>`;
-        grid.appendChild(btn);
+        const tile = document.createElement('div');
+        tile.className = 'room-tile';
+        const st = stData[room];
+        if (st) tile.classList.add(st);
+        const stLabel = st ? T(st === 'issue' ? 'hasIssues' : st === 'inprogress' ? 'inProgress' : 'clean') : '—';
+        tile.innerHTML = '<div class="rnum">' + room + '</div><div class="rsub">' + stLabel + '</div>';
+        grid.appendChild(tile);
       });
-      sec.appendChild(grid);
-      container.appendChild(sec);
+      block.appendChild(grid);
+      cont.appendChild(block);
     });
   };
 
   if (db && !demoMode) {
-    db.collection('roomStatus').get().then(snap => {
-      const data = {};
-      snap.forEach(doc => { data[doc.id] = doc.data().status; });
-      loadAndRender(data);
-    }).catch(() => loadAndRender(localRoomStatus));
+    db.collection('roomStatus').get()
+      .then(snap => {
+        const data = {};
+        snap.forEach(doc => { data[doc.id] = doc.data().status; });
+        draw(data);
+      }).catch(() => draw(localRoomSt));
   } else {
-    loadAndRender(localRoomStatus);
+    draw(localRoomSt);
   }
 }
 
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // MANAGE CHECKLIST
-// ═══════════════════════════════════════════════════
-function renderManageChecklist() {
-  const container = document.getElementById('manage-list');
-  container.innerHTML = '';
+// ══════════════════════════════════════════════════════
+function renderManage() {
+  const cont = document.getElementById('manage-content');
+  cont.innerHTML = '';
   localChecklist.forEach((item, idx) => {
     const div = document.createElement('div');
     div.className = 'manage-item';
     div.id = 'mi-' + idx;
-    div.innerHTML = `
-      <span>${item}</span>
-      <input class="manage-item-edit" id="mei-${idx}" value="${item.replace(/"/g,'&quot;')}" />
-      <div class="manage-item-btns">
-        <button class="btn-edit" onclick="startEditItem(${idx})">✏ ${t('edit')}</button>
-        <button class="btn-save-edit" onclick="saveEditItem(${idx})">✓ ${t('save')}</button>
-        <button class="btn-del" onclick="deleteChecklistItem(${idx})">${t('delete')}</button>
-      </div>`;
-    container.appendChild(div);
+    div.innerHTML =
+      '<span class="mi-name">' + item + '</span>'
+      + '<input class="mi-input" id="mii-' + idx + '" value="' + item.replace(/"/g,'&quot;') + '" />'
+      + '<div style="display:flex;gap:6px">'
+      + '<button class="btn-edit" onclick="startEdit(' + idx + ')">' + T('edit') + '</button>'
+      + '<button class="btn-save" onclick="saveEdit(' + idx + ')">' + T('save') + '</button>'
+      + '<button class="btn-del" onclick="deleteItem(' + idx + ')">' + T('delete') + '</button>'
+      + '</div>';
+    cont.appendChild(div);
   });
 }
 
-function startEditItem(idx) {
+function startEdit(idx) {
   const div = document.getElementById('mi-' + idx);
   div.classList.add('editing');
-  const inp = document.getElementById('mei-' + idx);
+  const inp = document.getElementById('mii-' + idx);
   inp.focus();
-  inp.selectionStart = inp.selectionEnd = inp.value.length;
-  inp.onkeydown = (e) => { if (e.key === 'Enter') saveEditItem(idx); if (e.key === 'Escape') cancelEditItem(idx); };
+  inp.onkeydown = e => { if (e.key === 'Enter') saveEdit(idx); if (e.key === 'Escape') cancelEdit(idx); };
 }
 
-function cancelEditItem(idx) {
+function cancelEdit(idx) {
   const div = document.getElementById('mi-' + idx);
   div.classList.remove('editing');
-  document.getElementById('mei-' + idx).value = localChecklist[idx];
+  document.getElementById('mii-' + idx).value = localChecklist[idx];
 }
 
-function saveEditItem(idx) {
-  const val = document.getElementById('mei-' + idx).value.trim();
+function saveEdit(idx) {
+  const val = document.getElementById('mii-' + idx).value.trim();
   if (!val) return;
   localChecklist[idx] = val;
-  localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
-  if (db && !demoMode) {
-    db.collection('config').doc('checklist').set({ items: localChecklist });
-  }
-  renderManageChecklist();
-  showToast(t('toastSaved'));
+  saveChecklist();
+  renderManage();
+  showToast(T('toastSaved'));
 }
 
-function addChecklistItem() {
-  const inp = document.getElementById('new-item-input');
+function addItem() {
+  const inp = document.getElementById('new-item-inp');
   const val = inp.value.trim();
   if (!val) return;
   localChecklist.push(val);
-  localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
-  if (db && !demoMode) {
-    db.collection('config').doc('checklist').set({ items: localChecklist });
-  }
+  saveChecklist();
   inp.value = '';
-  renderManageChecklist();
-  showToast(t('toastAdded'));
+  renderManage();
+  showToast(T('toastAdded'));
 }
 
-function deleteChecklistItem(idx) {
+function deleteItem(idx) {
   localChecklist.splice(idx, 1);
+  saveChecklist();
+  renderManage();
+  showToast(T('toastDeleted'));
+}
+
+function saveChecklist() {
   localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
   if (db && !demoMode) {
     db.collection('config').doc('checklist').set({ items: localChecklist });
   }
-  renderManageChecklist();
-  showToast(t('toastDeleted'));
 }
 
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // MAINTENANCE
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function setFilter(f) {
-  maintenanceFilter = f;
+  maintFilter = f;
   ['all','open','resolved'].forEach(x => {
     document.getElementById('flt-' + x).classList.toggle('active', x === f);
   });
-  loadMaintenanceReports();
+  loadMaintenance();
 }
 
-function loadMaintenanceReports() {
+function loadMaintenance() {
   if (db && !demoMode) {
-    db.collection('reports').orderBy('timestamp', 'desc').get().then(snap => {
-      const reports = [];
-      snap.forEach(doc => reports.push({ ...doc.data(), firestoreId: doc.id }));
-      renderMaintenanceReports(reports);
-    }).catch(() => renderMaintenanceReports(localReports));
+    db.collection('reports').orderBy('timestamp','desc').get()
+      .then(snap => {
+        const rpts = [];
+        snap.forEach(doc => rpts.push(doc.data()));
+        renderMaintenance(rpts);
+      }).catch(() => renderMaintenance(localReports));
   } else {
-    renderMaintenanceReports(localReports);
+    renderMaintenance(localReports);
   }
 }
 
-function renderMaintenanceReports(reports) {
-  const container = document.getElementById('maintenance-list');
-  container.innerHTML = '';
+function fmtDT(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
 
-  // Filter to only reports with issues
-  let filtered = reports.filter(r => r.issues && r.issues.length > 0);
+function renderMaintenance(reports) {
+  const cont = document.getElementById('maint-content');
+  cont.innerHTML = '';
 
-  if (maintenanceFilter === 'open') {
-    filtered = filtered.filter(r => r.issues.some(i => !i.resolved));
-  } else if (maintenanceFilter === 'resolved') {
-    filtered = filtered.filter(r => r.issues.every(i => i.resolved));
-  }
+  let list = reports.filter(r => r.issues && r.issues.length > 0);
+  if (maintFilter === 'open')     list = list.filter(r => r.issues.some(i => !i.resolved));
+  if (maintFilter === 'resolved') list = list.filter(r => r.issues.every(i => i.resolved));
 
-  if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>${t('noReports')}</p></div>`;
+  if (list.length === 0) {
+    cont.innerHTML = '<div class="empty-state"><div class="ei">✅</div><p>' + T('noReports') + '</p></div>';
     return;
   }
 
-  filtered.forEach(report => {
-    const allResolved = report.issues.every(i => i.resolved);
+  list.forEach(report => {
+    const allRes = report.issues.every(i => i.resolved);
     const card = document.createElement('div');
-    card.className = 'report-card' + (allResolved ? ' all-resolved' : '');
-    const dt = new Date(report.timestamp);
-    const dtStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    let issuesHTML = '';
+    card.className = 'report-card' + (allRes ? ' all-resolved' : '');
+
+    let issHTML = '';
     report.issues.forEach((iss, idx) => {
-      const badge = iss.resolved
-        ? `<span class="status-badge resolved">✓ ${t('resolved')}</span>`
-        : `<span class="status-badge open">⚠ Open</span>`;
-      const resBtn = iss.resolved
-        ? `<button class="btn-resolve resolved" onclick="resolveIssue('${report.id}', ${idx}, this)">${t('resolved')}</button>`
-        : `<button class="btn-resolve" onclick="resolveIssue('${report.id}', ${idx}, this)">${t('resolve')}</button>`;
-      const resolvedAtStr = iss.resolvedAt
-        ? `<div class="report-item-note">✅ ${t('fixedAt')}: ${new Date(iss.resolvedAt).toLocaleDateString()} ${new Date(iss.resolvedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>`
+      const badgeClass = iss.resolved ? 'resolved' : 'open';
+      const badgeText  = iss.resolved ? T('resolved') : 'Open';
+      const btnClass   = iss.resolved ? 'done' : 'open';
+      const btnText    = iss.resolved ? T('resolved') : T('resolve');
+      const fixedLine  = iss.resolvedAt
+        ? '<div class="iss-ts fixed">✅ ' + T('fixedAt') + ': ' + fmtDT(iss.resolvedAt) + '</div>'
         : '';
-      issuesHTML += `
-        <div class="report-item">
-          <div style="flex:1">
-            <div class="report-item-name">${iss.item} ${badge}</div>
-            ${iss.note ? `<div class="report-item-note">📝 ${iss.note}</div>` : ''}
-            ${resolvedAtStr}
-          </div>
-          ${resBtn}
-        </div>`;
+      issHTML +=
+        '<div class="report-issue-row">'
+        + '<div class="iss-info">'
+        + '<div class="iss-name">' + iss.item + '</div>'
+        + (iss.note ? '<div class="iss-note">📝 ' + iss.note + '</div>' : '')
+        + '<div class="iss-timestamps">'
+        + '<div class="iss-ts reported">📋 ' + T('reportedAt') + ': ' + fmtDT(report.timestamp) + '</div>'
+        + fixedLine
+        + '</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
+        + '<span class="iss-badge ' + badgeClass + '">' + badgeText + '</span>'
+        + '<button class="resolve-btn ' + btnClass + '" onclick="resolveIssue(\'' + report.id + '\',' + idx + ')">' + btnText + '</button>'
+        + '</div>'
+        + '</div>';
     });
-    card.innerHTML = `
-      <div class="report-card-header">
-        <div class="report-room">Room ${report.room}</div>
-        <div class="report-time">📋 ${t('reportedAt')}: ${dtStr}</div>
-      </div>
-      ${issuesHTML}`;
-    container.appendChild(card);
+
+    card.innerHTML =
+      '<div class="report-card-top">'
+      + '<div class="room-num">Room ' + report.room + '</div>'
+      + '<div class="report-meta">'
+      + '<div class="meta-label">REPORTED</div>'
+      + '<div class="meta-val">' + fmtDT(report.timestamp) + '</div>'
+      + '</div>'
+      + '</div>'
+      + '<div class="report-issues">' + issHTML + '</div>';
+
+    cont.appendChild(card);
   });
 }
 
-function resolveIssue(reportId, issueIdx, btn) {
+function resolveIssue(reportId, issueIdx) {
   const now = new Date().toISOString();
-  // Find in localReports
   const rep = localReports.find(r => r.id === reportId);
   if (rep) {
     const wasResolved = rep.issues[issueIdx].resolved;
     rep.issues[issueIdx].resolved = !wasResolved;
     rep.issues[issueIdx].resolvedAt = wasResolved ? null : now;
-    localStorage.setItem('hdk_reports', JSON.stringify(localReports));
     const anyOpen = rep.issues.some(i => !i.resolved);
     if (!anyOpen) {
-      localRoomStatus[rep.room] = 'clean';
-      localStorage.setItem('hdk_roomstatus', JSON.stringify(localRoomStatus));
+      localRoomSt[rep.room] = 'clean';
+      localStorage.setItem('hdk_roomst', JSON.stringify(localRoomSt));
     }
+    localStorage.setItem('hdk_reports', JSON.stringify(localReports));
+    showToast(rep.issues[issueIdx].resolved ? T('toastResolved') : T('toastUnresolved'));
   }
 
   if (db && !demoMode) {
     db.collection('reports').doc(reportId).get().then(doc => {
       if (doc.exists) {
         const data = doc.data();
-        const wasResolved = data.issues[issueIdx].resolved;
-        data.issues[issueIdx].resolved = !wasResolved;
-        data.issues[issueIdx].resolvedAt = wasResolved ? null : now;
+        const wasRes = data.issues[issueIdx].resolved;
+        data.issues[issueIdx].resolved = !wasRes;
+        data.issues[issueIdx].resolvedAt = wasRes ? null : now;
         const anyOpen = data.issues.some(i => !i.resolved);
         const p1 = db.collection('reports').doc(reportId).update({ issues: data.issues });
-        const p2 = anyOpen ? Promise.resolve() :
-          db.collection('roomStatus').doc(data.room).set({ status: 'clean', updatedAt: new Date().toISOString() });
+        const p2 = anyOpen ? Promise.resolve()
+          : db.collection('roomStatus').doc(data.room).set({ status: 'clean', updatedAt: now });
         return Promise.all([p1, p2]);
       }
-    }).then(() => {
-      showToast(t('toastResolved'));
-      loadMaintenanceReports();
-    }).catch(() => {
-      showToast(t('toastResolved'));
-      loadMaintenanceReports();
-    });
+    }).catch(() => {}).finally(() => loadMaintenance());
   } else {
-    showToast(t('toastResolved'));
-    loadMaintenanceReports();
+    loadMaintenance();
   }
 }
 
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // TOAST
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -1268,20 +1296,23 @@ function showToast(msg) {
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-// Load checklist from Firestore on init if connected
-function syncChecklistFromFirestore() {
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+initFirebase();
+applyLang();
+
+// Sync checklist from Firestore on load
+setTimeout(() => {
   if (db && !demoMode) {
     db.collection('config').doc('checklist').get().then(doc => {
-      if (doc.exists && doc.data().items) {
+      if (doc.exists && doc.data().items && doc.data().items.length > 0) {
         localChecklist = doc.data().items;
         localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
       }
     }).catch(() => {});
   }
-}
-
-// Try syncing checklist after firebase init
-setTimeout(syncChecklistFromFirestore, 1500);
+}, 2000);
 </script>
 </body>
 </html>
