@@ -730,17 +730,42 @@ function enterApp(r){
   document.getElementById('page-app').classList.add('active');
   const lbl={housekeeper:T('rhk'),maintenance:T('rmt'),reception:T('rrc'),superadmin:'⚙ Admin'};
   document.getElementById('t-trole').textContent=lbl[r]||r;
-  if(r==='housekeeper'||r==='reception'){
-    document.getElementById('shell-hk').style.display='flex';
-    document.getElementById('shell-mt').style.display='none';
-    hkTab('rooms');
+  // Always sync from Firebase on login
+  syncFromFirebase(()=>{
+    if(r==='housekeeper'||r==='reception'){
+      document.getElementById('shell-hk').style.display='flex';
+      document.getElementById('shell-mt').style.display='none';
+      hkTab('rooms');
+    }else{
+      document.getElementById('shell-hk').style.display='none';
+      document.getElementById('shell-mt').style.display='flex';
+      if(r==='superadmin') document.body.classList.add('super-admin-mode');
+      else document.body.classList.remove('super-admin-mode');
+      loadMaint();
+    }
+  });
+}
+
+function syncFromFirebase(callback){
+  if(db&&!demoMode){
+    const p1=db.collection('reports').orderBy('timestamp','desc').get().then(snap=>{
+      const r=[];snap.forEach(d=>r.push(d.data()));
+      lsReps=r;
+      localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+    }).catch(()=>{});
+    const p2=db.collection('roomStatus').get().then(snap=>{
+      snap.forEach(doc=>{lsRSt[doc.id]=doc.data().status;});
+      localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+    }).catch(()=>{});
+    const p3=db.collection('config').doc('checklist').get().then(doc=>{
+      if(doc.exists&&doc.data().items&&doc.data().items.length>0){
+        lsCL=doc.data().items;
+        localStorage.setItem('hdk_cl',JSON.stringify(lsCL));
+      }
+    }).catch(()=>{});
+    Promise.all([p1,p2,p3]).finally(()=>callback());
   }else{
-    document.getElementById('shell-hk').style.display='none';
-    document.getElementById('shell-mt').style.display='flex';
-    // Super admin gets delete buttons
-    if(r==='superadmin') document.body.classList.add('super-admin-mode');
-    else document.body.classList.remove('super-admin-mode');
-    loadMaint();
+    callback();
   }
 }
 
@@ -1110,10 +1135,21 @@ function renderMaint(reps){
 
 function deleteReport(repId){
   if(!document.body.classList.contains('super-admin-mode'))return;
+  const rep=lsReps.find(r=>r.id===repId);
+  const room=rep?rep.room:null;
   lsReps=lsReps.filter(r=>r.id!==repId);
+  // If no more issue reports for this room, clear room status too
+  if(room){
+    const hasMoreIssues=lsReps.some(r=>r.room===room&&r.issues&&r.issues.some(i=>!i.resolved));
+    if(!hasMoreIssues) delete lsRSt[room];
+  }
   localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+  localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
   if(db&&!demoMode){
     db.collection('reports').doc(repId).delete().catch(()=>{});
+    if(room){
+      db.collection('roomStatus').doc(room).delete().catch(()=>{});
+    }
   }
   toast('🗑 Report deleted');
   loadMaint();
@@ -1158,15 +1194,6 @@ function toast(msg){
 // ══════════════════════
 initFB();
 applyLang();
-setTimeout(()=>{
-  if(db&&!demoMode){
-    db.collection('config').doc('checklist').get().then(doc=>{
-      if(doc.exists&&doc.data().items&&doc.data().items.length>0){
-        lsCL=doc.data().items;localStorage.setItem('hdk_cl',JSON.stringify(lsCL));
-      }
-    }).catch(()=>{});
-  }
-},2000);
 </script>
 </body>
 </html>
