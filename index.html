@@ -10,1309 +10,1107 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{width:100%;height:100%;overflow:hidden;}
-
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
-  background:#0a0e1a;
-  color:#fff;
-}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;}
+body{background:#0a0e1a;color:#fff;}
 
 /* ── PAGES ── */
 .page{position:fixed;inset:0;display:none;flex-direction:column;}
 .page.active{display:flex;}
 
 /* ════════════════════════════════
-   LOGIN PAGE
+   LOGIN
 ════════════════════════════════ */
 #page-login{
-  background:linear-gradient(145deg,#0d1628 0%,#0a1520 40%,#0d1a2e 100%);
+  background:linear-gradient(150deg,#0d1628 0%,#0a1520 50%,#0d1a2e 100%);
   align-items:center;justify-content:center;
 }
+.login-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.login-bg span{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(196,160,70,0.07) 0%,transparent 70%);}
+.login-bg span:nth-child(1){width:700px;height:700px;top:-250px;right:-200px;}
+.login-bg span:nth-child(2){width:500px;height:500px;bottom:-150px;left:-150px;}
 
-.login-bg-decoration{
-  position:absolute;inset:0;overflow:hidden;pointer-events:none;
-}
-.login-bg-decoration .circle{
-  position:absolute;border-radius:50%;
-  background:radial-gradient(circle,rgba(196,160,70,0.08) 0%,transparent 70%);
-}
-.login-bg-decoration .circle:nth-child(1){width:600px;height:600px;top:-200px;right:-200px;}
-.login-bg-decoration .circle:nth-child(2){width:400px;height:400px;bottom:-100px;left:-100px;}
+.login-wrap{position:relative;z-index:1;width:100%;max-width:420px;padding:32px 28px;display:flex;flex-direction:column;align-items:center;}
 
-.login-container{
-  position:relative;z-index:1;
-  width:100%;max-width:460px;
-  padding:40px 32px;
-  display:flex;flex-direction:column;align-items:center;gap:0;
-}
+.hotel-logo{text-align:center;margin-bottom:36px;}
+.hotel-logo .pre{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:rgba(196,160,70,0.6);margin-bottom:6px;}
+.hotel-logo h1{font-size:40px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.hotel-logo h1 em{color:#c4a046;font-style:normal;}
+.hotel-logo .sub{font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-top:8px;}
 
-.login-hotel-name{
-  text-align:center;margin-bottom:40px;
-}
-.login-hotel-name .hotel-pre{
-  font-size:13px;letter-spacing:4px;text-transform:uppercase;
-  color:rgba(196,160,70,0.7);margin-bottom:8px;
-}
-.login-hotel-name h1{
-  font-size:42px;font-weight:800;letter-spacing:-1px;
-  color:#fff;line-height:1;
-}
-.login-hotel-name h1 span{color:#c4a046;}
-.login-hotel-name .tagline{
-  font-size:13px;color:rgba(255,255,255,0.35);
-  margin-top:10px;letter-spacing:1px;
-}
-
-.role-selector{
-  display:flex;gap:10px;width:100%;margin-bottom:32px;
-}
+.role-row{display:flex;gap:10px;width:100%;margin-bottom:28px;}
 .role-card{
-  flex:1;padding:16px 12px;
+  flex:1;padding:14px 10px;text-align:center;
   background:rgba(255,255,255,0.04);
   border:1.5px solid rgba(255,255,255,0.08);
-  border-radius:16px;cursor:pointer;
-  transition:all 0.2s;text-align:center;
+  border-radius:14px;cursor:pointer;transition:all 0.15s;
 }
-.role-card:active{transform:scale(0.97);}
-.role-card.selected{
-  background:rgba(196,160,70,0.12);
-  border-color:rgba(196,160,70,0.5);
-}
-.role-card .role-icon{font-size:26px;margin-bottom:6px;}
-.role-card .role-name{
-  font-size:14px;font-weight:600;color:rgba(255,255,255,0.6);
-}
-.role-card.selected .role-name{color:#c4a046;}
+.role-card.sel{background:rgba(196,160,70,0.1);border-color:rgba(196,160,70,0.45);}
+.role-card .ri{font-size:24px;margin-bottom:4px;}
+.role-card .rn{font-size:13px;font-weight:600;color:rgba(255,255,255,0.5);}
+.role-card.sel .rn{color:#c4a046;}
 
-.pin-label{
-  font-size:12px;letter-spacing:2px;text-transform:uppercase;
-  color:rgba(255,255,255,0.3);margin-bottom:20px;
-  align-self:flex-start;
-}
-
-.pin-dots{
-  display:flex;gap:16px;margin-bottom:36px;
-}
-.pin-dot{
-  width:16px;height:16px;border-radius:50%;
-  border:2px solid rgba(255,255,255,0.2);
-  background:transparent;
-  transition:all 0.15s;
-}
-.pin-dot.filled{
-  background:#c4a046;border-color:#c4a046;
-  transform:scale(1.1);
-}
-.pin-dot.error{background:#e74c3c;border-color:#e74c3c;}
-
-.pin-pad{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:12px;width:100%;
-}
-.pin-key{
-  aspect-ratio:1.4;
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px;
-  font-size:24px;font-weight:300;color:#fff;
-  cursor:pointer;
+.pin-lbl{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.28);margin-bottom:16px;align-self:flex-start;}
+.pin-dots{display:flex;gap:14px;margin-bottom:28px;}
+.pd{
+  width:15px;height:15px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.18);background:transparent;
   transition:all 0.1s;
-  display:flex;align-items:center;justify-content:center;
-  user-select:none;
 }
-.pin-key:active{
-  background:rgba(196,160,70,0.2);
-  border-color:rgba(196,160,70,0.4);
-  transform:scale(0.95);
-}
-.pin-key.key-del{font-size:20px;color:rgba(255,255,255,0.4);}
-.pin-key.key-empty{background:transparent;border:none;cursor:default;}
-.pin-key.key-empty:active{background:transparent;transform:none;}
+.pd.on{background:#c4a046;border-color:#c4a046;transform:scale(1.15);}
+.pd.err{background:#e74c3c;border-color:#e74c3c;}
 
-.pin-error-msg{
-  margin-top:16px;font-size:13px;
-  color:#e74c3c;min-height:20px;text-align:center;
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;}
+.pk{
+  aspect-ratio:1.5;background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.08);border-radius:12px;
+  font-size:22px;font-weight:300;color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  user-select:none;transition:background 0.08s, transform 0.08s;
 }
+.pk:active,.pk.pressed{background:rgba(196,160,70,0.22);border-color:rgba(196,160,70,0.4);transform:scale(0.93);}
+.pk.empty{background:transparent;border:none;cursor:default;}
+.pk.empty:active{background:transparent;transform:none;}
+.pk.del{font-size:18px;color:rgba(255,255,255,0.35);}
 
-.lang-switch-login{
-  position:absolute;top:24px;right:24px;
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.12);
-  color:rgba(255,255,255,0.5);
-  border-radius:20px;padding:8px 16px;
-  font-size:12px;font-weight:600;letter-spacing:1px;
-  cursor:pointer;
+.pin-err{min-height:18px;margin-top:14px;font-size:13px;color:#e74c3c;text-align:center;}
+
+.lang-btn-login{
+  position:absolute;top:20px;right:20px;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.45);border-radius:20px;
+  padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:1px;cursor:pointer;
 }
 
 /* ════════════════════════════════
-   MAIN APP SHELL
+   APP SHELL
 ════════════════════════════════ */
-#page-app{
-  background:#f0ede6;
-}
+#page-app{background:#f0ede6;}
 
-.app-topbar{
-  height:64px;min-height:64px;
-  background:#0d1628;
-  display:flex;align-items:center;
-  padding:0 24px;gap:16px;
-  box-shadow:0 2px 16px rgba(0,0,0,0.2);
-  z-index:50;flex-shrink:0;
+.topbar{
+  height:58px;min-height:58px;background:#0d1628;
+  display:flex;align-items:center;padding:0 20px;gap:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.25);z-index:50;flex-shrink:0;
 }
-.topbar-logo{
-  font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.5px;
+.tlogo{font-size:17px;font-weight:800;color:#fff;letter-spacing:-0.3px;}
+.tlogo em{color:#c4a046;font-style:normal;}
+.tsep{flex:1;}
+.trole{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px;padding:5px 12px;
 }
-.topbar-logo span{color:#c4a046;}
-.topbar-spacer{flex:1;}
-.topbar-role-badge{
-  display:flex;align-items:center;gap:8px;
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:20px;padding:6px 14px;
+.trole .dot{width:7px;height:7px;border-radius:50%;background:#c4a046;}
+.trole span{font-size:12px;color:rgba(255,255,255,0.75);font-weight:500;}
+.tbtn{
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.55);border-radius:9px;
+  padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;
+  transition:background 0.1s;
 }
-.topbar-role-badge .dot{
-  width:8px;height:8px;border-radius:50%;background:#c4a046;
-}
-.topbar-role-badge span{font-size:13px;color:rgba(255,255,255,0.8);font-weight:500;}
+.tbtn:active{background:rgba(255,255,255,0.14);}
 
-.topbar-btn{
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.12);
-  color:rgba(255,255,255,0.6);
-  border-radius:10px;padding:8px 14px;
-  font-size:12px;font-weight:600;cursor:pointer;
-  transition:all 0.15s;
+.demo-bar{
+  background:#fff8e0;border-bottom:1px solid #f0d070;
+  padding:7px 20px;font-size:12px;color:#9a7010;
+  font-weight:600;text-align:center;flex-shrink:0;display:none;
 }
-.topbar-btn:active{background:rgba(255,255,255,0.15);}
+.demo-bar.on{display:block;}
 
-.app-body{
-  flex:1;overflow:hidden;display:flex;flex-direction:column;
-}
+.app-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 
-/* ── TAB BAR (Housekeeper) ── */
-.hk-tabs{
+/* ── HK TABS ── */
+.hktabs{
   display:flex;background:#fff;
   border-bottom:1px solid #e0dbd0;
-  padding:0 24px;gap:0;flex-shrink:0;
+  padding:0 20px;flex-shrink:0;
 }
-.hk-tab{
-  padding:16px 24px;font-size:14px;font-weight:600;
+.hktab{
+  padding:14px 22px;font-size:14px;font-weight:600;
   color:#9a9690;border-bottom:3px solid transparent;
-  cursor:pointer;transition:all 0.15s;white-space:nowrap;
-  background:none;border-left:none;border-right:none;border-top:none;
+  cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;
+  transition:all 0.12s;white-space:nowrap;
 }
-.hk-tab.active{color:#0d1628;border-bottom-color:#c4a046;}
+.hktab.on{color:#0d1628;border-bottom-color:#c4a046;}
 
-/* ── SCROLLABLE CONTENT ── */
-.view{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px;}
-.view.active{display:block;}
+/* ── VIEWS ── */
+.view{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px;}
+.view.on{display:block;}
 
 /* ════════════════════════════════
-   ROOM GRID
+   ROOMS VIEW
 ════════════════════════════════ */
-.floor-block{margin-bottom:28px;}
-.floor-heading{
-  font-size:11px;font-weight:700;letter-spacing:2px;
-  text-transform:uppercase;color:#9a9690;
-  margin-bottom:12px;padding-bottom:8px;
+.floor-block{margin-bottom:24px;}
+.floor-lbl{
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:#a0998f;
+  margin-bottom:10px;padding-bottom:7px;
   border-bottom:1px solid #e0dbd0;
 }
 .room-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
-  gap:10px;
+  grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:8px;
 }
-.room-tile{
-  aspect-ratio:1;
-  background:#fff;
-  border:2px solid #e0dbd0;
-  border-radius:16px;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  cursor:pointer;transition:all 0.15s;
-  position:relative;
-  box-shadow:0 1px 4px rgba(0,0,0,0.04);
+.rtile{
+  aspect-ratio:1;background:#fff;
+  border:2px solid #e0dbd0;border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:transform 0.1s, border-color 0.15s;
+  position:relative;box-shadow:0 1px 3px rgba(0,0,0,0.05);
 }
-.room-tile:active{transform:scale(0.94);}
-.room-tile .rnum{font-size:20px;font-weight:800;color:#0d1628;}
-.room-tile .rsub{font-size:10px;color:#b0aaa0;margin-top:2px;font-weight:500;}
-.room-tile.clean{border-color:#27ae60;background:#f0faf4;}
-.room-tile.clean .rnum{color:#1e8449;}
-.room-tile.issue{border-color:#e74c3c;background:#fef5f5;}
-.room-tile.issue .rnum{color:#c0392b;}
-.room-tile.inprogress{border-color:#f39c12;background:#fffbf0;}
-.room-tile.inprogress .rnum{color:#d68910;}
-.room-tile .issue-badge{
-  position:absolute;top:-6px;right:-6px;
-  width:20px;height:20px;border-radius:50%;
-  background:#e74c3c;color:#fff;
-  font-size:11px;font-weight:700;
+.rtile:active{transform:scale(0.92);}
+.rtile .rn{font-size:18px;font-weight:800;color:#0d1628;}
+.rtile .rs{font-size:9px;color:#b0aaa0;margin-top:1px;font-weight:500;text-align:center;padding:0 4px;}
+.rtile.clean{border-color:#27ae60;background:#f0faf4;}
+.rtile.clean .rn{color:#1e8449;}
+.rtile.issue{border-color:#e74c3c;background:#fef5f5;}
+.rtile.issue .rn{color:#c0392b;}
+.rtile.inprogress{border-color:#f39c12;background:#fffbf0;}
+.rtile.inprogress .rn{color:#d68910;}
+.rtile .ibadge{
+  position:absolute;top:-5px;right:-5px;
+  width:18px;height:18px;border-radius:50%;
+  background:#e74c3c;color:#fff;font-size:10px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 2px 6px rgba(231,76,60,0.4);
+  box-shadow:0 2px 5px rgba(231,76,60,0.4);
 }
 
 /* ════════════════════════════════
-   CHECKLIST VIEW
+   CHECKLIST (GRID MODE)
 ════════════════════════════════ */
-.checklist-header{
-  display:flex;align-items:center;gap:14px;margin-bottom:20px;
-}
-.back-btn{
-  width:44px;height:44px;border-radius:12px;
+.cl-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.cl-back{
+  width:42px;height:42px;border-radius:11px;
   background:#fff;border:1.5px solid #e0dbd0;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;flex-shrink:0;
-  font-size:20px;color:#0d1628;
+  cursor:pointer;font-size:18px;color:#0d1628;flex-shrink:0;
 }
-.room-header-card{
-  flex:1;background:#0d1628;border-radius:16px;
-  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+.cl-room-bar{
+  flex:1;background:#0d1628;border-radius:14px;
+  padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
 }
-.room-header-card h2{font-size:22px;font-weight:800;color:#fff;}
-.room-header-card .progress-pill{
-  background:rgba(255,255,255,0.12);
-  border-radius:20px;padding:6px 14px;
-  font-size:13px;font-weight:600;color:rgba(255,255,255,0.8);
+.cl-room-bar h2{font-size:20px;font-weight:800;color:#fff;}
+.cl-prog{
+  background:rgba(255,255,255,0.1);border-radius:20px;
+  padding:5px 13px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);
 }
 
-.checklist-list{display:flex;flex-direction:column;gap:8px;padding-bottom:100px;}
+/* GRID OF ITEMS */
+.cl-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  gap:10px;
+  padding-bottom:90px;
+}
+.cl-tile{
+  background:#fff;border:2px solid #e8e3da;
+  border-radius:14px;padding:14px 12px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:8px;cursor:pointer;
+  transition:all 0.12s;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);
+  min-height:100px;justify-content:center;
+  position:relative;text-align:center;
+}
+.cl-tile:active{transform:scale(0.94);}
+.cl-tile .ct-icon{font-size:26px;line-height:1;}
+.cl-tile .ct-name{font-size:12px;font-weight:600;color:#3a3530;line-height:1.3;}
+.cl-tile .ct-status{
+  font-size:10px;font-weight:700;letter-spacing:0.5px;
+  padding:2px 8px;border-radius:10px;margin-top:2px;
+}
+.cl-tile.ok{border-color:#27ae60;background:#f0faf4;}
+.cl-tile.ok .ct-name{color:#1e8449;}
+.cl-tile.ok .ct-status{background:#c8f0da;color:#1e8449;}
+.cl-tile.iss{border-color:#e74c3c;background:#fef5f5;}
+.cl-tile.iss .ct-name{color:#c0392b;}
+.cl-tile.iss .ct-status{background:#fdd;color:#c0392b;}
 
-.cl-item{
-  background:#fff;border-radius:14px;
-  border:1.5px solid #e8e3da;
-  overflow:hidden;
-  box-shadow:0 1px 4px rgba(0,0,0,0.04);
+/* NOTE MODAL for issue */
+.note-modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  z-index:200;display:none;align-items:flex-end;justify-content:center;
+  padding-bottom:0;
 }
-.cl-row{
-  display:flex;align-items:center;gap:14px;padding:16px 16px;
+.note-modal-bg.open{display:flex;}
+.note-modal{
+  background:#fff;border-radius:20px 20px 0 0;
+  padding:24px 20px 32px;width:100%;max-width:600px;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.2);
 }
-.cl-status-icon{
-  width:36px;height:36px;border-radius:10px;
-  border:2px solid #e0dbd0;background:#f8f5f0;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;font-size:16px;transition:all 0.15s;
+.note-modal h3{font-size:16px;font-weight:700;color:#0d1628;margin-bottom:4px;}
+.note-modal p{font-size:13px;color:#9a9690;margin-bottom:14px;}
+.note-modal textarea{
+  width:100%;padding:12px 14px;border:1.5px solid #e0dbd0;
+  border-radius:12px;font-size:15px;color:#1a1a1a;
+  font-family:inherit;resize:none;background:#f8f5f0;
 }
-.cl-status-icon.ok{background:#e8f8ef;border-color:#27ae60;}
-.cl-status-icon.issue{background:#fef0ef;border-color:#e74c3c;}
-.cl-name{flex:1;font-size:15px;font-weight:500;color:#1a1a1a;}
-.cl-actions{display:flex;gap:8px;}
-.cl-btn{
-  padding:9px 18px;border-radius:10px;border:none;
-  font-size:13px;font-weight:700;cursor:pointer;
-  transition:all 0.15s;
+.note-modal textarea:focus{outline:none;border-color:#c4a046;}
+.note-modal-btns{display:flex;gap:10px;margin-top:14px;}
+.note-modal-btns button{
+  flex:1;padding:14px;border:none;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;
 }
-.cl-btn:active{transform:scale(0.95);}
-.cl-btn.ok{background:#f0faf4;color:#27ae60;}
-.cl-btn.ok.sel{background:#27ae60;color:#fff;}
-.cl-btn.iss{background:#fef5f5;color:#e74c3c;}
-.cl-btn.iss.sel{background:#e74c3c;color:#fff;}
+.note-btn-cancel{background:#f0ede6;color:#6b6560;}
+.note-btn-ok{background:#e74c3c;color:#fff;}
 
-.cl-note-area{
-  display:none;padding:0 16px 14px;
-}
-.cl-note-area.show{display:block;}
-.cl-note-area textarea{
-  width:100%;padding:10px 12px;
-  border:1.5px solid #e0dbd0;border-radius:10px;
-  font-size:14px;background:#f8f5f0;color:#1a1a1a;
-  font-family:inherit;resize:none;
-}
-.cl-note-area textarea:focus{outline:none;border-color:#c4a046;}
-
-.submit-footer{
+.cl-submit-bar{
   position:fixed;bottom:0;left:0;right:0;
-  padding:16px 24px;
-  background:rgba(240,237,230,0.95);
-  backdrop-filter:blur(10px);
-  border-top:1px solid #e0dbd0;
-  z-index:40;
+  padding:14px 20px;
+  background:rgba(240,237,230,0.96);
+  backdrop-filter:blur(12px);
+  border-top:1px solid #e0dbd0;z-index:100;
 }
-.submit-btn{
-  width:100%;padding:18px;
-  background:#0d1628;color:#fff;
-  border:none;border-radius:16px;
-  font-size:16px;font-weight:700;cursor:pointer;
-  transition:all 0.15s;letter-spacing:0.3px;
+.cl-submit-btn{
+  width:100%;padding:16px;background:#0d1628;color:#fff;
+  border:none;border-radius:14px;font-size:16px;font-weight:700;
+  cursor:pointer;letter-spacing:0.3px;transition:all 0.12s;
 }
-.submit-btn:active{background:#1a3a5c;transform:scale(0.99);}
-.submit-btn:disabled{background:#c8c3bc;cursor:not-allowed;}
+.cl-submit-btn:active{background:#1a3a5c;}
+.cl-submit-btn:disabled{background:#c8c3bc;cursor:not-allowed;}
 
 /* ════════════════════════════════
-   STATUS OVERVIEW
+   STATUS
 ════════════════════════════════ */
-.legend-row{
-  display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;
-}
-.legend-chip{
-  display:flex;align-items:center;gap:6px;
-  font-size:12px;color:#6b6560;font-weight:500;
-}
-.legend-dot{width:10px;height:10px;border-radius:3px;}
-.legend-dot.clean{background:#27ae60;}
-.legend-dot.issue{background:#e74c3c;}
-.legend-dot.inprogress{background:#f39c12;}
-.legend-dot.unchecked{background:#c8c3bc;}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+.lchip{display:flex;align-items:center;gap:5px;font-size:12px;color:#6b6560;font-weight:500;}
+.ldot{width:9px;height:9px;border-radius:3px;}
+.ldot.clean{background:#27ae60;}
+.ldot.issue{background:#e74c3c;}
+.ldot.inprogress{background:#f39c12;}
+.ldot.nc{background:#c8c3bc;}
 
 /* ════════════════════════════════
    MANAGE CHECKLIST
 ════════════════════════════════ */
-.add-row{display:flex;gap:10px;margin-bottom:20px;}
+.add-row{display:flex;gap:10px;margin-bottom:18px;}
 .add-row input{
-  flex:1;padding:14px 16px;
-  background:#fff;border:1.5px solid #e0dbd0;
-  border-radius:14px;font-size:15px;color:#1a1a1a;
-  font-family:inherit;
+  flex:1;padding:13px 15px;background:#fff;
+  border:1.5px solid #e0dbd0;border-radius:13px;
+  font-size:15px;color:#1a1a1a;font-family:inherit;
 }
 .add-row input:focus{outline:none;border-color:#c4a046;}
 .add-row button{
-  padding:14px 20px;background:#0d1628;color:#fff;
-  border:none;border-radius:14px;
-  font-size:15px;font-weight:700;cursor:pointer;
-  white-space:nowrap;
+  padding:13px 18px;background:#0d1628;color:#fff;
+  border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;
 }
-
-.manage-list{display:flex;flex-direction:column;gap:8px;}
-.manage-item{
-  background:#fff;border:1.5px solid #e8e3da;
-  border-radius:14px;padding:14px 16px;
-  display:flex;align-items:center;gap:12px;
-  box-shadow:0 1px 4px rgba(0,0,0,0.04);
+.mi-list{display:flex;flex-direction:column;gap:8px;}
+.mi{
+  background:#fff;border:1.5px solid #e8e3da;border-radius:13px;
+  padding:13px 15px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.04);
 }
-.manage-item .mi-name{flex:1;font-size:15px;color:#1a1a1a;}
-.manage-item .mi-input{
-  flex:1;padding:8px 10px;border:1.5px solid #c4a046;
-  border-radius:8px;font-size:15px;color:#1a1a1a;
+.mi .mn{flex:1;font-size:14px;color:#1a1a1a;}
+.mi .minp{
+  flex:1;padding:7px 10px;border:1.5px solid #c4a046;
+  border-radius:8px;font-size:14px;color:#1a1a1a;
   font-family:inherit;background:#fffbf0;display:none;
 }
-.manage-item.editing .mi-name{display:none;}
-.manage-item.editing .mi-input{display:block;}
-.manage-item.editing .btn-edit{display:none;}
-.manage-item.editing .btn-del{display:none;}
-.manage-item.editing .btn-save{display:flex;}
-.btn-edit,.btn-del,.btn-save{
-  padding:8px 14px;border-radius:9px;border:none;
-  font-size:13px;font-weight:600;cursor:pointer;
-  white-space:nowrap;
+.mi.editing .mn{display:none;}
+.mi.editing .minp{display:block;}
+.mi.editing .edbtn{display:none;}
+.mi.editing .delbtn{display:none;}
+.mi.editing .savbtn{display:flex;}
+.edbtn,.delbtn,.savbtn{
+  padding:7px 13px;border-radius:8px;border:none;
+  font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
 }
-.btn-edit{background:#f0ede6;color:#0d1628;}
-.btn-del{background:#fef5f5;color:#e74c3c;}
-.btn-save{background:#27ae60;color:#fff;display:none;}
+.edbtn{background:#f0ede6;color:#0d1628;}
+.delbtn{background:#fef5f5;color:#e74c3c;}
+.savbtn{background:#27ae60;color:#fff;display:none;}
 
 /* ════════════════════════════════
-   MAINTENANCE VIEW
+   MAINTENANCE
 ════════════════════════════════ */
-.maint-filter{
-  display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;
-}
-.flt-btn{
-  padding:9px 20px;border-radius:20px;
+.mfilt{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.fbtn{
+  padding:8px 18px;border-radius:20px;
   background:#fff;border:1.5px solid #e0dbd0;
-  font-size:13px;font-weight:600;color:#6b6560;
-  cursor:pointer;transition:all 0.15s;
+  font-size:13px;font-weight:600;color:#6b6560;cursor:pointer;
 }
-.flt-btn.active{background:#0d1628;border-color:#0d1628;color:#fff;}
+.fbtn.on{background:#0d1628;border-color:#0d1628;color:#fff;}
 
-.report-card{
-  background:#fff;border-radius:16px;
-  border:1.5px solid #e8e3da;
-  margin-bottom:14px;overflow:hidden;
-  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+.rcard{
+  background:#fff;border-radius:15px;
+  border:1.5px solid #e8e3da;margin-bottom:12px;
+  overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
-.report-card.all-resolved{opacity:0.6;}
-.report-card-top{
-  padding:16px 18px;
-  background:#0d1628;
+.rcard.allres{opacity:0.55;}
+.rcard-top{
+  padding:14px 16px;background:#0d1628;
   display:flex;align-items:center;justify-content:space-between;
 }
-.report-card-top .room-num{font-size:20px;font-weight:800;color:#fff;}
-.report-card-top .report-meta{text-align:right;}
-.report-card-top .meta-label{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.5px;}
-.report-card-top .meta-val{font-size:12px;color:rgba(255,255,255,0.7);font-weight:500;}
+.rcard-top .rnum{font-size:19px;font-weight:800;color:#fff;}
+.rcard-top .rmeta{text-align:right;}
+.rcard-top .mlbl{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;}
+.rcard-top .mval{font-size:12px;color:rgba(255,255,255,0.65);font-weight:500;}
+.rissues{padding:2px 0;}
+.rirow{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 16px;border-top:1px solid #f0ede6;
+}
+.rirow:first-child{border-top:none;}
+.riinfo{flex:1;}
+.riname{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:3px;}
+.rinote{font-size:12px;color:#6b6560;}
+.rits{margin-top:5px;display:flex;flex-direction:column;gap:2px;}
+.rit{font-size:11px;display:flex;align-items:center;gap:4px;}
+.rit.rep{color:#9a9690;}
+.rit.fix{color:#27ae60;font-weight:600;}
+.ribadge{
+  font-size:10px;font-weight:700;padding:2px 8px;
+  border-radius:10px;white-space:nowrap;display:inline-block;margin-bottom:4px;
+}
+.ribadge.open{background:#fef0ef;color:#e74c3c;}
+.ribadge.res{background:#e8f8ef;color:#27ae60;}
+.resbtn{
+  padding:8px 14px;border-radius:9px;border:none;
+  font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;
+  align-self:flex-start;margin-top:2px;transition:all 0.1s;
+}
+.resbtn:active{transform:scale(0.95);}
+.resbtn.open{background:#fef0ef;color:#e74c3c;border:1.5px solid #fdd;}
+.resbtn.done{background:#e8f8ef;color:#27ae60;border:1.5px solid #aed;}
 
-.report-issues{padding:4px 0;}
-.report-issue-row{
-  display:flex;align-items:flex-start;gap:12px;
-  padding:14px 18px;border-top:1px solid #f0ede6;
-}
-.report-issue-row:first-child{border-top:none;}
-.iss-info{flex:1;}
-.iss-name{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:4px;}
-.iss-note{font-size:13px;color:#6b6560;}
-.iss-timestamps{margin-top:6px;display:flex;flex-direction:column;gap:3px;}
-.iss-ts{font-size:11px;display:flex;align-items:center;gap:5px;}
-.iss-ts.reported{color:#9a9690;}
-.iss-ts.fixed{color:#27ae60;font-weight:600;}
-.iss-badge{
-  font-size:11px;font-weight:700;padding:3px 9px;
-  border-radius:20px;white-space:nowrap;flex-shrink:0;
-  margin-bottom:6px;display:inline-block;
-}
-.iss-badge.open{background:#fef0ef;color:#e74c3c;}
-.iss-badge.resolved{background:#e8f8ef;color:#27ae60;}
-.resolve-btn{
-  padding:9px 16px;border-radius:10px;border:none;
-  font-size:13px;font-weight:700;cursor:pointer;
-  transition:all 0.15s;flex-shrink:0;align-self:flex-start;
-  margin-top:2px;
-}
-.resolve-btn:active{transform:scale(0.95);}
-.resolve-btn.open{background:#fef0ef;color:#e74c3c;border:1.5px solid #fadadd;}
-.resolve-btn.done{background:#e8f8ef;color:#27ae60;border:1.5px solid #a9dfbf;}
+.empty-s{text-align:center;padding:50px 20px;color:#9a9690;}
+.empty-s .ei{font-size:44px;margin-bottom:12px;}
+.empty-s p{font-size:14px;}
 
-/* ── EMPTY STATE ── */
-.empty-state{
-  text-align:center;padding:60px 24px;color:#9a9690;
-}
-.empty-state .ei{font-size:48px;margin-bottom:16px;}
-.empty-state p{font-size:15px;}
-
-/* ── SECTION TITLE ── */
-.section-title{
-  font-size:20px;font-weight:800;color:#0d1628;
-  margin-bottom:20px;letter-spacing:-0.3px;
-}
+.sec-title{font-size:19px;font-weight:800;color:#0d1628;margin-bottom:18px;letter-spacing:-0.3px;}
 
 /* ── TOAST ── */
 #toast{
-  position:fixed;bottom:30px;left:50%;
+  position:fixed;bottom:28px;left:50%;
   transform:translateX(-50%) translateY(100px);
-  background:#0d1628;color:#fff;
-  padding:13px 28px;border-radius:30px;
-  font-size:14px;font-weight:600;
-  transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  background:#0d1628;color:#fff;padding:12px 26px;
+  border-radius:30px;font-size:14px;font-weight:600;
+  transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
   z-index:9999;white-space:nowrap;
-  box-shadow:0 8px 32px rgba(0,0,0,0.3);
-  pointer-events:none;
+  box-shadow:0 8px 28px rgba(0,0,0,0.3);pointer-events:none;
 }
-#toast.show{transform:translateX(-50%) translateY(0);}
-
-/* ── DEMO BANNER ── */
-.demo-banner{
-  background:#fff8e6;border-bottom:1px solid #f0d880;
-  padding:8px 24px;font-size:12px;color:#b8860b;
-  font-weight:600;text-align:center;flex-shrink:0;display:none;
-}
-.demo-banner.show{display:block;}
+#toast.on{transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════
-     LOGIN PAGE
-════════════════════════════════ -->
-<div id="page-login" class="page active">
-  <div class="login-bg-decoration">
-    <div class="circle"></div>
-    <div class="circle"></div>
-  </div>
-
-  <button class="lang-switch-login" id="lang-btn-login" onclick="toggleLang()">EN / МК</button>
-
-  <div class="login-container">
-    <div class="login-hotel-name">
-      <div class="hotel-pre">Welcome to</div>
-      <h1>Hotel De <span>KOKA</span></h1>
-      <div class="tagline" id="t-tagline">Room Maintenance System</div>
+<!-- NOTE MODAL -->
+<div class="note-modal-bg" id="note-modal-bg">
+  <div class="note-modal">
+    <h3 id="note-modal-item">Item</h3>
+    <p id="t-note-desc">Describe the issue (optional)</p>
+    <textarea id="note-ta" rows="3" id="note-textarea"></textarea>
+    <div class="note-modal-btns">
+      <button class="note-btn-cancel" onclick="closeNoteModal()"><span id="t-note-cancel">Cancel</span></button>
+      <button class="note-btn-ok" onclick="confirmIssue()"><span id="t-note-confirm">Report Issue</span></button>
     </div>
-
-    <div class="role-selector">
-      <div class="role-card selected" id="rc-hk" onclick="selectRole('housekeeper')">
-        <div class="role-icon">🧹</div>
-        <div class="role-name" id="t-role-hk">Housekeeper</div>
-      </div>
-      <div class="role-card" id="rc-mt" onclick="selectRole('maintenance')">
-        <div class="role-icon">🔧</div>
-        <div class="role-name" id="t-role-mt">Maintenance</div>
-      </div>
-    </div>
-
-    <div class="pin-label" id="t-pin-label">ENTER PIN</div>
-    <div class="pin-dots">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
-    </div>
-
-    <div class="pin-pad">
-      <div class="pin-key" ontouchstart="" onclick="pinPress('1')">1</div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('2')">2</div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('3')">3</div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('4')">4</div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('5')">5</div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('6')">6</div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('7')">7</div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('8')">8</div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('9')">9</div>
-      <div class="pin-key key-empty"></div>
-      <div class="pin-key" ontouchstart="" onclick="pinPress('0')">0</div>
-      <div class="pin-key key-del" ontouchstart="" onclick="pinDel()">⌫</div>
-    </div>
-
-    <div class="pin-error-msg" id="pin-error"></div>
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     APP PAGE
-════════════════════════════════ -->
-<div id="page-app" class="page">
-
-  <!-- TOP BAR -->
-  <div class="app-topbar">
-    <div class="topbar-logo">Hotel De <span>KOKA</span></div>
-    <div class="topbar-spacer"></div>
-    <div class="topbar-role-badge">
-      <div class="dot"></div>
-      <span id="topbar-role-label">—</span>
+<!-- ════ LOGIN ════ -->
+<div id="page-login" class="page active">
+  <div class="login-bg"><span></span><span></span></div>
+  <button class="lang-btn-login" onclick="toggleLang()">EN / МК</button>
+  <div class="login-wrap">
+    <div class="hotel-logo">
+      <div class="pre">Welcome to</div>
+      <h1>Hotel De <em>KOKA</em></h1>
+      <div class="sub" id="t-tagline">Room Maintenance System</div>
     </div>
-    <button class="topbar-btn" onclick="toggleLang()" style="margin-left:8px">EN/МК</button>
-    <button class="topbar-btn" onclick="doLogout()" style="margin-left:8px" id="t-logout">Sign out</button>
+    <div class="role-row">
+      <div class="role-card sel" id="rc-hk" onclick="selRole('housekeeper')">
+        <div class="ri">🧹</div><div class="rn" id="t-rhk">Housekeeper</div>
+      </div>
+      <div class="role-card" id="rc-mt" onclick="selRole('maintenance')">
+        <div class="ri">🔧</div><div class="rn" id="t-rmt">Maintenance</div>
+      </div>
+      <div class="role-card" id="rc-rc" onclick="selRole('reception')">
+        <div class="ri">🛎</div><div class="rn" id="t-rrc">Reception</div>
+      </div>
+    </div>
+    <div class="pin-lbl" id="t-pinlbl">ENTER PIN</div>
+    <div class="pin-dots">
+      <div class="pd" id="pd0"></div><div class="pd" id="pd1"></div>
+      <div class="pd" id="pd2"></div><div class="pd" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <div class="pk" id="pk1" onpointerdown="pkDown('1')">1</div>
+      <div class="pk" id="pk2" onpointerdown="pkDown('2')">2</div>
+      <div class="pk" id="pk3" onpointerdown="pkDown('3')">3</div>
+      <div class="pk" id="pk4" onpointerdown="pkDown('4')">4</div>
+      <div class="pk" id="pk5" onpointerdown="pkDown('5')">5</div>
+      <div class="pk" id="pk6" onpointerdown="pkDown('6')">6</div>
+      <div class="pk" id="pk7" onpointerdown="pkDown('7')">7</div>
+      <div class="pk" id="pk8" onpointerdown="pkDown('8')">8</div>
+      <div class="pk" id="pk9" onpointerdown="pkDown('9')">9</div>
+      <div class="pk empty"></div>
+      <div class="pk" id="pk0" onpointerdown="pkDown('0')">0</div>
+      <div class="pk del" onpointerdown="pkDel()">⌫</div>
+    </div>
+    <div class="pin-err" id="pin-err"></div>
   </div>
+</div>
 
-  <div class="demo-banner" id="demo-banner">⚠ Demo mode — data is saved locally only, no sync between devices</div>
-
+<!-- ════ APP ════ -->
+<div id="page-app" class="page">
+  <div class="topbar">
+    <div class="tlogo">Hotel De <em>KOKA</em></div>
+    <div class="tsep"></div>
+    <div class="trole"><div class="dot"></div><span id="t-trole">—</span></div>
+    <button class="tbtn" onclick="toggleLang()" style="margin-left:8px">EN/МК</button>
+    <button class="tbtn" onclick="doLogout()" id="t-logout" style="margin-left:6px">Sign out</button>
+  </div>
+  <div class="demo-bar" id="demo-bar">⚠ Demo mode — local storage only</div>
   <div class="app-body">
 
-    <!-- HOUSEKEEPER SHELL -->
-    <div id="shell-hk" style="display:none;flex:1;overflow:hidden;display:none;flex-direction:column;">
-
-      <div class="hk-tabs" id="hk-tabs">
-        <button class="hk-tab active" id="tab-rooms" onclick="hkTab('rooms')"><span id="t-tab-rooms">Rooms</span></button>
-        <button class="hk-tab" id="tab-status" onclick="hkTab('status')"><span id="t-tab-status">Status</span></button>
-        <button class="hk-tab" id="tab-manage" onclick="hkTab('manage')"><span id="t-tab-manage">Checklist</span></button>
+    <!-- HK SHELL -->
+    <div id="shell-hk" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+      <div class="hktabs">
+        <button class="hktab on" id="tab-rooms" onclick="hkTab('rooms')"><span id="t-tabr">Rooms</span></button>
+        <button class="hktab" id="tab-status" onclick="hkTab('status')"><span id="t-tabs">Status</span></button>
+        <button class="hktab" id="tab-manage" onclick="hkTab('manage')"><span id="t-tabm">Checklist</span></button>
       </div>
-
-      <!-- VIEW: ROOMS -->
-      <div class="view active" id="view-rooms">
-        <div id="rooms-content"></div>
-      </div>
-
-      <!-- VIEW: CHECKLIST -->
-      <div class="view" id="view-checklist">
-        <div class="checklist-header">
-          <div class="back-btn" onclick="closeChecklist()">←</div>
-          <div class="room-header-card">
-            <h2 id="cl-room-title">Room 101</h2>
-            <div class="progress-pill" id="cl-progress">0 / 0</div>
+      <div class="view on" id="v-rooms"><div id="rooms-cont"></div></div>
+      <div class="view" id="v-checklist">
+        <div class="cl-header">
+          <div class="cl-back" onclick="closeChecklist()">←</div>
+          <div class="cl-room-bar">
+            <h2 id="cl-title">Room 101</h2>
+            <div class="cl-prog" id="cl-prog">0 / 0</div>
           </div>
         </div>
-        <div class="checklist-list" id="cl-list"></div>
-        <div class="submit-footer">
-          <button class="submit-btn" id="submit-btn" onclick="submitChecklist()" disabled>
+        <div class="cl-grid" id="cl-grid"></div>
+        <div class="cl-submit-bar">
+          <button class="cl-submit-btn" id="sub-btn" onclick="submitChecklist()" disabled>
             <span id="t-submit">Submit Room Report</span>
           </button>
         </div>
       </div>
-
-      <!-- VIEW: STATUS -->
-      <div class="view" id="view-status">
-        <div class="section-title" id="t-status-title">Room Status Overview</div>
+      <div class="view" id="v-status">
+        <div class="sec-title" id="t-stitle">Room Status Overview</div>
         <div class="legend-row">
-          <div class="legend-chip"><div class="legend-dot clean"></div><span id="t-leg-clean">Clean</span></div>
-          <div class="legend-chip"><div class="legend-dot issue"></div><span id="t-leg-issue">Has issues</span></div>
-          <div class="legend-chip"><div class="legend-dot inprogress"></div><span id="t-leg-prog">In progress</span></div>
-          <div class="legend-chip"><div class="legend-dot unchecked"></div><span id="t-leg-unch">Not checked</span></div>
+          <div class="lchip"><div class="ldot clean"></div><span id="t-lc">Clean</span></div>
+          <div class="lchip"><div class="ldot issue"></div><span id="t-li">Has issues</span></div>
+          <div class="lchip"><div class="ldot inprogress"></div><span id="t-lp">In progress</span></div>
+          <div class="lchip"><div class="ldot nc"></div><span id="t-ln">Not checked</span></div>
         </div>
-        <div id="status-content"></div>
+        <div id="status-cont"></div>
       </div>
-
-      <!-- VIEW: MANAGE -->
-      <div class="view" id="view-manage">
-        <div class="section-title" id="t-manage-title">Manage Checklist</div>
+      <div class="view" id="v-manage">
+        <div class="sec-title" id="t-mtitle">Manage Checklist</div>
         <div class="add-row">
-          <input type="text" id="new-item-inp" placeholder="New checklist item..." />
-          <button onclick="addItem()" id="t-add-btn">+ Add</button>
+          <input type="text" id="new-inp" /><button onclick="addItem()" id="t-addbtn">+ Add</button>
         </div>
-        <div class="manage-list" id="manage-content"></div>
+        <div class="mi-list" id="mi-cont"></div>
       </div>
-
     </div>
 
-    <!-- MAINTENANCE SHELL -->
-    <div id="shell-mt" style="display:none;flex:1;overflow:hidden;flex-direction:column;">
-      <div class="view active" id="view-maint" style="display:block;">
-        <div class="section-title" id="t-maint-title">Maintenance Reports</div>
-        <div class="maint-filter">
-          <button class="flt-btn active" id="flt-all" onclick="setFilter('all')"><span id="t-flt-all">All</span></button>
-          <button class="flt-btn" id="flt-open" onclick="setFilter('open')"><span id="t-flt-open">Open</span></button>
-          <button class="flt-btn" id="flt-resolved" onclick="setFilter('resolved')"><span id="t-flt-res">Resolved</span></button>
+    <!-- MT / RC SHELL -->
+    <div id="shell-mt" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+      <div class="view on" id="v-maint" style="display:block;">
+        <div class="sec-title" id="t-mttitle">Maintenance Reports</div>
+        <div class="mfilt">
+          <button class="fbtn on" id="flt-all" onclick="setFlt('all')"><span id="t-fall">All</span></button>
+          <button class="fbtn" id="flt-open" onclick="setFlt('open')"><span id="t-fopen">Open</span></button>
+          <button class="fbtn" id="flt-res" onclick="setFlt('resolved')"><span id="t-fres">Resolved</span></button>
         </div>
-        <div id="maint-content"></div>
+        <div id="mt-cont"></div>
       </div>
     </div>
 
   </div>
 </div>
-
-<!-- TOAST -->
 <div id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════
-// FIREBASE — credentials hardcoded
-// ══════════════════════════════════════════════════════
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB8epHhc7bsGVx9WYe3akx_0x14lRYbkj4",
-  projectId: "hotel-de-koka-maintenance",
-  appId: "1:1027092134691:web:492a63a9cc16bdd1436a96"
+// ══════════════════════
+// FIREBASE
+// ══════════════════════
+const FB = {
+  apiKey:"AIzaSyB8epHhc7bsGVx9WYe3akx_0x14lRYbkj4",
+  projectId:"hotel-de-koka-maintenance",
+  appId:"1:1027092134691:web:492a63a9cc16bdd1436a96"
 };
-
-let db = null;
-let demoMode = false;
-
-function initFirebase() {
-  try {
-    firebase.initializeApp(FIREBASE_CONFIG);
-    db = firebase.firestore();
-    db.collection('ping').doc('test').set({ t: Date.now() })
-      .then(() => { demoMode = false; })
-      .catch(() => { demoMode = true; showDemoBanner(); });
-  } catch(e) {
-    demoMode = true;
-    showDemoBanner();
-  }
+let db=null, demoMode=false;
+function initFB(){
+  try{
+    firebase.initializeApp(FB);
+    db=firebase.firestore();
+    db.collection('_ping').doc('p').set({t:Date.now()})
+      .catch(()=>{demoMode=true;document.getElementById('demo-bar').classList.add('on');});
+  }catch(e){demoMode=true;document.getElementById('demo-bar').classList.add('on');}
 }
 
-function showDemoBanner() {
-  document.getElementById('demo-banner').classList.add('show');
-}
-
-// ══════════════════════════════════════════════════════
+// ══════════════════════
 // DATA
-// ══════════════════════════════════════════════════════
-const PINS = { housekeeper: '1234', maintenance: '5678' };
-
-const ROOMS = {
-  '1st Floor': ['101','102','103','104','105','106','107'],
-  '2nd Floor': ['208','209','210','211','212','213','214'],
-  '3rd Floor': ['302','303','304','305','306','307','308','309','310','311','312','313','314','315','316','317','318','319','320','321','322','323','324'],
-  '4th Floor': ['400','401','402','403','404','405','406','407','408','409','410','411','412','413','414','415','416','417','418']
+// ══════════════════════
+const PINS={housekeeper:'1234',maintenance:'5678',reception:'9999'};
+const ROOMS={
+  '1st Floor':['101','102','103','104','105','106','107'],
+  '2nd Floor':['208','209','210','211','212','213','214'],
+  '3rd Floor':['302','303','304','305','306','307','308','309','310','311','312','313','314','315','316','317','318','319','320','321','322','323','324'],
+  '4th Floor':['400','401','402','403','404','405','406','407','408','409','410','411','412','413','414','415','416','417','418']
 };
 
-const DEFAULT_CHECKLIST = [
-  'Linens / Постелнина','Pillows / Јастуци','Blanket / Ќебе',
-  'Floor / Под','TV','AC / Клима','Curtains / Завеси',
-  'Dusting / Прашина','Shower / Туш','Bathtub / Када',
-  'Toilet / WC','Shampoo','Soap / Сапун','Towels / Пешкири',
-  'Mirror / Огледало','Mini-bar','Safe / Сеф',
-  'Remote controls / Далјинци','Door lock / Брава'
+// Icons for checklist items
+const ICONS={
+  'Linens':'🛏','Pillows':'🛌','Blanket':'🛋','Floor':'🏠','TV':'📺',
+  'AC':'❄️','Curtains':'🪟','Dusting':'🧹','Shower':'🚿','Bathtub':'🛁',
+  'Toilet':'🚽','Shampoo':'🧴','Soap':'🧼','Towels':'🛁','Mirror':'🪞',
+  'Mini-bar':'🍷','Safe':'🔒','Remote':'📱','Door':'🚪','Lamp':'💡',
+  'Bed':'🛏','Desk':'🗒️','Chair':'🪑','Phone':'☎️','Window':'🪟',
+};
+function getIcon(name){
+  const k=Object.keys(ICONS).find(k=>name.toLowerCase().includes(k.toLowerCase()));
+  return k?ICONS[k]:'✅';
+}
+
+const DEF_CL=[
+  'Linens','Pillows','Blanket','Floor','TV','AC','Curtains',
+  'Dusting','Shower','Bathtub','Toilet','Shampoo','Soap','Towels',
+  'Mirror','Mini-bar','Safe','Remote controls','Door lock'
 ];
 
-const TRANSLATIONS = {
-  en: {
+const TXT={
+  en:{
     tagline:'Room Maintenance System',
-    roleHK:'Housekeeper', roleMT:'Maintenance',
-    pinLabel:'ENTER PIN',
-    tabRooms:'Rooms', tabStatus:'Status', tabManage:'Checklist',
-    statusTitle:'Room Status Overview',
-    manageTitle:'Manage Checklist',
-    maintTitle:'Maintenance Reports',
-    addPlaceholder:'New checklist item...',
-    addBtn:'+ Add',
+    rhk:'Housekeeper',rmt:'Maintenance',rrc:'Reception',
+    pinlbl:'ENTER PIN',
+    tabr:'Rooms',tabs:'Status',tabm:'Checklist',
+    stitle:'Room Status Overview',mtitle:'Manage Checklist',
+    mttitle:'Maintenance Reports',
+    addbtn:'+ Add',addph:'New checklist item...',
     submit:'Submit Room Report',
-    ok:'OK', issue:'Issue',
-    edit:'Edit', save:'Save', delete:'Delete',
-    resolve:'Resolve', resolved:'Resolved',
-    fltAll:'All', fltOpen:'Open', fltResolved:'Resolved',
-    legClean:'Clean', legIssue:'Has issues', legProg:'In progress', legUnch:'Not checked',
-    reportedAt:'Reported', fixedAt:'Fixed',
-    logout:'Sign out',
-    wrongPin:'Incorrect PIN — please try again',
-    toastSubmitted:'Room report submitted!',
-    toastResolved:'Marked as resolved',
-    toastUnresolved:'Marked as open',
-    toastAdded:'Item added',
-    toastDeleted:'Item deleted',
-    toastSaved:'Item saved',
-    noReports:'No reports found',
-    clean:'Clean', hasIssues:'Issues', inProgress:'In progress',
-    notePlaceholder:'Describe the issue...',
-    demoBanner:'⚠ Demo mode — data is saved locally only, no sync between devices'
+    ok:'OK',iss:'Issue',edit:'Edit',save:'Save',del:'Delete',
+    resolve:'Resolve',resolved:'Resolved',
+    fall:'All',fopen:'Open',fres:'Resolved',
+    lc:'Clean',li:'Has issues',lp:'In progress',ln:'Not checked',
+    repAt:'Reported',fixAt:'Fixed',logout:'Sign out',
+    wrongPin:'Incorrect PIN — try again',
+    tSubmit:'Report submitted!',tResolve:'Marked resolved',tUnresolve:'Marked open',
+    tAdd:'Item added',tDel:'Item deleted',tSave:'Item saved',
+    noRep:'No reports found',
+    clean:'Clean',hasIssues:'Issues',inProgress:'In progress',
+    noteDesc:'Describe the issue (optional)',noteCancel:'Cancel',noteConfirm:'Report Issue',
+    demoBanner:'⚠ Demo mode — data saved locally, no sync between devices'
   },
-  mk: {
+  mk:{
     tagline:'Систем за одржување на соби',
-    roleHK:'Собарица', roleMT:'Одржување',
-    pinLabel:'ВНЕСЕТЕ PIN',
-    tabRooms:'Соби', tabStatus:'Статус', tabManage:'Листа',
-    statusTitle:'Преглед на статус на соби',
-    manageTitle:'Управување со листата',
-    maintTitle:'Пријави за одржување',
-    addPlaceholder:'Нова ставка...',
-    addBtn:'+ Додај',
+    rhk:'Собарица',rmt:'Одржување',rrc:'Рецепција',
+    pinlbl:'ВНЕСЕТЕ PIN',
+    tabr:'Соби',tabs:'Статус',tabm:'Листа',
+    stitle:'Преглед на статус на соби',mtitle:'Управување со листата',
+    mttitle:'Пријави за одржување',
+    addbtn:'+ Додај',addph:'Нова ставка...',
     submit:'Поднеси извештај',
-    ok:'ОК', issue:'Проблем',
-    edit:'Уреди', save:'Зачувај', delete:'Избриши',
-    resolve:'Реши', resolved:'Решено',
-    fltAll:'Сите', fltOpen:'Отворени', fltResolved:'Решени',
-    legClean:'Чисто', legIssue:'Проблеми', legProg:'Во тек', legUnch:'Непроверено',
-    reportedAt:'Пријавено', fixedAt:'Поправено',
-    logout:'Одјава',
+    ok:'ОК',iss:'Проблем',edit:'Уреди',save:'Зачувај',del:'Избриши',
+    resolve:'Реши',resolved:'Решено',
+    fall:'Сите',fopen:'Отворени',fres:'Решени',
+    lc:'Чисто',li:'Проблеми',lp:'Во тек',ln:'Непроверено',
+    repAt:'Пријавено',fixAt:'Поправено',logout:'Одјава',
     wrongPin:'Погрешен PIN — обидете се повторно',
-    toastSubmitted:'Извештајот е поднесен!',
-    toastResolved:'Означено како решено',
-    toastUnresolved:'Означено како отворено',
-    toastAdded:'Ставката е додадена',
-    toastDeleted:'Ставката е избришана',
-    toastSaved:'Ставката е зачувана',
-    noReports:'Нема пронајдени пријави',
-    clean:'Чисто', hasIssues:'Проблеми', inProgress:'Во тек',
-    notePlaceholder:'Опишете го проблемот...',
-    demoBanner:'⚠ Демо режим — податоците се зачувани локално'
+    tSubmit:'Извештајот е поднесен!',tResolve:'Означено решено',tUnresolve:'Означено отворено',
+    tAdd:'Ставката е додадена',tDel:'Ставката е избришана',tSave:'Ставката е зачувана',
+    noRep:'Нема пријави',
+    clean:'Чисто',hasIssues:'Проблеми',inProgress:'Во тек',
+    noteDesc:'Опишете го проблемот (незадолжително)',noteCancel:'Откажи',noteConfirm:'Пријави проблем',
+    demoBanner:'⚠ Демо режим — само локално зачувување'
   }
 };
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════
 // STATE
-// ══════════════════════════════════════════════════════
-let lang = localStorage.getItem('hdk_lang') || 'en';
-let currentRole = 'housekeeper';
-let pinBuffer = '';
-let currentRoom = null;
-let clState = {};
+// ══════════════════════
+let lang=localStorage.getItem('hdk_lang')||'en';
+let role='housekeeper';
+let pin='';
+let curRoom=null;
+let clState={};
+let noteItem=null;
 
-let localChecklist = JSON.parse(localStorage.getItem('hdk_checklist') || 'null') || DEFAULT_CHECKLIST;
-let localReports   = JSON.parse(localStorage.getItem('hdk_reports')   || '[]');
-let localRoomSt    = JSON.parse(localStorage.getItem('hdk_roomst')    || '{}');
-let maintFilter    = 'all';
+let lsCL   = JSON.parse(localStorage.getItem('hdk_cl')||'null')||DEF_CL;
+let lsReps = JSON.parse(localStorage.getItem('hdk_reps')||'[]');
+let lsRSt  = JSON.parse(localStorage.getItem('hdk_rst')||'{}');
+let flt    = 'all';
 
-// ══════════════════════════════════════════════════════
-// TRANSLATIONS
-// ══════════════════════════════════════════════════════
-function T(k) { return (TRANSLATIONS[lang] && TRANSLATIONS[lang][k]) || TRANSLATIONS.en[k] || k; }
+function T(k){return(TXT[lang]&&TXT[lang][k])||TXT.en[k]||k;}
 
-function applyLang() {
-  document.getElementById('t-tagline').textContent        = T('tagline');
-  document.getElementById('t-role-hk').textContent        = T('roleHK');
-  document.getElementById('t-role-mt').textContent        = T('roleMT');
-  document.getElementById('t-pin-label').textContent      = T('pinLabel');
-  document.getElementById('t-tab-rooms').textContent      = T('tabRooms');
-  document.getElementById('t-tab-status').textContent     = T('tabStatus');
-  document.getElementById('t-tab-manage').textContent     = T('tabManage');
-  document.getElementById('t-status-title').textContent   = T('statusTitle');
-  document.getElementById('t-manage-title').textContent   = T('manageTitle');
-  document.getElementById('t-maint-title').textContent    = T('maintTitle');
-  document.getElementById('t-submit').textContent         = T('submit');
-  document.getElementById('t-logout').textContent         = T('logout');
-  document.getElementById('t-leg-clean').textContent      = T('legClean');
-  document.getElementById('t-leg-issue').textContent      = T('legIssue');
-  document.getElementById('t-leg-prog').textContent       = T('legProg');
-  document.getElementById('t-leg-unch').textContent       = T('legUnch');
-  document.getElementById('t-flt-all').textContent        = T('fltAll');
-  document.getElementById('t-flt-open').textContent       = T('fltOpen');
-  document.getElementById('t-flt-res').textContent        = T('fltResolved');
-  document.getElementById('t-add-btn').textContent        = T('addBtn');
-  document.getElementById('new-item-inp').placeholder     = T('addPlaceholder');
-  document.getElementById('demo-banner').textContent      = T('demoBanner');
+// ══════════════════════
+// LANG
+// ══════════════════════
+function applyLang(){
+  const ids={
+    't-tagline':'tagline','t-rhk':'rhk','t-rmt':'rmt','t-rrc':'rrc',
+    't-pinlbl':'pinlbl','t-tabr':'tabr','t-tabs':'tabs','t-tabm':'tabm',
+    't-stitle':'stitle','t-mtitle':'mtitle','t-mttitle':'mttitle',
+    't-addbtn':'addbtn','t-submit':'submit','t-logout':'logout',
+    't-lc':'lc','t-li':'li','t-lp':'lp','t-ln':'ln',
+    't-fall':'fall','t-fopen':'fopen','t-fres':'fres',
+    't-trole':'role_label_skip',
+    't-note-desc':'noteDesc','t-note-cancel':'noteCancel','t-note-confirm':'noteConfirm',
+    'demo-bar':'demoBanner'
+  };
+  Object.entries(ids).forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el&&key!=='role_label_skip')el.textContent=T(key);
+  });
+  document.getElementById('new-inp').placeholder=T('addph');
 }
-
-function toggleLang() {
-  lang = lang === 'en' ? 'mk' : 'en';
-  localStorage.setItem('hdk_lang', lang);
+function toggleLang(){
+  lang=lang==='en'?'mk':'en';
+  localStorage.setItem('hdk_lang',lang);
   applyLang();
 }
 
-// ══════════════════════════════════════════════════════
-// LOGIN / PIN
-// ══════════════════════════════════════════════════════
-function selectRole(role) {
-  currentRole = role;
-  pinBuffer = '';
+// ══════════════════════
+// PIN — instant via pointerdown
+// ══════════════════════
+let pinLocked=false;
+
+function pkDown(d){
+  if(pinLocked||pin.length>=4)return;
+  pin+=d;
+  // Flash pressed state
+  const pkEl=document.getElementById('pk'+d);
+  if(pkEl){pkEl.classList.add('pressed');setTimeout(()=>pkEl.classList.remove('pressed'),120);}
   updateDots();
-  document.getElementById('pin-error').textContent = '';
-  document.getElementById('rc-hk').classList.toggle('selected', role === 'housekeeper');
-  document.getElementById('rc-mt').classList.toggle('selected', role === 'maintenance');
+  if(pin.length===4) checkPin();
 }
 
-function pinPress(d) {
-  if (pinBuffer.length >= 4) return;
-  pinBuffer += d;
+function pkDel(){
+  if(pinLocked)return;
+  pin=pin.slice(0,-1);
   updateDots();
-  if (pinBuffer.length === 4) {
-    setTimeout(checkPin, 100);
+  document.getElementById('pin-err').textContent='';
+}
+
+function updateDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    d.classList.remove('on','err');
+    if(i<pin.length)d.classList.add('on');
   }
 }
 
-function pinDel() {
-  pinBuffer = pinBuffer.slice(0, -1);
-  updateDots();
-  document.getElementById('pin-error').textContent = '';
-}
-
-function updateDots() {
-  for (let i = 0; i < 4; i++) {
-    const d = document.getElementById('pd' + i);
-    d.classList.remove('filled', 'error');
-    if (i < pinBuffer.length) d.classList.add('filled');
-  }
-}
-
-function checkPin() {
-  if (pinBuffer === PINS[currentRole]) {
-    enterApp(currentRole);
-  } else {
-    for (let i = 0; i < 4; i++) {
-      const d = document.getElementById('pd' + i);
-      d.classList.remove('filled');
-      d.classList.add('error');
+function checkPin(){
+  if(PINS[role]===pin){
+    pinLocked=false;
+    enterApp(role);
+  }else{
+    pinLocked=true;
+    for(let i=0;i<4;i++){
+      const d=document.getElementById('pd'+i);
+      d.classList.remove('on');d.classList.add('err');
     }
-    document.getElementById('pin-error').textContent = T('wrongPin');
-    setTimeout(() => {
-      pinBuffer = '';
+    document.getElementById('pin-err').textContent=T('wrongPin');
+    setTimeout(()=>{
+      pin='';pinLocked=false;
       updateDots();
-      document.getElementById('pin-error').textContent = '';
-    }, 1000);
+      document.getElementById('pin-err').textContent='';
+    },900);
   }
 }
 
-function enterApp(role) {
+function selRole(r){
+  role=r;pin='';updateDots();
+  document.getElementById('pin-err').textContent='';
+  ['hk','mt','rc'].forEach(x=>document.getElementById('rc-'+x).classList.remove('sel'));
+  const map={housekeeper:'hk',maintenance:'mt',reception:'rc'};
+  document.getElementById('rc-'+map[r]).classList.add('sel');
+}
+
+// ══════════════════════
+// APP ENTER / LOGOUT
+// ══════════════════════
+function enterApp(r){
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-app').classList.add('active');
-  document.getElementById('topbar-role-label').textContent = role === 'housekeeper' ? T('roleHK') : T('roleMT');
-
-  if (role === 'housekeeper') {
-    document.getElementById('shell-hk').style.display = 'flex';
-    document.getElementById('shell-mt').style.display = 'none';
+  const lbl={housekeeper:T('rhk'),maintenance:T('rmt'),reception:T('rrc')};
+  document.getElementById('t-trole').textContent=lbl[r]||r;
+  if(r==='housekeeper'||r==='reception'){
+    document.getElementById('shell-hk').style.display='flex';
+    document.getElementById('shell-mt').style.display='none';
     hkTab('rooms');
-  } else {
-    document.getElementById('shell-hk').style.display = 'none';
-    document.getElementById('shell-mt').style.display = 'flex';
-    loadMaintenance();
+  }else{
+    document.getElementById('shell-hk').style.display='none';
+    document.getElementById('shell-mt').style.display='flex';
+    loadMaint();
   }
 }
 
-function doLogout() {
-  pinBuffer = '';
-  currentRoom = null;
-  clState = {};
+function doLogout(){
+  pin='';curRoom=null;clState={};pinLocked=false;
   updateDots();
-  document.getElementById('pin-error').textContent = '';
-  selectRole('housekeeper');
+  document.getElementById('pin-err').textContent='';
+  selRole('housekeeper');
   document.getElementById('page-app').classList.remove('active');
   document.getElementById('page-login').classList.add('active');
 }
 
-// ══════════════════════════════════════════════════════
-// HOUSEKEEPER TABS
-// ══════════════════════════════════════════════════════
-function hkTab(tab) {
-  ['rooms','checklist','status','manage'].forEach(v => {
-    document.getElementById('view-' + v).classList.remove('active');
+// ══════════════════════
+// HK TABS
+// ══════════════════════
+function hkTab(t){
+  ['rooms','checklist','status','manage'].forEach(v=>{
+    document.getElementById('v-'+v).classList.remove('on');
   });
-  ['rooms','status','manage'].forEach(t => {
-    const el = document.getElementById('tab-' + t);
-    if (el) el.classList.remove('active');
+  ['rooms','status','manage'].forEach(x=>{
+    const el=document.getElementById('tab-'+x);
+    if(el)el.classList.remove('on');
   });
-
-  document.getElementById('view-' + tab).classList.add('active');
-  const tabEl = document.getElementById('tab-' + tab);
-  if (tabEl) tabEl.classList.add('active');
-
-  if (tab === 'rooms')   renderRooms();
-  if (tab === 'status')  renderStatus();
-  if (tab === 'manage')  renderManage();
+  document.getElementById('v-'+t).classList.add('on');
+  const te=document.getElementById('tab-'+t);
+  if(te)te.classList.add('on');
+  if(t==='rooms')renderRooms();
+  if(t==='status')renderStatus();
+  if(t==='manage')renderManage();
 }
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════
 // ROOMS
-// ══════════════════════════════════════════════════════
-function getIssueCount(room) {
-  let c = 0;
-  localReports.filter(r => r.room === room).forEach(r => {
-    r.issues.forEach(i => { if (!i.resolved) c++; });
-  });
+// ══════════════════════
+function issCount(room){
+  let c=0;
+  lsReps.filter(r=>r.room===room).forEach(r=>r.issues.forEach(i=>{if(!i.resolved)c++;}));
   return c;
 }
 
-function renderRooms() {
-  const cont = document.getElementById('rooms-content');
-  cont.innerHTML = '';
-  Object.entries(ROOMS).forEach(([floor, rooms]) => {
-    const block = document.createElement('div');
-    block.className = 'floor-block';
-    block.innerHTML = '<div class="floor-heading">' + floor + '</div>';
-    const grid = document.createElement('div');
-    grid.className = 'room-grid';
-    rooms.forEach(room => {
-      const tile = document.createElement('div');
-      tile.className = 'room-tile';
-      const st = localRoomSt[room];
-      if (st) tile.classList.add(st);
-      const ic = getIssueCount(room);
-      const stLabel = st ? T(st === 'issue' ? 'hasIssues' : st === 'inprogress' ? 'inProgress' : 'clean') : '';
-      tile.innerHTML = '<div class="rnum">' + room + '</div>'
-        + '<div class="rsub">' + stLabel + '</div>'
-        + (ic > 0 ? '<div class="issue-badge">' + ic + '</div>' : '');
-      tile.onclick = () => openChecklist(room);
+function renderRooms(){
+  const cont=document.getElementById('rooms-cont');
+  cont.innerHTML='';
+  Object.entries(ROOMS).forEach(([floor,rooms])=>{
+    const blk=document.createElement('div');
+    blk.className='floor-block';
+    blk.innerHTML='<div class="floor-lbl">'+floor+'</div>';
+    const grid=document.createElement('div');
+    grid.className='room-grid';
+    rooms.forEach(room=>{
+      const tile=document.createElement('div');
+      tile.className='rtile';
+      const st=lsRSt[room]||null;
+      if(st)tile.classList.add(st);
+      const ic=issCount(room);
+      const stlbl=st?T(st==='issue'?'hasIssues':st==='inprogress'?'inProgress':'clean'):'';
+      tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
+      tile.onclick=()=>openChecklist(room);
       grid.appendChild(tile);
     });
-    block.appendChild(grid);
-    cont.appendChild(block);
+    blk.appendChild(grid);
+    cont.appendChild(blk);
   });
 }
 
-// ══════════════════════════════════════════════════════
-// CHECKLIST
-// ══════════════════════════════════════════════════════
-function openChecklist(room) {
-  currentRoom = room;
-  clState = {};
-  localChecklist.forEach(item => { clState[item] = { status: null, note: '' }; });
-  document.getElementById('cl-room-title').textContent = 'Room ' + room;
+// ══════════════════════
+// CHECKLIST GRID
+// ══════════════════════
+function openChecklist(room){
+  curRoom=room;
+  clState={};
+  lsCL.forEach(item=>{clState[item]={status:null,note:''};});
+  document.getElementById('cl-title').textContent='Room '+room;
   hkTab('checklist');
-  renderChecklist();
+  renderClGrid();
 }
 
-function closeChecklist() {
-  hkTab('rooms');
-}
+function closeChecklist(){hkTab('rooms');}
 
-function renderChecklist() {
-  const list = document.getElementById('cl-list');
-  list.innerHTML = '';
-  localChecklist.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'cl-item';
-    div.id = 'cli-' + encodeItem(item);
-    div.innerHTML =
-      '<div class="cl-row">'
-      + '<div class="cl-status-icon" id="csi-' + encodeItem(item) + '"></div>'
-      + '<div class="cl-name">' + item + '</div>'
-      + '<div class="cl-actions">'
-      + '<button class="cl-btn ok" id="cok-' + encodeItem(item) + '" onclick="setClStatus(\'' + escItem(item) + '\',\'ok\')">' + T('ok') + '</button>'
-      + '<button class="cl-btn iss" id="cis-' + encodeItem(item) + '" onclick="setClStatus(\'' + escItem(item) + '\',\'issue\')">' + T('issue') + '</button>'
-      + '</div></div>'
-      + '<div class="cl-note-area" id="cna-' + encodeItem(item) + '">'
-      + '<textarea rows="2" placeholder="' + T('notePlaceholder') + '" oninput="setClNote(\'' + escItem(item) + '\',this.value)"></textarea>'
-      + '</div>';
-    list.appendChild(div);
+function renderClGrid(){
+  const grid=document.getElementById('cl-grid');
+  grid.innerHTML='';
+  lsCL.forEach(item=>{
+    const tile=document.createElement('div');
+    tile.className='cl-tile';
+    tile.id='ct-'+eid(item);
+    const icon=getIcon(item);
+    const s=clState[item]?clState[item].status:null;
+    if(s==='ok')tile.classList.add('ok');
+    if(s==='iss')tile.classList.add('iss');
+    const statusLabel=s==='ok'?T('ok'):s==='iss'?T('iss'):'';
+    tile.innerHTML=
+      '<div class="ct-icon">'+icon+'</div>'
+      +'<div class="ct-name">'+item+'</div>'
+      +(statusLabel?'<div class="ct-status">'+statusLabel+'</div>':'');
+    tile.onclick=()=>tileTap(item);
+    grid.appendChild(tile);
   });
-  updateProgress();
+  updateProg();
 }
 
-function encodeItem(s) { return btoa(unescape(encodeURIComponent(s))).replace(/[^a-zA-Z0-9]/g,''); }
-function escItem(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
-
-function setClStatus(item, status) {
-  if (!clState[item]) clState[item] = { status: null, note: '' };
-  clState[item].status = clState[item].status === status ? null : status;
-  const id = encodeItem(item);
-  const icon = document.getElementById('csi-' + id);
-  const okBtn = document.getElementById('cok-' + id);
-  const isBtn = document.getElementById('cis-' + id);
-  const noteArea = document.getElementById('cna-' + id);
-  const s = clState[item].status;
-  icon.className = 'cl-status-icon' + (s === 'ok' ? ' ok' : s === 'issue' ? ' issue' : '');
-  icon.textContent = s === 'ok' ? '✓' : s === 'issue' ? '!' : '';
-  okBtn.className = 'cl-btn ok' + (s === 'ok' ? ' sel' : '');
-  isBtn.className = 'cl-btn iss' + (s === 'issue' ? ' sel' : '');
-  noteArea.className = 'cl-note-area' + (s === 'issue' ? ' show' : '');
-  updateProgress();
-}
-
-function setClNote(item, val) {
-  if (clState[item]) clState[item].note = val;
-}
-
-function updateProgress() {
-  const total = localChecklist.length;
-  const done = localChecklist.filter(i => clState[i] && clState[i].status !== null).length;
-  document.getElementById('cl-progress').textContent = done + ' / ' + total;
-  document.getElementById('submit-btn').disabled = done === 0;
-}
-
-function submitChecklist() {
-  const issues = localChecklist
-    .filter(i => clState[i] && clState[i].status === 'issue')
-    .map(i => ({ item: i, note: clState[i].note || '', resolved: false, resolvedAt: null }));
-
-  const allDone = localChecklist.every(i => clState[i] && clState[i].status !== null);
-  const roomStatus = issues.length > 0 ? 'issue' : allDone ? 'clean' : 'inprogress';
-
-  const report = {
-    id: Date.now().toString(),
-    room: currentRoom,
-    timestamp: new Date().toISOString(),
-    issues: issues,
-    status: roomStatus
-  };
-
-  localReports.unshift(report);
-  localStorage.setItem('hdk_reports', JSON.stringify(localReports));
-  localRoomSt[currentRoom] = roomStatus;
-  localStorage.setItem('hdk_roomst', JSON.stringify(localRoomSt));
-
-  if (db && !demoMode) {
-    db.collection('reports').doc(report.id).set(report);
-    db.collection('roomStatus').doc(currentRoom).set({ status: roomStatus, updatedAt: report.timestamp });
+function tileTap(item){
+  const s=clState[item]?clState[item].status:null;
+  if(s===null||s==='iss'){
+    // Cycle: null→ok, iss→ok
+    if(s==='iss'){
+      clState[item]={status:'ok',note:''};
+      updateTile(item);
+      updateProg();
+    }else{
+      // First tap — show OK immediately, second tap on OK shows issue option
+      clState[item]={status:'ok',note:''};
+      updateTile(item);
+      updateProg();
+    }
+  }else if(s==='ok'){
+    // Tapping OK tile → open issue modal
+    openNoteModal(item);
   }
+}
 
-  showToast(T('toastSubmitted'));
+function openNoteModal(item){
+  noteItem=item;
+  document.getElementById('note-modal-item').textContent=item;
+  document.getElementById('note-ta').value=clState[item]?clState[item].note||'':'';
+  document.getElementById('note-modal-bg').classList.add('open');
+  setTimeout(()=>document.getElementById('note-ta').focus(),100);
+}
+
+function closeNoteModal(){
+  document.getElementById('note-modal-bg').classList.remove('open');
+  noteItem=null;
+}
+
+function confirmIssue(){
+  if(!noteItem)return;
+  const note=document.getElementById('note-ta').value.trim();
+  clState[noteItem]={status:'iss',note:note};
+  updateTile(noteItem);
+  updateProg();
+  closeNoteModal();
+}
+
+function updateTile(item){
+  const tile=document.getElementById('ct-'+eid(item));
+  if(!tile)return;
+  const s=clState[item]?clState[item].status:null;
+  tile.className='cl-tile'+(s==='ok'?' ok':s==='iss'?' iss':'');
+  const icon=getIcon(item);
+  const statusLabel=s==='ok'?T('ok'):s==='iss'?T('iss'):'';
+  tile.innerHTML=
+    '<div class="ct-icon">'+icon+'</div>'
+    +'<div class="ct-name">'+item+'</div>'
+    +(statusLabel?'<div class="ct-status">'+statusLabel+'</div>':'');
+  tile.onclick=()=>tileTap(item);
+}
+
+function updateProg(){
+  const total=lsCL.length;
+  const done=lsCL.filter(i=>clState[i]&&clState[i].status!==null).length;
+  document.getElementById('cl-prog').textContent=done+' / '+total;
+  document.getElementById('sub-btn').disabled=done===0;
+}
+
+function eid(s){return btoa(unescape(encodeURIComponent(s))).replace(/[^a-zA-Z0-9]/g,'');}
+
+function submitChecklist(){
+  const issues=lsCL
+    .filter(i=>clState[i]&&clState[i].status==='iss')
+    .map(i=>({item:i,note:clState[i].note||'',resolved:false,resolvedAt:null}));
+  const allDone=lsCL.every(i=>clState[i]&&clState[i].status!==null);
+  const rst=issues.length>0?'issue':allDone?'clean':'inprogress';
+  const rep={
+    id:Date.now().toString(),room:curRoom,
+    timestamp:new Date().toISOString(),issues:issues,status:rst
+  };
+  lsReps.unshift(rep);
+  localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+  lsRSt[curRoom]=rst;
+  localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+  if(db&&!demoMode){
+    db.collection('reports').doc(rep.id).set(rep);
+    db.collection('roomStatus').doc(curRoom).set({status:rst,updatedAt:rep.timestamp});
+  }
+  toast(T('tSubmit'));
   closeChecklist();
 }
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════
 // STATUS
-// ══════════════════════════════════════════════════════
-function renderStatus() {
-  const cont = document.getElementById('status-content');
-  cont.innerHTML = '';
-
-  const draw = (stData) => {
-    Object.entries(ROOMS).forEach(([floor, rooms]) => {
-      const block = document.createElement('div');
-      block.className = 'floor-block';
-      block.innerHTML = '<div class="floor-heading">' + floor + '</div>';
-      const grid = document.createElement('div');
-      grid.className = 'room-grid';
-      rooms.forEach(room => {
-        const tile = document.createElement('div');
-        tile.className = 'room-tile';
-        const st = stData[room];
-        if (st) tile.classList.add(st);
-        const stLabel = st ? T(st === 'issue' ? 'hasIssues' : st === 'inprogress' ? 'inProgress' : 'clean') : '—';
-        tile.innerHTML = '<div class="rnum">' + room + '</div><div class="rsub">' + stLabel + '</div>';
+// ══════════════════════
+function renderStatus(){
+  const cont=document.getElementById('status-cont');
+  cont.innerHTML='';
+  const draw=(data)=>{
+    Object.entries(ROOMS).forEach(([floor,rooms])=>{
+      const blk=document.createElement('div');
+      blk.className='floor-block';
+      blk.innerHTML='<div class="floor-lbl">'+floor+'</div>';
+      const grid=document.createElement('div');
+      grid.className='room-grid';
+      rooms.forEach(room=>{
+        const tile=document.createElement('div');
+        tile.className='rtile';
+        const st=data[room]||null;
+        if(st)tile.classList.add(st);
+        const stlbl=st?T(st==='issue'?'hasIssues':st==='inprogress'?'inProgress':'clean'):'—';
+        tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>';
         grid.appendChild(tile);
       });
-      block.appendChild(grid);
-      cont.appendChild(block);
+      blk.appendChild(grid);
+      cont.appendChild(blk);
     });
   };
-
-  if (db && !demoMode) {
+  if(db&&!demoMode){
     db.collection('roomStatus').get()
-      .then(snap => {
-        const data = {};
-        snap.forEach(doc => { data[doc.id] = doc.data().status; });
-        draw(data);
-      }).catch(() => draw(localRoomSt));
-  } else {
-    draw(localRoomSt);
-  }
+      .then(snap=>{const d={};snap.forEach(doc=>{d[doc.id]=doc.data().status;});draw(d);})
+      .catch(()=>draw(lsRSt));
+  }else draw(lsRSt);
 }
 
-// ══════════════════════════════════════════════════════
-// MANAGE CHECKLIST
-// ══════════════════════════════════════════════════════
-function renderManage() {
-  const cont = document.getElementById('manage-content');
-  cont.innerHTML = '';
-  localChecklist.forEach((item, idx) => {
-    const div = document.createElement('div');
-    div.className = 'manage-item';
-    div.id = 'mi-' + idx;
-    div.innerHTML =
-      '<span class="mi-name">' + item + '</span>'
-      + '<input class="mi-input" id="mii-' + idx + '" value="' + item.replace(/"/g,'&quot;') + '" />'
-      + '<div style="display:flex;gap:6px">'
-      + '<button class="btn-edit" onclick="startEdit(' + idx + ')">' + T('edit') + '</button>'
-      + '<button class="btn-save" onclick="saveEdit(' + idx + ')">' + T('save') + '</button>'
-      + '<button class="btn-del" onclick="deleteItem(' + idx + ')">' + T('delete') + '</button>'
-      + '</div>';
+// ══════════════════════
+// MANAGE
+// ══════════════════════
+function renderManage(){
+  const cont=document.getElementById('mi-cont');
+  cont.innerHTML='';
+  lsCL.forEach((item,idx)=>{
+    const div=document.createElement('div');
+    div.className='mi';div.id='mi-'+idx;
+    div.innerHTML=
+      '<span class="mn">'+item+'</span>'
+      +'<input class="minp" id="minp-'+idx+'" value="'+item.replace(/"/g,'&quot;')+'" />'
+      +'<div style="display:flex;gap:6px">'
+      +'<button class="edbtn" onclick="startEdit('+idx+')">'+T('edit')+'</button>'
+      +'<button class="savbtn" onclick="saveEdit('+idx+')">'+T('save')+'</button>'
+      +'<button class="delbtn" onclick="delItem('+idx+')">'+T('del')+'</button>'
+      +'</div>';
     cont.appendChild(div);
   });
 }
-
-function startEdit(idx) {
-  const div = document.getElementById('mi-' + idx);
-  div.classList.add('editing');
-  const inp = document.getElementById('mii-' + idx);
-  inp.focus();
-  inp.onkeydown = e => { if (e.key === 'Enter') saveEdit(idx); if (e.key === 'Escape') cancelEdit(idx); };
+function startEdit(i){
+  document.getElementById('mi-'+i).classList.add('editing');
+  const inp=document.getElementById('minp-'+i);
+  inp.focus();inp.select();
+  inp.onkeydown=e=>{if(e.key==='Enter')saveEdit(i);if(e.key==='Escape')cancelEdit(i);};
+}
+function cancelEdit(i){document.getElementById('mi-'+i).classList.remove('editing');document.getElementById('minp-'+i).value=lsCL[i];}
+function saveEdit(i){
+  const v=document.getElementById('minp-'+i).value.trim();
+  if(!v)return;
+  lsCL[i]=v;saveCL();renderManage();toast(T('tSave'));
+}
+function addItem(){
+  const inp=document.getElementById('new-inp');
+  const v=inp.value.trim();if(!v)return;
+  lsCL.push(v);saveCL();inp.value='';renderManage();toast(T('tAdd'));
+}
+function delItem(i){lsCL.splice(i,1);saveCL();renderManage();toast(T('tDel'));}
+function saveCL(){
+  localStorage.setItem('hdk_cl',JSON.stringify(lsCL));
+  if(db&&!demoMode)db.collection('config').doc('checklist').set({items:lsCL});
 }
 
-function cancelEdit(idx) {
-  const div = document.getElementById('mi-' + idx);
-  div.classList.remove('editing');
-  document.getElementById('mii-' + idx).value = localChecklist[idx];
-}
-
-function saveEdit(idx) {
-  const val = document.getElementById('mii-' + idx).value.trim();
-  if (!val) return;
-  localChecklist[idx] = val;
-  saveChecklist();
-  renderManage();
-  showToast(T('toastSaved'));
-}
-
-function addItem() {
-  const inp = document.getElementById('new-item-inp');
-  const val = inp.value.trim();
-  if (!val) return;
-  localChecklist.push(val);
-  saveChecklist();
-  inp.value = '';
-  renderManage();
-  showToast(T('toastAdded'));
-}
-
-function deleteItem(idx) {
-  localChecklist.splice(idx, 1);
-  saveChecklist();
-  renderManage();
-  showToast(T('toastDeleted'));
-}
-
-function saveChecklist() {
-  localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
-  if (db && !demoMode) {
-    db.collection('config').doc('checklist').set({ items: localChecklist });
-  }
-}
-
-// ══════════════════════════════════════════════════════
+// ══════════════════════
 // MAINTENANCE
-// ══════════════════════════════════════════════════════
-function setFilter(f) {
-  maintFilter = f;
-  ['all','open','resolved'].forEach(x => {
-    document.getElementById('flt-' + x).classList.toggle('active', x === f);
-  });
-  loadMaintenance();
+// ══════════════════════
+function setFlt(f){
+  flt=f;
+  ['all','open','res'].forEach(x=>document.getElementById('flt-'+x).classList.remove('on'));
+  document.getElementById('flt-'+f).classList.add('on');
+  loadMaint();
 }
-
-function loadMaintenance() {
-  if (db && !demoMode) {
+function loadMaint(){
+  if(db&&!demoMode){
     db.collection('reports').orderBy('timestamp','desc').get()
-      .then(snap => {
-        const rpts = [];
-        snap.forEach(doc => rpts.push(doc.data()));
-        renderMaintenance(rpts);
-      }).catch(() => renderMaintenance(localReports));
-  } else {
-    renderMaintenance(localReports);
-  }
+      .then(snap=>{const r=[];snap.forEach(d=>r.push(d.data()));renderMaint(r);})
+      .catch(()=>renderMaint(lsReps));
+  }else renderMaint(lsReps);
 }
-
-function fmtDT(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+function fmtDT(iso){
+  if(!iso)return'';
+  const d=new Date(iso);
+  return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 }
-
-function renderMaintenance(reports) {
-  const cont = document.getElementById('maint-content');
-  cont.innerHTML = '';
-
-  let list = reports.filter(r => r.issues && r.issues.length > 0);
-  if (maintFilter === 'open')     list = list.filter(r => r.issues.some(i => !i.resolved));
-  if (maintFilter === 'resolved') list = list.filter(r => r.issues.every(i => i.resolved));
-
-  if (list.length === 0) {
-    cont.innerHTML = '<div class="empty-state"><div class="ei">✅</div><p>' + T('noReports') + '</p></div>';
+function renderMaint(reps){
+  const cont=document.getElementById('mt-cont');
+  cont.innerHTML='';
+  let list=reps.filter(r=>r.issues&&r.issues.length>0);
+  if(flt==='open')list=list.filter(r=>r.issues.some(i=>!i.resolved));
+  if(flt==='resolved')list=list.filter(r=>r.issues.every(i=>i.resolved));
+  if(!list.length){
+    cont.innerHTML='<div class="empty-s"><div class="ei">✅</div><p>'+T('noRep')+'</p></div>';
     return;
   }
-
-  list.forEach(report => {
-    const allRes = report.issues.every(i => i.resolved);
-    const card = document.createElement('div');
-    card.className = 'report-card' + (allRes ? ' all-resolved' : '');
-
-    let issHTML = '';
-    report.issues.forEach((iss, idx) => {
-      const badgeClass = iss.resolved ? 'resolved' : 'open';
-      const badgeText  = iss.resolved ? T('resolved') : 'Open';
-      const btnClass   = iss.resolved ? 'done' : 'open';
-      const btnText    = iss.resolved ? T('resolved') : T('resolve');
-      const fixedLine  = iss.resolvedAt
-        ? '<div class="iss-ts fixed">✅ ' + T('fixedAt') + ': ' + fmtDT(iss.resolvedAt) + '</div>'
-        : '';
-      issHTML +=
-        '<div class="report-issue-row">'
-        + '<div class="iss-info">'
-        + '<div class="iss-name">' + iss.item + '</div>'
-        + (iss.note ? '<div class="iss-note">📝 ' + iss.note + '</div>' : '')
-        + '<div class="iss-timestamps">'
-        + '<div class="iss-ts reported">📋 ' + T('reportedAt') + ': ' + fmtDT(report.timestamp) + '</div>'
-        + fixedLine
-        + '</div>'
-        + '</div>'
-        + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
-        + '<span class="iss-badge ' + badgeClass + '">' + badgeText + '</span>'
-        + '<button class="resolve-btn ' + btnClass + '" onclick="resolveIssue(\'' + report.id + '\',' + idx + ')">' + btnText + '</button>'
-        + '</div>'
-        + '</div>';
+  list.forEach(rep=>{
+    const allRes=rep.issues.every(i=>i.resolved);
+    const card=document.createElement('div');
+    card.className='rcard'+(allRes?' allres':'');
+    let issH='';
+    rep.issues.forEach((iss,idx)=>{
+      const bClass=iss.resolved?'res':'open';
+      const bTxt=iss.resolved?T('resolved'):'Open';
+      const btnClass=iss.resolved?'done':'open';
+      const btnTxt=iss.resolved?T('resolved'):T('resolve');
+      const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>':'';
+      issH+=
+        '<div class="rirow">'
+        +'<div class="riinfo">'
+        +'<div class="riname">'+iss.item+'</div>'
+        +(iss.note?'<div class="rinote">📝 '+iss.note+'</div>':'')
+        +'<div class="rits">'
+        +'<div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+'</div>'
+        +fixLine+'</div></div>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'
+        +'<span class="ribadge '+bClass+'">'+bTxt+'</span>'
+        +'<button class="resbtn '+btnClass+'" onclick="resolveIss(\''+rep.id+'\','+idx+')">'+btnTxt+'</button>'
+        +'</div></div>';
     });
-
-    card.innerHTML =
-      '<div class="report-card-top">'
-      + '<div class="room-num">Room ' + report.room + '</div>'
-      + '<div class="report-meta">'
-      + '<div class="meta-label">REPORTED</div>'
-      + '<div class="meta-val">' + fmtDT(report.timestamp) + '</div>'
-      + '</div>'
-      + '</div>'
-      + '<div class="report-issues">' + issHTML + '</div>';
-
+    card.innerHTML=
+      '<div class="rcard-top">'
+      +'<div class="rnum">Room '+rep.room+'</div>'
+      +'<div class="rmeta"><div class="mlbl">REPORTED</div><div class="mval">'+fmtDT(rep.timestamp)+'</div></div>'
+      +'</div><div class="rissues">'+issH+'</div>';
     cont.appendChild(card);
   });
 }
 
-function resolveIssue(reportId, issueIdx) {
-  const now = new Date().toISOString();
-  const rep = localReports.find(r => r.id === reportId);
-  if (rep) {
-    const wasResolved = rep.issues[issueIdx].resolved;
-    rep.issues[issueIdx].resolved = !wasResolved;
-    rep.issues[issueIdx].resolvedAt = wasResolved ? null : now;
-    const anyOpen = rep.issues.some(i => !i.resolved);
-    if (!anyOpen) {
-      localRoomSt[rep.room] = 'clean';
-      localStorage.setItem('hdk_roomst', JSON.stringify(localRoomSt));
-    }
-    localStorage.setItem('hdk_reports', JSON.stringify(localReports));
-    showToast(rep.issues[issueIdx].resolved ? T('toastResolved') : T('toastUnresolved'));
+function resolveIss(repId,issIdx){
+  const now=new Date().toISOString();
+  const rep=lsReps.find(r=>r.id===repId);
+  if(rep){
+    const was=rep.issues[issIdx].resolved;
+    rep.issues[issIdx].resolved=!was;
+    rep.issues[issIdx].resolvedAt=was?null:now;
+    if(!rep.issues.some(i=>!i.resolved)){lsRSt[rep.room]='clean';localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));}
+    localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+    toast(rep.issues[issIdx].resolved?T('tResolve'):T('tUnresolve'));
   }
-
-  if (db && !demoMode) {
-    db.collection('reports').doc(reportId).get().then(doc => {
-      if (doc.exists) {
-        const data = doc.data();
-        const wasRes = data.issues[issueIdx].resolved;
-        data.issues[issueIdx].resolved = !wasRes;
-        data.issues[issueIdx].resolvedAt = wasRes ? null : now;
-        const anyOpen = data.issues.some(i => !i.resolved);
-        const p1 = db.collection('reports').doc(reportId).update({ issues: data.issues });
-        const p2 = anyOpen ? Promise.resolve()
-          : db.collection('roomStatus').doc(data.room).set({ status: 'clean', updatedAt: now });
-        return Promise.all([p1, p2]);
-      }
-    }).catch(() => {}).finally(() => loadMaintenance());
-  } else {
-    loadMaintenance();
-  }
+  if(db&&!demoMode){
+    db.collection('reports').doc(repId).get().then(doc=>{
+      if(!doc.exists)return;
+      const data=doc.data();const was=data.issues[issIdx].resolved;
+      data.issues[issIdx].resolved=!was;data.issues[issIdx].resolvedAt=was?null:now;
+      const p1=db.collection('reports').doc(repId).update({issues:data.issues});
+      const p2=!data.issues.some(i=>!i.resolved)
+        ?db.collection('roomStatus').doc(data.room).set({status:'clean',updatedAt:now})
+        :Promise.resolve();
+      return Promise.all([p1,p2]);
+    }).catch(()=>{}).finally(()=>loadMaint());
+  }else loadMaint();
 }
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════
 // TOAST
-// ══════════════════════════════════════════════════════
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+// ══════════════════════
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),2400);
 }
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════
 // INIT
-// ══════════════════════════════════════════════════════
-initFirebase();
+// ══════════════════════
+initFB();
 applyLang();
-
-// Sync checklist from Firestore on load
-setTimeout(() => {
-  if (db && !demoMode) {
-    db.collection('config').doc('checklist').get().then(doc => {
-      if (doc.exists && doc.data().items && doc.data().items.length > 0) {
-        localChecklist = doc.data().items;
-        localStorage.setItem('hdk_checklist', JSON.stringify(localChecklist));
+setTimeout(()=>{
+  if(db&&!demoMode){
+    db.collection('config').doc('checklist').get().then(doc=>{
+      if(doc.exists&&doc.data().items&&doc.data().items.length>0){
+        lsCL=doc.data().items;localStorage.setItem('hdk_cl',JSON.stringify(lsCL));
       }
-    }).catch(() => {});
+    }).catch(()=>{});
   }
-}, 2000);
+},2000);
 </script>
 </body>
 </html>
