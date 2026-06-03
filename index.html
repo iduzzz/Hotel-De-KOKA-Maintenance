@@ -665,7 +665,7 @@ const TXT={
     ok:'OK',iss:'Issue',edit:'Edit',save:'Save',del:'Delete',
     resolve:'Resolve',resolved:'Resolved',
     fall:'All',fopen:'Open',fres:'Resolved',
-    lc:'Clean',li:'Has issues',lp:'In progress',ln:'Not checked',
+    lc:'Checked',li:'Has issues',ln:'Not checked',
     repAt:'Reported',fixAt:'Fixed',logout:'Sign out',
     wrongPin:'Incorrect PIN — try again',
     tSubmit:'Report submitted!',tResolve:'Marked resolved',tUnresolve:'Marked open',
@@ -687,7 +687,7 @@ const TXT={
     ok:'ОК',iss:'Проблем',edit:'Уреди',save:'Зачувај',del:'Избриши',
     resolve:'Реши',resolved:'Решено',
     fall:'Сите',fopen:'Отворени',fres:'Решени',
-    lc:'Чисто',li:'Проблеми',lp:'Во тек',ln:'Непроверено',
+    lc:'Проверено',li:'Проблеми',ln:'Непроверено',
     repAt:'Пријавено',fixAt:'Поправено',logout:'Одјава',
     wrongPin:'Погрешен PIN — обидете се повторно',
     tSubmit:'Извештајот е поднесен!',tResolve:'Означено решено',tUnresolve:'Означено отворено',
@@ -845,7 +845,10 @@ function syncFromFirebase(callback){
       localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
     }).catch(()=>{});
     const p2=db.collection('roomStatus').get().then(snap=>{
-      snap.forEach(doc=>{lsRSt[doc.id]=doc.data().status;});
+      // Full replace — not merge — so deleted rooms disappear everywhere
+      const fresh={};
+      snap.forEach(doc=>{fresh[doc.id]=doc.data().status;});
+      lsRSt=fresh;
       localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
     }).catch(()=>{});
     const p3=db.collection('config').doc('checklist').get().then(doc=>{
@@ -1234,7 +1237,6 @@ function deleteReport(repId){
   const rep=lsReps.find(r=>r.id===repId);
   const room=rep?rep.room:null;
   lsReps=lsReps.filter(r=>r.id!==repId);
-  // If no more issue reports for this room, clear room status too
   if(room){
     const hasMoreIssues=lsReps.some(r=>r.room===room&&r.issues&&r.issues.some(i=>!i.resolved));
     if(!hasMoreIssues) delete lsRSt[room];
@@ -1244,7 +1246,11 @@ function deleteReport(repId){
   if(db&&!demoMode){
     db.collection('reports').doc(repId).delete().catch(()=>{});
     if(room){
-      db.collection('roomStatus').doc(room).delete().catch(()=>{});
+      // Only delete roomStatus if no other issues remain for this room in Firestore
+      const stillHasIssues=lsReps.some(r=>r.room===room&&r.issues&&r.issues.some(i=>!i.resolved));
+      if(!stillHasIssues){
+        db.collection('roomStatus').doc(room).delete().catch(()=>{});
+      }
     }
   }
   toast('🗑 Report deleted');
