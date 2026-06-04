@@ -566,11 +566,11 @@ body{background:#0a0e1a;color:#fff;}
 </div>
 
 <!-- ROOM ISSUES MODAL -->
-<div class="room-iss-bg" id="room-iss-bg" onclick="closeRoomIssModal(event)">
-  <div class="room-iss-modal">
+<div class="room-iss-bg" id="room-iss-bg" onclick="closeRoomIssModal(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;display:none;align-items:center;justify-content:center;padding:24px;">
+  <div class="room-iss-modal" style="background:#fff;border-radius:20px;width:100%;max-width:560px;max-height:75vh;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,0.3);overflow:hidden;margin:auto;">
     <div class="rim-header">
       <h3 id="rim-title">Room 101 — Issues</h3>
-      <button class="rim-close" onclick="closeRoomIssModal()">✕ Close</button>
+      <button class="rim-close" onclick="document.getElementById('room-iss-bg').classList.remove('open');document.getElementById('room-iss-bg').style.display='none';">✕ Close</button>
     </div>
     <div class="rim-body" id="rim-body"></div>
   </div>
@@ -1270,12 +1270,18 @@ function openRoomIssModal(room){
       body.appendChild(row);
     });
   }
-  document.getElementById('room-iss-bg').classList.add('open');
+  const bg = document.getElementById('room-iss-bg');
+  bg.style.display = 'flex';
+  bg.style.alignItems = 'center';
+  bg.style.justifyContent = 'center';
+  bg.classList.add('open');
 }
 
 function closeRoomIssModal(e){
   if(e&&e.target!==document.getElementById('room-iss-bg'))return;
-  document.getElementById('room-iss-bg').classList.remove('open');
+  const bg=document.getElementById('room-iss-bg');
+  bg.classList.remove('open');
+  bg.style.display='none';
 }
 
 // ══════════════════════
