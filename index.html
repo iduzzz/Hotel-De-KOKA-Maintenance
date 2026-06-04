@@ -1307,6 +1307,50 @@ function resolveIss(repId,issIdx){
 }
 
 // ══════════════════════
+// NOTIFICATION SOUND
+// ══════════════════════
+let audioCtx = null;
+
+function initAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+  }
+}
+
+function playAlertSound(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+
+    const now = audioCtx.currentTime;
+
+    // Three-tone alert: high-mid-high
+    const tones = [
+      {freq:880, start:0,    dur:0.15},
+      {freq:660, start:0.18, dur:0.12},
+      {freq:880, start:0.33, dur:0.25},
+    ];
+
+    tones.forEach(t=>{
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(t.freq, now + t.start);
+      gain.gain.setValueAtTime(0, now + t.start);
+      gain.gain.linearRampToValueAtTime(0.5, now + t.start + 0.02);
+      gain.gain.linearRampToValueAtTime(0, now + t.start + t.dur);
+      osc.start(now + t.start);
+      osc.stop(now + t.start + t.dur + 0.05);
+    });
+  }catch(e){}
+}
+
+// Unlock audio context on first user interaction (required by browsers)
+document.addEventListener('pointerdown', initAudio, {once:true});
+
+// ══════════════════════
 // NOTIFICATIONS
 // ══════════════════════
 let notifList = JSON.parse(localStorage.getItem('hdk_notifs') || '[]');
@@ -1363,14 +1407,13 @@ function addNotification(rep){
     timestamp: rep.timestamp,
     read: false
   };
-  // Avoid duplicates
   if(notifList.find(n => n.id === rep.id)) return;
   notifList.unshift(notif);
   if(notifList.length > 50) notifList = notifList.slice(0, 50);
   localStorage.setItem('hdk_notifs', JSON.stringify(notifList));
   updateBadge();
   shakeBell();
-  // Also refresh maintenance list if already viewing it
+  playAlertSound();
   if(currentUserRole === 'maintenance' || currentUserRole === 'superadmin'){
     loadMaint();
   }
