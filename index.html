@@ -448,6 +448,48 @@ body{background:#0a0e1a;color:#fff;}
 }
 .bell-shake{animation:bell-shake 0.5s ease;}
 #page-app{position:relative;}
+
+/* ── ROOM ISSUES MODAL ── */
+.room-iss-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:300;display:none;align-items:flex-end;justify-content:center;
+}
+.room-iss-bg.open{display:flex;}
+.room-iss-modal{
+  background:#fff;border-radius:20px 20px 0 0;
+  width:100%;max-width:640px;
+  max-height:80vh;display:flex;flex-direction:column;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+  overflow:hidden;
+}
+.rim-header{
+  background:#0d1628;padding:18px 20px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.rim-header h3{font-size:20px;font-weight:800;color:#fff;}
+.rim-close{
+  background:rgba(255,255,255,0.12);border:none;
+  color:#fff;border-radius:8px;padding:7px 14px;
+  font-size:14px;font-weight:600;cursor:pointer;
+}
+.rim-body{overflow-y:auto;padding:16px 20px 28px;-webkit-overflow-scrolling:touch;}
+.rim-issue-row{
+  padding:14px 0;border-bottom:1px solid #f0ede6;
+  display:flex;flex-direction:column;gap:5px;
+}
+.rim-issue-row:last-child{border-bottom:none;}
+.rim-issue-name{font-size:16px;font-weight:700;color:#1a1a1a;}
+.rim-issue-note{font-size:14px;color:#5a5550;}
+.rim-issue-ts{font-size:12px;color:#9a9690;}
+.rim-issue-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:700;padding:3px 10px;
+  border-radius:10px;align-self:flex-start;
+}
+.rim-issue-badge.open{background:#fef0ef;color:#e74c3c;}
+.rim-issue-badge.res{background:#e8f8ef;color:#27ae60;}
+.rim-empty{text-align:center;padding:40px 20px;color:#9a9690;font-size:15px;}
+
 #toast{
   position:fixed;bottom:28px;left:50%;
   transform:translateX(-50%) translateY(100px);
@@ -522,6 +564,17 @@ body{background:#0a0e1a;color:#fff;}
   </div>
 </div>
 
+<!-- ROOM ISSUES MODAL -->
+<div class="room-iss-bg" id="room-iss-bg" onclick="closeRoomIssModal(event)">
+  <div class="room-iss-modal">
+    <div class="rim-header">
+      <h3 id="rim-title">Room 101 — Issues</h3>
+      <button class="rim-close" onclick="closeRoomIssModal()">✕ Close</button>
+    </div>
+    <div class="rim-body" id="rim-body"></div>
+  </div>
+</div>
+
 <!-- ════ APP ════ -->
 <div id="page-app" class="page">
   <div class="topbar">
@@ -556,6 +609,7 @@ body{background:#0a0e1a;color:#fff;}
         <button class="hktab on" id="tab-rooms" onclick="hkTab('rooms')"><span id="t-tabr">Rooms</span></button>
         <button class="hktab" id="tab-status" onclick="hkTab('status')"><span id="t-tabs">Status</span></button>
         <button class="hktab" id="tab-manage" onclick="hkTab('manage')"><span id="t-tabm">Checklist</span></button>
+        <button class="hktab super-admin-only" id="tab-reports" onclick="hkTab('reports')" style="display:none"><span id="t-tabadmrep">Reports</span></button>
       </div>
       <div class="view on" id="v-rooms"><div id="rooms-cont"></div></div>
       <div class="view" id="v-checklist">
@@ -588,6 +642,16 @@ body{background:#0a0e1a;color:#fff;}
           <input type="text" id="new-inp" /><button onclick="addItem()" id="t-addbtn">+ Add</button>
         </div>
         <div class="mi-list" id="mi-cont"></div>
+      </div>
+      <div class="view" id="v-reports">
+        <div class="sec-title">Reports</div>
+        <div class="mfilt">
+          <button class="fbtn on" id="admflt-all" onclick="setAdmFlt('all')">All</button>
+          <button class="fbtn" id="admflt-open" onclick="setAdmFlt('open')">Open</button>
+          <button class="fbtn" id="admflt-res" onclick="setAdmFlt('resolved')">Resolved</button>
+          <button class="fbtn fbtn-wipe" onclick="wipeAllReports()">🗑 Delete ALL</button>
+        </div>
+        <div id="adm-rep-cont"></div>
       </div>
     </div>
 
@@ -827,15 +891,18 @@ function enterApp(r){
   }
 
   syncFromFirebase(()=>{
-    if(r==='housekeeper'||r==='reception'){
+    if(r==='housekeeper'||r==='reception'||r==='superadmin'||r==='maintenance'){
       document.getElementById('shell-hk').style.display='flex';
       document.getElementById('shell-mt').style.display='none';
+      if(r==='superadmin') document.body.classList.add('super-admin-mode');
+      // Show Reports tab for maintenance and admin
+      const repTab=document.getElementById('tab-reports');
+      if(repTab) repTab.style.display=(r==='maintenance'||r==='superadmin')?'block':'none';
       hkTab('rooms');
     }else{
       document.getElementById('shell-hk').style.display='none';
       document.getElementById('shell-mt').style.display='flex';
-      if(r==='superadmin') document.body.classList.add('super-admin-mode');
-      else document.body.classList.remove('super-admin-mode');
+      document.body.classList.remove('super-admin-mode');
       loadMaint();
     }
     // Start real-time listener for maintenance/admin
@@ -879,6 +946,8 @@ function doLogout(){
   document.getElementById('notif-panel').style.display='none';
   notifPanelOpen=false;
   document.body.classList.remove('super-admin-mode');
+  const repTab=document.getElementById('tab-reports');
+  if(repTab) repTab.style.display='none';
   selRole('housekeeper');
   document.getElementById('page-app').classList.remove('active');
   document.getElementById('page-login').classList.add('active');
@@ -888,19 +957,20 @@ function doLogout(){
 // HK TABS
 // ══════════════════════
 function hkTab(t){
-  ['rooms','checklist','status','manage'].forEach(v=>{
+  ['rooms','checklist','status','manage','reports'].forEach(v=>{
     document.getElementById('v-'+v).classList.remove('on');
   });
-  ['rooms','status','manage'].forEach(x=>{
+  ['rooms','status','manage','reports'].forEach(x=>{
     const el=document.getElementById('tab-'+x);
     if(el)el.classList.remove('on');
   });
   document.getElementById('v-'+t).classList.add('on');
   const te=document.getElementById('tab-'+t);
   if(te)te.classList.add('on');
-  if(t==='rooms')renderRooms();
-  if(t==='status')renderStatus();
-  if(t==='manage')renderManage();
+  if(t==='rooms')   renderRooms();
+  if(t==='status')  renderStatus();
+  if(t==='manage')  renderManage();
+  if(t==='reports') renderAdmReports();
 }
 
 // ══════════════════════
@@ -1114,7 +1184,18 @@ function renderStatus(){
         const st=data[room]||null;
         if(st)tile.classList.add(st);
         const stlbl=st?T(st==='issue'?'hasIssues':'checked'):'—';
-        tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>';
+        // Count open issues
+        const openCount=lsReps
+          .filter(r=>r.room===room)
+          .reduce((n,r)=>n+r.issues.filter(i=>!i.resolved).length,0);
+        tile.innerHTML='<div class="rn">'+room+'</div>'
+          +'<div class="rs">'+stlbl+'</div>'
+          +(openCount>0?'<div class="ibadge">'+openCount+'</div>':'');
+        // Clickable only if has issues
+        if(st==='issue'||openCount>0){
+          tile.style.cursor='pointer';
+          tile.onclick=()=>openRoomIssModal(room);
+        }
         grid.appendChild(tile);
       });
       blk.appendChild(grid);
@@ -1126,6 +1207,97 @@ function renderStatus(){
       .then(snap=>{const d={};snap.forEach(doc=>{d[doc.id]=doc.data().status;});draw(d);})
       .catch(()=>draw(lsRSt));
   }else draw(lsRSt);
+}
+
+let admFlt='all';
+function setAdmFlt(f){
+  admFlt=f;
+  ['all','open','res'].forEach(x=>document.getElementById('admflt-'+x).classList.remove('on'));
+  document.getElementById('admflt-'+f).classList.add('on');
+  renderAdmReports();
+}
+function renderAdmReports(){
+  // Reuse renderMaint logic but render into adm-rep-cont
+  if(db&&!demoMode){
+    db.collection('reports').orderBy('timestamp','desc').get()
+      .then(snap=>{const r=[];snap.forEach(d=>r.push(d.data()));_drawAdmReps(r);})
+      .catch(()=>_drawAdmReps(lsReps));
+  }else _drawAdmReps(lsReps);
+}
+function _drawAdmReps(reports){
+  const cont=document.getElementById('adm-rep-cont');
+  if(!cont)return;
+  cont.innerHTML='';
+  let list=reports.filter(r=>r.issues&&r.issues.length>0);
+  if(admFlt==='open') list=list.filter(r=>r.issues.some(i=>!i.resolved));
+  if(admFlt==='res')  list=list.filter(r=>r.issues.every(i=>i.resolved));
+  if(!list.length){cont.innerHTML='<div class="empty-s"><div class="ei">✅</div><p>No reports</p></div>';return;}
+  list.forEach(rep=>{
+    const allRes=rep.issues.every(i=>i.resolved);
+    const card=document.createElement('div');
+    card.className='rcard'+(allRes?' allres':'');
+    let issH='';
+    rep.issues.forEach((iss,idx)=>{
+      const bClass=iss.resolved?'res':'open';
+      const bTxt=iss.resolved?T('resolved'):'Open';
+      const btnClass=iss.resolved?'done':'open';
+      const btnTxt=iss.resolved?T('resolved'):T('resolve');
+      const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>':'';
+      issH+='<div class="rirow"><div class="riinfo">'
+        +'<div class="riname">'+iss.item+'</div>'
+        +(iss.note?'<div class="rinote">📝 '+iss.note+'</div>':'')
+        +'<div class="rits"><div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+'</div>'+fixLine+'</div>'
+        +'</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'
+        +'<span class="ribadge '+bClass+'">'+bTxt+'</span>'
+        +'<button class="resbtn '+btnClass+'" onclick="resolveIss(\''+rep.id+'\','+idx+')">'+btnTxt+'</button>'
+        +'</div></div>';
+    });
+    card.innerHTML='<div class="rcard-top"><div class="rnum">Room '+rep.room+'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div class="rmeta"><div class="mlbl">REPORTED</div><div class="mval">'+fmtDT(rep.timestamp)+'</div></div>'
+      +'<button class="delbtn-report" style="display:block" onclick="deleteReport(\''+rep.id+'\')">🗑</button>'
+      +'</div></div><div class="rissues">'+issH+'</div>';
+    cont.appendChild(card);
+  });
+}
+
+function openRoomIssModal(room){
+  document.getElementById('rim-title').textContent='Room '+room+' — Issues';
+  const body=document.getElementById('rim-body');
+  body.innerHTML='';
+  // Collect all unresolved issues for this room
+  const allIssues=[];
+  lsReps.filter(r=>r.room===room).forEach(rep=>{
+    rep.issues.forEach(iss=>{
+      allIssues.push({...iss, reportedAt:rep.timestamp});
+    });
+  });
+  if(allIssues.length===0){
+    body.innerHTML='<div class="rim-empty">No issues reported for this room.</div>';
+  }else{
+    allIssues.forEach(iss=>{
+      const row=document.createElement('div');
+      row.className='rim-issue-row';
+      const badge=iss.resolved
+        ?'<span class="rim-issue-badge res">✓ '+T('resolved')+'</span>'
+        :'<span class="rim-issue-badge open">⚠ Open</span>';
+      const fixedLine=iss.resolvedAt
+        ?'<div class="rim-issue-ts">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>'
+        :'';
+      row.innerHTML=badge
+        +'<div class="rim-issue-name">'+iss.item+'</div>'
+        +(iss.note?'<div class="rim-issue-note">📝 '+iss.note+'</div>':'')
+        +'<div class="rim-issue-ts">📋 '+T('repAt')+': '+fmtDT(iss.reportedAt)+'</div>'
+        +fixedLine;
+      body.appendChild(row);
+    });
+  }
+  document.getElementById('room-iss-bg').classList.add('open');
+}
+
+function closeRoomIssModal(e){
+  if(e&&e.target!==document.getElementById('room-iss-bg'))return;
+  document.getElementById('room-iss-bg').classList.remove('open');
 }
 
 // ══════════════════════
