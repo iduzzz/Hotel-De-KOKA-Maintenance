@@ -897,7 +897,7 @@ function enterApp(r){
       if(r==='superadmin') document.body.classList.add('super-admin-mode');
       // Show Reports tab for maintenance and admin
       const repTab=document.getElementById('tab-reports');
-      if(repTab) repTab.style.display=(r==='maintenance'||r==='superadmin')?'block':'none';
+      if(repTab) repTab.style.display=(r==='maintenance'||r==='superadmin')?'flex':'none';
       hkTab('rooms');
     }else{
       document.getElementById('shell-hk').style.display='none';
@@ -1052,6 +1052,7 @@ function setOK(item){
   updateTile(item);
   updateProg();
   saveItemInstant(item);
+  toast('✓  '+item+' — OK');
 }
 
 function setISS(item){
@@ -1141,29 +1142,7 @@ function updateProg(){
 
 function eid(s){return btoa(unescape(encodeURIComponent(s))).replace(/[^a-zA-Z0-9]/g,'');}
 
-function submitChecklist(){} // no longer needed — auto-save on every tap
-
-function submitChecklist(){
-  const issues=lsCL
-    .filter(i=>clState[i]&&clState[i].status==='iss')
-    .map(i=>({item:i,note:clState[i].note||'',resolved:false,resolvedAt:null}));
-  const allDone=lsCL.every(i=>clState[i]&&clState[i].status!==null);
-  const rst=issues.length>0?'issue':allDone?'clean':'inprogress';
-  const rep={
-    id:Date.now().toString(),room:curRoom,
-    timestamp:new Date().toISOString(),issues:issues,status:rst
-  };
-  lsReps.unshift(rep);
-  localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
-  lsRSt[curRoom]=rst;
-  localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
-  if(db&&!demoMode){
-    db.collection('reports').doc(rep.id).set(rep);
-    db.collection('roomStatus').doc(curRoom).set({status:rst,updatedAt:rep.timestamp});
-  }
-  toast(T('tSubmit'));
-  closeChecklist();
-}
+// submitChecklist removed — auto-save on every OK/Issue tap via saveRoomState()
 
 // ══════════════════════
 // STATUS
@@ -1191,11 +1170,9 @@ function renderStatus(){
         tile.innerHTML='<div class="rn">'+room+'</div>'
           +'<div class="rs">'+stlbl+'</div>'
           +(openCount>0?'<div class="ibadge">'+openCount+'</div>':'');
-        // Clickable only if has issues
-        if(st==='issue'||openCount>0){
-          tile.style.cursor='pointer';
-          tile.onclick=()=>openRoomIssModal(room);
-        }
+        // All rooms with any status are clickable to show details
+        tile.style.cursor='pointer';
+        tile.onclick=()=>openRoomIssModal(room);
         grid.appendChild(tile);
       });
       blk.appendChild(grid);
