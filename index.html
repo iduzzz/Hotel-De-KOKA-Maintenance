@@ -1393,22 +1393,29 @@ function renderMaint(reps){
   });
 }
 
+function refreshReports(){
+  // Refresh whichever reports view is currently visible
+  const admView = document.getElementById('v-reports');
+  const mtView  = document.getElementById('v-maint');
+  if(admView && admView.classList.contains('on')) renderAdmReports();
+  else if(mtView && mtView.classList.contains('on')) loadMaint();
+  else { renderAdmReports(); loadMaint(); }
+}
+
 function deleteReport(repId){
   if(!document.body.classList.contains('super-admin-mode'))return;
   const rep=lsReps.find(r=>r.id===repId);
   const room=rep?rep.room:null;
   lsReps=lsReps.filter(r=>r.id!==repId);
-  // Always delete roomStatus for this room — force full re-check
   if(room) delete lsRSt[room];
   localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
   localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
   if(db&&!demoMode){
     db.collection('reports').doc(repId).delete().catch(()=>{});
-    // Always delete roomStatus — housekeeper will re-set it when they re-check the room
     if(room) db.collection('roomStatus').doc(room).delete().catch(()=>{});
   }
   toast('🗑 Report deleted');
-  loadMaint();
+  refreshReports();
 }
 
 function wipeAllReports(){
@@ -1421,22 +1428,16 @@ function wipeAllReports(){
   localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
   localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
   if(db&&!demoMode){
-    // Delete all reports from Firestore
     const batch=db.batch();
-    repsCopy.forEach(r=>{
-      batch.delete(db.collection('reports').doc(r.id));
-    });
-    roomsCopy.forEach(room=>{
-      batch.delete(db.collection('roomStatus').doc(room));
-    });
+    repsCopy.forEach(r=>{ batch.delete(db.collection('reports').doc(r.id)); });
+    roomsCopy.forEach(room=>{ batch.delete(db.collection('roomStatus').doc(room)); });
     batch.commit().catch(()=>{
-      // If batch fails, delete one by one
       repsCopy.forEach(r=>db.collection('reports').doc(r.id).delete().catch(()=>{}));
       roomsCopy.forEach(room=>db.collection('roomStatus').doc(room).delete().catch(()=>{}));
     });
   }
   toast('🗑 All reports deleted');
-  loadMaint();
+  refreshReports();
 }
 
 function resolveIss(repId,issIdx){
@@ -1460,8 +1461,8 @@ function resolveIss(repId,issIdx){
         ?db.collection('roomStatus').doc(data.room).set({status:'checked',updatedAt:now})
         :Promise.resolve();
       return Promise.all([p1,p2]);
-    }).catch(()=>{}).finally(()=>loadMaint());
-  }else loadMaint();
+    }).catch(()=>{}).finally(()=>refreshReports());
+  }else refreshReports();
 }
 
 // ══════════════════════
@@ -1580,7 +1581,7 @@ function addNotification(rep){
   shakeBell();
   playAlertSound();
   if(currentUserRole === 'maintenance' || currentUserRole === 'superadmin'){
-    loadMaint();
+    refreshReports();
   }
 }
 
