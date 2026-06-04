@@ -540,7 +540,10 @@ body{background:#0a0e1a;color:#fff;}
   <div id="notif-panel" class="notif-panel" style="display:none">
     <div class="notif-panel-header">
       <span id="t-notif-title">New Reports</span>
-      <button class="notif-clear" onclick="clearNotifs()">✓ Clear all</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="notif-clear" onclick="playAlertSound();event.stopPropagation();" title="Test sound">🔊</button>
+        <button class="notif-clear" onclick="clearNotifs()">✓ Clear all</button>
+      </div>
     </div>
     <div id="notif-list"></div>
   </div>
@@ -1310,45 +1313,52 @@ function resolveIss(repId,issIdx){
 // NOTIFICATION SOUND
 // ══════════════════════
 let audioCtx = null;
+let audioUnlocked = false;
 
-function initAudio(){
-  if(!audioCtx){
-    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
-  }
+function unlockAudio(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended'){
+      audioCtx.resume().then(()=>{ audioUnlocked = true; });
+    } else {
+      audioUnlocked = true;
+    }
+  }catch(e){}
 }
+
+// Re-unlock on every interaction — browsers can suspend again after idle
+document.addEventListener('pointerdown', unlockAudio);
+document.addEventListener('click', unlockAudio);
 
 function playAlertSound(){
   try{
     if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-
-    const now = audioCtx.currentTime;
-
-    // Three-tone alert: high-mid-high
-    const tones = [
-      {freq:880, start:0,    dur:0.15},
-      {freq:660, start:0.18, dur:0.12},
-      {freq:880, start:0.33, dur:0.25},
-    ];
-
-    tones.forEach(t=>{
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(t.freq, now + t.start);
-      gain.gain.setValueAtTime(0, now + t.start);
-      gain.gain.linearRampToValueAtTime(0.5, now + t.start + 0.02);
-      gain.gain.linearRampToValueAtTime(0, now + t.start + t.dur);
-      osc.start(now + t.start);
-      osc.stop(now + t.start + t.dur + 0.05);
+    const resume = audioCtx.state === 'suspended' ? audioCtx.resume() : Promise.resolve();
+    resume.then(()=>{
+      const now = audioCtx.currentTime;
+      // Louder 4-tone alert
+      const tones = [
+        {freq:1046, start:0.0,  dur:0.18},
+        {freq:784,  start:0.22, dur:0.14},
+        {freq:1046, start:0.40, dur:0.18},
+        {freq:1318, start:0.62, dur:0.35},
+      ];
+      tones.forEach(t=>{
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(t.freq, now + t.start);
+        gain.gain.setValueAtTime(0.0,  now + t.start);
+        gain.gain.linearRampToValueAtTime(0.8, now + t.start + 0.03);
+        gain.gain.linearRampToValueAtTime(0.0, now + t.start + t.dur);
+        osc.start(now + t.start);
+        osc.stop(now + t.start + t.dur + 0.1);
+      });
     });
-  }catch(e){}
+  }catch(e){ console.warn('Audio error:', e); }
 }
-
-// Unlock audio context on first user interaction (required by browsers)
-document.addEventListener('pointerdown', initAudio, {once:true});
 
 // ══════════════════════
 // NOTIFICATIONS
