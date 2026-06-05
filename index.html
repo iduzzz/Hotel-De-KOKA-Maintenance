@@ -11,7 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
-html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;touch-action:pan-y;}
 body{background:#0a0e1a;color:#fff;}
 
 /* ── PAGES ── */
@@ -117,7 +117,7 @@ body{background:#0a0e1a;color:#fff;}
 }
 .demo-bar.on{display:block;}
 
-.app-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.app-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;height:100%;}
 
 /* ── HK TABS ── */
 .hktabs{
@@ -134,7 +134,7 @@ body{background:#0a0e1a;color:#fff;}
 .hktab.on{color:#0d1628;border-bottom-color:#c4a046;}
 
 /* ── VIEWS ── */
-.view{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px;}
+.view{display:none;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px;min-height:0;}
 .view.on{display:block;}
 
 /* ════════════════════════════════
@@ -607,7 +607,7 @@ body{background:#0a0e1a;color:#fff;}
   <div class="app-body">
 
     <!-- HK SHELL -->
-    <div id="shell-hk" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+    <div id="shell-hk" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;height:100%;">
       <div class="hktabs">
         <button class="hktab on" id="tab-rooms" onclick="hkTab('rooms')"><span id="t-tabr">Rooms</span></button>
         <button class="hktab" id="tab-status" onclick="hkTab('status')"><span id="t-tabs">Status</span></button>
@@ -659,8 +659,8 @@ body{background:#0a0e1a;color:#fff;}
     </div>
 
     <!-- MT / RC SHELL -->
-    <div id="shell-mt" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
-      <div class="view on" id="v-maint" style="display:block;">
+    <div id="shell-mt" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;height:100%;">
+      <div class="view on" id="v-maint" style="display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;">
         <div class="sec-title" id="t-mttitle">Maintenance Reports</div>
         <div class="mfilt">
           <button class="fbtn on" id="flt-all" onclick="setFlt('all')"><span id="t-fall">All</span></button>
