@@ -1470,7 +1470,7 @@ function wipeAllReports(){
 }
 
 function resolveIss(repId,issIdx){
-  // ONE-WAY: can only resolve, never un-resolve by clicking again
+  // ONE-WAY: can only resolve, never un-resolve
   const rep=lsReps.find(r=>r.id===repId);
   if(rep && rep.issues[issIdx].resolved) return; // already resolved, do nothing
   const now=new Date().toISOString();
@@ -1481,20 +1481,31 @@ function resolveIss(repId,issIdx){
     localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
     toast(T('tResolve'));
   }
+  resolvingLock = true; // block snapshot re-render while Firestore write is in flight
   if(db&&!demoMode){
     db.collection('reports').doc(repId).get().then(doc=>{
       if(!doc.exists)return;
       const data=doc.data();
-      if(data.issues[issIdx].resolved) return; // already resolved in Firestore too
-      data.issues[issIdx].resolved=true;
-      data.issues[issIdx].resolvedAt=now;
+      // Merge resolved state — never downgrade
+      data.issues.forEach((iss,i)=>{
+        if(rep && rep.issues[i] && rep.issues[i].resolved){
+          data.issues[i].resolved=true;
+          data.issues[i].resolvedAt=rep.issues[i].resolvedAt;
+        }
+      });
       const p1=db.collection('reports').doc(repId).update({issues:data.issues});
       const p2=!data.issues.some(i=>!i.resolved)
         ?db.collection('roomStatus').doc(data.room).set({status:'checked',updatedAt:now})
         :Promise.resolve();
       return Promise.all([p1,p2]);
-    }).catch(()=>{}).finally(()=>refreshReports());
-  }else refreshReports();
+    }).catch(()=>{}).finally(()=>{
+      resolvingLock=false;
+      refreshReports();
+    });
+  }else{
+    resolvingLock=false;
+    refreshReports();
+  }
 }
 
 // ══════════════════════
@@ -1556,6 +1567,7 @@ let unsubscribeSnapshot = null;
 let unsubscribeRoomStatus = null;
 let notifPanelOpen = false;
 let currentUserRole = null;
+let resolvingLock = false; // prevents snapshot from re-rendering during resolve write
 
 function isNotifRole(r){ return r === 'maintenance' || r === 'superadmin'; }
 
@@ -1595,8 +1607,21 @@ function startRealtimeListener(){
         if(change.type === 'modified'){
           const rep = change.doc.data();
           const idx = lsReps.findIndex(r => r.id === rep.id);
-          if(idx >= 0){ lsReps[idx] = rep; }
-          else { lsReps.unshift(rep); }
+          if(idx >= 0){
+            // Merge: never downgrade a resolved issue back to unresolved
+            if(lsReps[idx].issues && rep.issues){
+              rep.issues.forEach((iss,i)=>{
+                if(lsReps[idx].issues[i] && lsReps[idx].issues[i].resolved && !iss.resolved){
+                  // Local says resolved, Firestore says not yet — keep local resolved state
+                  rep.issues[i].resolved = true;
+                  rep.issues[i].resolvedAt = lsReps[idx].issues[i].resolvedAt;
+                }
+              });
+            }
+            lsReps[idx] = rep;
+          } else {
+            lsReps.unshift(rep);
+          }
           localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
           if(rep.status) lsRSt[rep.room] = rep.status;
         }
@@ -1607,8 +1632,10 @@ function startRealtimeListener(){
         }
       });
       // Re-render rooms view if visible
-      const vRooms = document.getElementById('v-rooms');
-      if(vRooms && vRooms.classList.contains('on')) renderRooms();
+      if(!resolvingLock){
+        const vRooms = document.getElementById('v-rooms');
+        if(vRooms && vRooms.classList.contains('on')) renderRooms();
+      }
     }, () => {});
 
   // Listen to roomStatus changes — re-render rooms live for ALL roles
