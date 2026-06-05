@@ -676,6 +676,31 @@ body{background:#0a0e1a;color:#fff;}
 
 <script>
 // ══════════════════════
+// SERVICE WORKER
+// ══════════════════════
+function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return;
+  // Inline SW as blob — single file approach
+  const swCode = [
+    "self.addEventListener('push',e=>{",
+    "  const d=e.data?e.data.json():{};",
+    "  e.waitUntil(self.registration.showNotification(d.title||'Hotel De KOKA',{",
+    "    body:d.body||'New report',tag:d.tag||'hdk',requireInteraction:false",
+    "  }));",
+    "});",
+    "self.addEventListener('notificationclick',e=>{",
+    "  e.notification.close();",
+    "  e.waitUntil(clients.openWindow(self.location.origin+'/Hotel-De-KOKA-Maintenance/'));",
+    "});"
+  ].join('\n');
+  try{
+    const blob = new Blob([swCode],{type:'application/javascript'});
+    const url = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url,{scope:'/'}).catch(()=>{});
+  }catch(e){}
+}
+
+// ══════════════════════
 // FIREBASE
 // ══════════════════════
 const FB = {
@@ -886,6 +911,7 @@ function enterApp(r){
   if(isNotifRole(r)){
     bell.style.display = 'flex';
     requestNotifPermission();
+    registerServiceWorker();
     updateBadge();
   } else {
     bell.style.display = 'none';
@@ -906,8 +932,8 @@ function enterApp(r){
       document.body.classList.remove('super-admin-mode');
       loadMaint();
     }
-    // Start real-time listener for maintenance/admin
-    if(isNotifRole(r)) startRealtimeListener();
+    // Start real-time listener for ALL roles
+    startRealtimeListener();
   });
 }
 
@@ -1521,6 +1547,7 @@ function playAlertSound(){
 // ══════════════════════
 let notifList = JSON.parse(localStorage.getItem('hdk_notifs') || '[]');
 let unsubscribeSnapshot = null;
+let unsubscribeRoomStatus = null;
 let notifPanelOpen = false;
 let currentUserRole = null;
 
@@ -1535,7 +1562,11 @@ function requestNotifPermission(){
 function startRealtimeListener(){
   if(!db || demoMode) return;
   if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  if(unsubscribeRoomStatus){ unsubscribeRoomStatus(); unsubscribeRoomStatus = null; }
+
   const knownIds = new Set(lsReps.map(r => r.id));
+
+  // Listen to new reports — for ALL roles
   unsubscribeSnapshot = db.collection('reports')
     .orderBy('timestamp','desc')
     .onSnapshot(snap => {
@@ -1544,12 +1575,10 @@ function startRealtimeListener(){
           const rep = change.doc.data();
           if(!knownIds.has(rep.id)){
             knownIds.add(rep.id);
-            // Only notify if there are issues
-            if(rep.issues && rep.issues.length > 0){
+            if(rep.issues && rep.issues.length > 0 && isNotifRole(currentUserRole)){
               addNotification(rep);
               sendBrowserNotif(rep);
             }
-            // Update local data
             if(!lsReps.find(r => r.id === rep.id)){
               lsReps.unshift(rep);
               localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
@@ -1557,12 +1586,49 @@ function startRealtimeListener(){
             if(rep.status) lsRSt[rep.room] = rep.status;
           }
         }
+        if(change.type === 'modified'){
+          const rep = change.doc.data();
+          const idx = lsReps.findIndex(r => r.id === rep.id);
+          if(idx >= 0){ lsReps[idx] = rep; }
+          else { lsReps.unshift(rep); }
+          localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
+          if(rep.status) lsRSt[rep.room] = rep.status;
+        }
+        if(change.type === 'removed'){
+          const rep = change.doc.data();
+          lsReps = lsReps.filter(r => r.id !== rep.id);
+          localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
+        }
       });
+      // Re-render rooms view if visible
+      const vRooms = document.getElementById('v-rooms');
+      if(vRooms && vRooms.classList.contains('on')) renderRooms();
+    }, () => {});
+
+  // Listen to roomStatus changes — re-render rooms live for ALL roles
+  unsubscribeRoomStatus = db.collection('roomStatus')
+    .onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if(change.type === 'added' || change.type === 'modified'){
+          lsRSt[change.doc.id] = change.doc.data().status;
+        }
+        if(change.type === 'removed'){
+          delete lsRSt[change.doc.id];
+        }
+      });
+      localStorage.setItem('hdk_rst', JSON.stringify(lsRSt));
+      // Re-render rooms view if visible
+      const vRooms = document.getElementById('v-rooms');
+      if(vRooms && vRooms.classList.contains('on')) renderRooms();
+      // Re-render status view if visible
+      const vStatus = document.getElementById('v-status');
+      if(vStatus && vStatus.classList.contains('on')) renderStatus();
     }, () => {});
 }
 
 function stopRealtimeListener(){
   if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  if(unsubscribeRoomStatus){ unsubscribeRoomStatus(); unsubscribeRoomStatus = null; }
 }
 
 function addNotification(rep){
