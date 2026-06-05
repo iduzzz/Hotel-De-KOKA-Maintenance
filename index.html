@@ -1278,13 +1278,14 @@ function openRoomIssModal(room){
   body.innerHTML='';
   const allIssues=[];
   lsReps.filter(r=>r.room===room).forEach(rep=>{
-    rep.issues.forEach(iss=>{
-      allIssues.push({...iss, reportedAt:rep.timestamp});
+    rep.issues.forEach((iss,issIdx)=>{
+      allIssues.push({...iss, reportedAt:rep.timestamp, repId:rep.id, issIdx:issIdx});
     });
   });
   if(allIssues.length===0){
     body.innerHTML='<div class="rim-empty">No issues reported for this room.</div>';
   }else{
+    const canResolve = currentUserRole==='maintenance'||currentUserRole==='superadmin';
     allIssues.forEach(iss=>{
       const row=document.createElement('div');
       row.className='rim-issue-row';
@@ -1294,17 +1295,28 @@ function openRoomIssModal(room){
       const fixedLine=iss.resolvedAt
         ?'<div class="rim-issue-ts">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>'
         :'';
+      const resolveBtn = canResolve && !iss.resolved
+        ? '<button class="resbtn open" style="margin-top:8px;width:100%;" onclick="resolveFromModal(\''+iss.repId+'\','+iss.issIdx+')">🔧 '+T('resolve')+'</button>'
+        : (canResolve && iss.resolved ? '<div class="rim-issue-ts" style="margin-top:6px;color:#27ae60;font-weight:700;">✅ '+T('resolved')+'</div>' : '');
       row.innerHTML=badge
         +'<div class="rim-issue-name">'+iss.item+'</div>'
         +(iss.note?'<div class="rim-issue-note">📝 '+iss.note+'</div>':'')
         +'<div class="rim-issue-ts">📋 '+T('repAt')+': '+fmtDT(iss.reportedAt)+'</div>'
-        +fixedLine;
+        +fixedLine
+        +resolveBtn;
       body.appendChild(row);
     });
   }
   const bg=document.getElementById('room-iss-bg');
   bg.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:32px 24px;';
   document.getElementById('rim-close-btn').onclick=closeRoomIssFn;
+}
+
+function resolveFromModal(repId, issIdx){
+  resolveIss(repId, issIdx);
+  // Refresh the modal after resolving
+  const rep = lsReps.find(r=>r.id===repId);
+  if(rep) openRoomIssModal(rep.room);
 }
 
 function closeRoomIssFn(){
