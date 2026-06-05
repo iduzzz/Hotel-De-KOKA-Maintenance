@@ -6,7 +6,1929 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Hotel De KOKA</title><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Hotel De KOKA</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;}
+body{background:#0a0e1a;color:#fff;}
+
+/* ── PAGES ── */
+.page{position:fixed;top:0;left:0;right:0;bottom:0;display:none;flex-direction:column;overflow:hidden;}
+.page.active{display:flex;}
+
+/* ════════════════════════════════
+   LOGIN
+════════════════════════════════ */
+#page-login{
+  background:linear-gradient(150deg,#0d1628 0%,#0a1520 50%,#0d1a2e 100%);
+  align-items:center;justify-content:center;
+}
+.login-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.login-bg span{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(196,160,70,0.07) 0%,transparent 70%);}
+.login-bg span:nth-child(1){width:700px;height:700px;top:-250px;right:-200px;}
+.login-bg span:nth-child(2){width:500px;height:500px;bottom:-150px;left:-150px;}
+
+.login-wrap{position:relative;z-index:1;width:100%;max-width:420px;padding:32px 28px;display:flex;flex-direction:column;align-items:center;}
+
+.hotel-logo{text-align:center;margin-bottom:36px;}
+.hotel-logo .pre{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:rgba(196,160,70,0.6);margin-bottom:6px;}
+.hotel-logo h1{font-size:40px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.hotel-logo h1 em{color:#c4a046;font-style:normal;}
+.hotel-logo .sub{font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-top:8px;}
+
+.role-row{display:flex;gap:10px;width:100%;margin-bottom:28px;}
+.role-card{
+  flex:1;padding:14px 10px;text-align:center;
+  background:rgba(255,255,255,0.04);
+  border:1.5px solid rgba(255,255,255,0.08);
+  border-radius:14px;cursor:pointer;transition:all 0.15s;
+}
+.role-card.sel{background:rgba(196,160,70,0.1);border-color:rgba(196,160,70,0.45);}
+.role-card .ri{font-size:24px;margin-bottom:4px;}
+.role-card .rn{font-size:13px;font-weight:600;color:rgba(255,255,255,0.5);}
+.role-card.sel .rn{color:#c4a046;}
+
+.pin-lbl{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.28);margin-bottom:16px;align-self:flex-start;}
+.pin-dots{display:flex;gap:14px;margin-bottom:28px;}
+.pd{
+  width:15px;height:15px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.18);background:transparent;
+  transition:all 0.1s;
+}
+.pd.on{background:#c4a046;border-color:#c4a046;transform:scale(1.15);}
+.pd.err{background:#e74c3c;border-color:#e74c3c;}
+
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;}
+.pk{
+  aspect-ratio:1.5;background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.08);border-radius:12px;
+  font-size:22px;font-weight:300;color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  user-select:none;transition:background 0.08s, transform 0.08s;
+}
+.pk:active,.pk.pressed{background:rgba(196,160,70,0.22);border-color:rgba(196,160,70,0.4);transform:scale(0.93);}
+.pk.empty{background:transparent;border:none;cursor:default;}
+.pk.empty:active{background:transparent;transform:none;}
+.pk.del{font-size:18px;color:rgba(255,255,255,0.35);}
+
+.pin-err{min-height:18px;margin-top:14px;font-size:13px;color:#e74c3c;text-align:center;}
+
+.lang-btn-login{
+  position:absolute;top:20px;right:20px;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.45);border-radius:20px;
+  padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:1px;cursor:pointer;
+}
+
+/* ════════════════════════════════
+   APP SHELL
+════════════════════════════════ */
+#page-app{background:#f0ede6;}
+
+.topbar{
+  height:58px;min-height:58px;background:#0d1628;
+  display:flex;align-items:center;padding:0 20px;gap:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.25);z-index:50;flex-shrink:0;
+}
+.tlogo{font-size:17px;font-weight:800;color:#fff;letter-spacing:-0.3px;}
+.tlogo em{color:#c4a046;font-style:normal;}
+.tsep{flex:1;}
+.trole{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px;padding:5px 12px;
+}
+.trole .dot{width:7px;height:7px;border-radius:50%;background:#c4a046;}
+.trole span{font-size:12px;color:rgba(255,255,255,0.75);font-weight:500;}
+.tbtn{
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.55);border-radius:9px;
+  padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;
+  transition:background 0.1s;
+}
+.tbtn:active{background:rgba(255,255,255,0.14);}
+
+.demo-bar{
+  background:#fff8e0;border-bottom:1px solid #f0d070;
+  padding:7px 20px;font-size:12px;color:#9a7010;
+  font-weight:600;text-align:center;flex-shrink:0;display:none;
+}
+.demo-bar.on{display:block;}
+
+.app-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+
+/* ── HK TABS ── */
+.hktabs{
+  display:flex;background:#fff;
+  border-bottom:1px solid #e0dbd0;
+  padding:0 20px;flex-shrink:0;
+}
+.hktab{
+  padding:14px 22px;font-size:14px;font-weight:600;
+  color:#9a9690;border-bottom:3px solid transparent;
+  cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;
+  transition:all 0.12s;white-space:nowrap;
+}
+.hktab.on{color:#0d1628;border-bottom-color:#c4a046;}
+
+/* ── VIEWS ── */
+.view{display:none;padding:20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex-direction:column;}
+.view.on{display:flex;flex:1;min-height:0;flex-direction:column;}
+
+/* ════════════════════════════════
+   ROOMS VIEW
+════════════════════════════════ */
+.floor-block{margin-bottom:24px;}
+.floor-lbl{
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:#a0998f;
+  margin-bottom:10px;padding-bottom:7px;
+  border-bottom:1px solid #e0dbd0;
+}
+.room-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:8px;
+}
+.rtile{
+  aspect-ratio:1;background:#fff;
+  border:2px solid #e0dbd0;border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:transform 0.1s, border-color 0.15s;
+  position:relative;box-shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+.rtile:active{transform:scale(0.92);}
+.rtile .rn{font-size:18px;font-weight:800;color:#0d1628;}
+.rtile .rs{font-size:9px;color:#b0aaa0;margin-top:1px;font-weight:500;text-align:center;padding:0 4px;}
+.rtile.clean{border-color:#7fb3d3;background:#f0f6fb;}
+.rtile.clean .rn{color:#2471a3;}
+.rtile.issue{border-color:#e74c3c;background:#fef5f5;}
+.rtile.issue .rn{color:#c0392b;}
+.rtile.inprogress{border-color:#7fb3d3;background:#f0f6fb;}
+.rtile.inprogress .rn{color:#2471a3;}
+.rtile .ibadge{
+  position:absolute;top:-5px;right:-5px;
+  width:18px;height:18px;border-radius:50%;
+  background:#e74c3c;color:#fff;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 5px rgba(231,76,60,0.4);
+}
+
+/* ════════════════════════════════
+   CHECKLIST (GRID MODE)
+════════════════════════════════ */
+.cl-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.cl-back{
+  width:42px;height:42px;border-radius:11px;
+  background:#fff;border:1.5px solid #e0dbd0;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;color:#0d1628;flex-shrink:0;
+}
+.cl-room-bar{
+  flex:1;background:#0d1628;border-radius:14px;
+  padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
+}
+.cl-room-bar h2{font-size:20px;font-weight:800;color:#fff;}
+.cl-prog{
+  background:rgba(255,255,255,0.1);border-radius:20px;
+  padding:5px 13px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);
+}
+
+/* GRID OF ITEMS */
+.cl-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  gap:10px;
+  padding-bottom:90px;
+}
+.cl-tile{
+  background:#fff;border:2px solid #e8e3da;
+  border-radius:14px;padding:12px 10px 10px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:6px;
+  transition:border-color 0.12s, background 0.12s;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);
+  position:relative;text-align:center;
+}
+.cl-tile .ct-icon{display:none;}
+.cl-tile .ct-name{font-size:14px;font-weight:700;color:#3a3530;line-height:1.4;min-height:40px;display:flex;align-items:center;justify-content:center;}
+.cl-tile .ct-btns{display:flex;gap:6px;width:100%;margin-top:4px;}
+.ct-ok,.ct-iss{
+  flex:1;padding:7px 4px;border:none;border-radius:8px;
+  font-size:11px;font-weight:700;cursor:pointer;
+  transition:all 0.1s;letter-spacing:0.3px;
+}
+.ct-ok:active,.ct-iss:active{transform:scale(0.93);}
+.ct-ok{background:#e8f8ef;color:#27ae60;}
+.ct-ok.sel{background:#27ae60;color:#fff;}
+.ct-iss{background:#fef0ef;color:#e74c3c;}
+.ct-iss.sel{background:#e74c3c;color:#fff;}
+.cl-tile.ok{border-color:#27ae60;background:#f5fdf8;}
+.cl-tile.ok .ct-name{color:#1e8449;}
+.cl-tile.iss{border-color:#e74c3c;background:#fff8f8;}
+.cl-tile.iss .ct-name{color:#c0392b;}
+
+/* NOTE MODAL for issue */
+.note-modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  z-index:200;display:none;align-items:flex-end;justify-content:center;
+  padding-bottom:0;
+}
+.note-modal-bg.open{display:flex;}
+.note-modal{
+  background:#fff;border-radius:20px 20px 0 0;
+  padding:24px 20px 32px;width:100%;max-width:600px;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.2);
+}
+.note-modal h3{font-size:16px;font-weight:700;color:#0d1628;margin-bottom:4px;}
+.note-modal p{font-size:13px;color:#9a9690;margin-bottom:14px;}
+.note-modal textarea{
+  width:100%;padding:12px 14px;border:1.5px solid #e0dbd0;
+  border-radius:12px;font-size:15px;color:#1a1a1a;
+  font-family:inherit;resize:none;background:#f8f5f0;
+}
+.note-modal textarea:focus{outline:none;border-color:#c4a046;}
+.note-modal-btns{display:flex;gap:10px;margin-top:14px;}
+.note-modal-btns button{
+  flex:1;padding:14px;border:none;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;
+}
+.note-btn-cancel{background:#f0ede6;color:#6b6560;}
+.note-btn-ok{background:#e74c3c;color:#fff;}
+
+.cl-submit-bar{display:none;}
+.cl-submit-btn{display:none;}
+
+/* ════════════════════════════════
+   STATUS
+════════════════════════════════ */
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+.lchip{display:flex;align-items:center;gap:5px;font-size:12px;color:#6b6560;font-weight:500;}
+.ldot{width:9px;height:9px;border-radius:3px;}
+.ldot.clean{background:#7fb3d3;}
+.ldot.checked{background:#7fb3d3;}
+.ldot.issue{background:#e74c3c;}
+.ldot.inprogress{background:#7fb3d3;}
+.ldot.nc{background:#c8c3bc;}
+
+/* ════════════════════════════════
+   MANAGE CHECKLIST
+════════════════════════════════ */
+.add-row{display:flex;gap:10px;margin-bottom:18px;}
+.add-row input{
+  flex:1;padding:13px 15px;background:#fff;
+  border:1.5px solid #e0dbd0;border-radius:13px;
+  font-size:15px;color:#1a1a1a;font-family:inherit;
+}
+.add-row input:focus{outline:none;border-color:#c4a046;}
+.add-row button{
+  padding:13px 18px;background:#0d1628;color:#fff;
+  border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;
+}
+.mi-list{display:flex;flex-direction:column;gap:8px;}
+.mi{
+  background:#fff;border:1.5px solid #e8e3da;border-radius:13px;
+  padding:13px 15px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.mi .mn{flex:1;font-size:14px;color:#1a1a1a;}
+.mi .minp{
+  flex:1;padding:7px 10px;border:1.5px solid #c4a046;
+  border-radius:8px;font-size:14px;color:#1a1a1a;
+  font-family:inherit;background:#fffbf0;display:none;
+}
+.mi.editing .mn{display:none;}
+.mi.editing .minp{display:block;}
+.mi.editing .edbtn{display:none;}
+.mi.editing .delbtn{display:none;}
+.mi.editing .savbtn{display:flex;}
+.edbtn,.delbtn,.savbtn{
+  padding:7px 13px;border-radius:8px;border:none;
+  font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
+}
+.edbtn{background:#f0ede6;color:#0d1628;}
+.delbtn{background:#fef5f5;color:#e74c3c;}
+.savbtn{background:#27ae60;color:#fff;display:none;}
+
+/* ════════════════════════════════
+   MAINTENANCE
+════════════════════════════════ */
+.mfilt{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.fbtn{
+  padding:8px 18px;border-radius:20px;
+  background:#fff;border:1.5px solid #e0dbd0;
+  font-size:13px;font-weight:600;color:#6b6560;cursor:pointer;
+}
+.fbtn.on{background:#0d1628;border-color:#0d1628;color:#fff;}
+.fbtn-wipe{background:#fef0ef!important;color:#c0392b!important;border-color:#fadadd!important;}
+.super-admin-mode .super-admin-only{display:flex!important;}
+
+.rcard{
+  background:#fff;border-radius:15px;
+  border:1.5px solid #e8e3da;margin-bottom:12px;
+  overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+.rcard.allres{opacity:0.55;}
+.rcard-top{
+  padding:14px 16px;background:#0d1628;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.rcard-top .rnum{font-size:22px;font-weight:800;color:#fff;}
+.rcard-top .rmeta{text-align:right;}
+.rcard-top .mlbl{font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;}
+.rcard-top .mval{font-size:14px;color:rgba(255,255,255,0.75);font-weight:600;}
+.rissues{padding:2px 0;}
+.rirow{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:14px 16px;border-top:1px solid #f0ede6;
+}
+.rirow:first-child{border-top:none;}
+.riinfo{flex:1;}
+.riname{font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:4px;}
+.rinote{font-size:14px;color:#4a4540;}
+.rits{margin-top:6px;display:flex;flex-direction:column;gap:4px;}
+.rit{font-size:13px;display:flex;align-items:center;gap:5px;}
+.rit.rep{color:#7a7570;}
+.rit.fix{color:#1e8449;font-weight:700;}
+.ribadge{
+  font-size:12px;font-weight:700;padding:4px 11px;
+  border-radius:10px;white-space:nowrap;display:inline-block;margin-bottom:4px;
+}
+.ribadge.open{background:#fef0ef;color:#e74c3c;}
+.ribadge.res{background:#e8f8ef;color:#27ae60;}
+.resbtn{
+  padding:10px 18px;border-radius:10px;border:none;
+  font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;
+  align-self:flex-start;margin-top:2px;transition:all 0.1s;
+}
+.resbtn:active{transform:scale(0.95);}
+.resbtn.open{background:#fef0ef;color:#e74c3c;border:1.5px solid #fdd;}
+.resbtn.done{background:#e8f8ef;color:#27ae60;border:1.5px solid #aed;}
+/* SUPER ADMIN DELETE BTN */
+.delbtn-report{
+  padding:8px 14px;border-radius:9px;border:none;
+  font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;
+  background:#fff0f0;color:#c0392b;border:1.5px solid #f5c6c6;
+  margin-top:4px;transition:all 0.1s;display:none;
+}
+.delbtn-report:active{transform:scale(0.95);}
+.super-admin-mode .delbtn-report{display:block;}
+.delbtn-report[style*="display:block"]{display:block!important;}
+
+.empty-s{text-align:center;padding:50px 20px;color:#9a9690;}
+.empty-s .ei{font-size:44px;margin-bottom:12px;}
+.empty-s p{font-size:14px;}
+
+.sec-title{font-size:19px;font-weight:800;color:#0d1628;margin-bottom:18px;letter-spacing:-0.3px;}
+
+/* ── NOTIFICATIONS ── */
+.notif-bell{
+  position:relative;cursor:pointer;
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;margin-left:8px;
+  transition:background 0.1s;
+}
+.notif-bell:active{background:rgba(255,255,255,0.14);}
+.bell-icon{font-size:18px;line-height:1;}
+.notif-badge{
+  position:absolute;top:-5px;right:-5px;
+  min-width:18px;height:18px;border-radius:9px;
+  background:#e74c3c;color:#fff;
+  font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4px;
+  box-shadow:0 2px 6px rgba(231,76,60,0.5);
+  animation:notif-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes notif-pop{from{transform:scale(0);}to{transform:scale(1);}}
+
+.notif-panel{
+  position:absolute;top:68px;right:16px;
+  width:340px;max-width:calc(100vw - 32px);
+  background:#fff;border-radius:16px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.18);
+  border:1px solid #e8e3da;
+  z-index:200;overflow:hidden;
+}
+.notif-panel-header{
+  background:#0d1628;padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.notif-panel-header span{color:#fff;font-size:14px;font-weight:700;}
+.notif-clear{
+  background:rgba(255,255,255,0.12);border:none;
+  color:rgba(255,255,255,0.7);border-radius:8px;
+  padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;
+}
+.notif-item{
+  padding:14px 16px;border-bottom:1px solid #f0ede6;
+  display:flex;gap:12px;align-items:flex-start;
+}
+.notif-item:last-child{border-bottom:none;}
+.notif-item.unread{background:#fffbf0;}
+.notif-dot{
+  width:9px;height:9px;border-radius:50%;
+  background:#e74c3c;flex-shrink:0;margin-top:5px;
+}
+.notif-dot.read{background:#c8c3bc;}
+.notif-text{flex:1;}
+.notif-text strong{font-size:14px;color:#0d1628;display:block;margin-bottom:2px;}
+.notif-text span{font-size:12px;color:#9a9690;}
+.notif-empty{padding:24px;text-align:center;color:#9a9690;font-size:14px;}
+
+/* pulse animation on bell when new notif arrives */
+@keyframes bell-shake{
+  0%,100%{transform:rotate(0);}
+  20%{transform:rotate(-15deg);}
+  40%{transform:rotate(15deg);}
+  60%{transform:rotate(-10deg);}
+  80%{transform:rotate(10deg);}
+}
+.bell-shake{animation:bell-shake 0.5s ease;}
+#page-app{position:relative;}
+
+/* ── ROOM ISSUES MODAL ── */
+.room-iss-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:300;display:none;align-items:center;justify-content:center;
+  padding:24px;
+}
+.room-iss-bg.open{display:flex;}
+.room-iss-modal{
+  background:#fff;border-radius:20px;
+  width:100%;max-width:560px;
+  max-height:80vh;display:flex;flex-direction:column;
+  box-shadow:0 8px 48px rgba(0,0,0,0.25);
+  overflow:hidden;
+}
+.rim-header{
+  background:#0d1628;padding:18px 20px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.rim-header h3{font-size:20px;font-weight:800;color:#fff;}
+.rim-close{
+  background:rgba(255,255,255,0.12);border:none;
+  color:#fff;border-radius:8px;padding:7px 14px;
+  font-size:14px;font-weight:600;cursor:pointer;
+}
+.rim-body{overflow-y:auto;padding:16px 20px 28px;-webkit-overflow-scrolling:touch;}
+.rim-issue-row{
+  padding:14px 0;border-bottom:1px solid #f0ede6;
+  display:flex;flex-direction:column;gap:5px;
+}
+.rim-issue-row:last-child{border-bottom:none;}
+.rim-issue-name{font-size:16px;font-weight:700;color:#1a1a1a;}
+.rim-issue-note{font-size:14px;color:#5a5550;}
+.rim-issue-ts{font-size:12px;color:#9a9690;}
+.rim-issue-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:700;padding:3px 10px;
+  border-radius:10px;align-self:flex-start;
+}
+.rim-issue-badge.open{background:#fef0ef;color:#e74c3c;}
+.rim-issue-badge.res{background:#e8f8ef;color:#27ae60;}
+.rim-empty{text-align:center;padding:40px 20px;color:#9a9690;font-size:15px;}
+
+#toast{
+  position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(100px);
+  background:#0d1628;color:#fff;padding:12px 26px;
+  border-radius:30px;font-size:14px;font-weight:600;
+  transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  z-index:9999;white-space:nowrap;
+  box-shadow:0 8px 28px rgba(0,0,0,0.3);pointer-events:none;
+}
+#toast.on{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- NOTE MODAL -->
+<div class="note-modal-bg" id="note-modal-bg">
+  <div class="note-modal">
+    <h3 id="note-modal-item">Item</h3>
+    <p id="t-note-desc">Describe the issue (optional)</p>
+    <textarea id="note-ta" rows="3" id="note-textarea"></textarea>
+    <div class="note-modal-btns">
+      <button class="note-btn-cancel" onclick="closeNoteModal()"><span id="t-note-cancel">Cancel</span></button>
+      <button class="note-btn-ok" onclick="confirmIssue()"><span id="t-note-confirm">Report Issue</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ LOGIN ════ -->
+<div id="page-login" class="page active">
+  <div class="login-bg"><span></span><span></span></div>
+  <button class="lang-btn-login" onclick="toggleLang()">EN / МК</button>
+  <div class="login-wrap">
+    <div class="hotel-logo">
+      <div class="pre">Welcome to</div>
+      <h1>Hotel De <em>KOKA</em></h1>
+      <div class="sub" id="t-tagline">Room Maintenance System</div>
+    </div>
+    <div class="role-row">
+      <div class="role-card sel" id="rc-hk" onclick="selRole('housekeeper')">
+        <div class="ri">🧹</div><div class="rn" id="t-rhk">Housekeeper</div>
+      </div>
+      <div class="role-card" id="rc-mt" onclick="selRole('maintenance')">
+        <div class="ri">🔧</div><div class="rn" id="t-rmt">Maintenance</div>
+      </div>
+      <div class="role-card" id="rc-rc" onclick="selRole('reception')">
+        <div class="ri">🛎</div><div class="rn" id="t-rrc">Reception</div>
+      </div>
+      <div class="role-card" id="rc-sa" onclick="selRole('superadmin')">
+        <div class="ri">🔑</div><div class="rn" id="t-rsa">Admin</div>
+      </div>
+    </div>
+    <div class="pin-lbl" id="t-pinlbl">ENTER PIN</div>
+    <div class="pin-dots">
+      <div class="pd" id="pd0"></div><div class="pd" id="pd1"></div>
+      <div class="pd" id="pd2"></div><div class="pd" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <div class="pk" id="pk1" onpointerdown="pkDown('1')">1</div>
+      <div class="pk" id="pk2" onpointerdown="pkDown('2')">2</div>
+      <div class="pk" id="pk3" onpointerdown="pkDown('3')">3</div>
+      <div class="pk" id="pk4" onpointerdown="pkDown('4')">4</div>
+      <div class="pk" id="pk5" onpointerdown="pkDown('5')">5</div>
+      <div class="pk" id="pk6" onpointerdown="pkDown('6')">6</div>
+      <div class="pk" id="pk7" onpointerdown="pkDown('7')">7</div>
+      <div class="pk" id="pk8" onpointerdown="pkDown('8')">8</div>
+      <div class="pk" id="pk9" onpointerdown="pkDown('9')">9</div>
+      <div class="pk empty"></div>
+      <div class="pk" id="pk0" onpointerdown="pkDown('0')">0</div>
+      <div class="pk del" onpointerdown="pkDel()">⌫</div>
+    </div>
+    <div class="pin-err" id="pin-err"></div>
+  </div>
+</div>
+
+<!-- ROOM ISSUES MODAL -->
+<div id="room-iss-bg" onclick="closeRoomIssModal(event)" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9000;display:none;align-items:center;justify-content:center;box-sizing:border-box;padding:32px 24px;">
+  <div style="background:#fff;border-radius:20px;width:100%;max-width:540px;max-height:70vh;display:flex;flex-direction:column;box-shadow:0 12px 60px rgba(0,0,0,0.35);overflow:hidden;position:relative;">
+    <div class="rim-header">
+      <h3 id="rim-title">Room 101 — Issues</h3>
+      <button class="rim-close" id="rim-close-btn">✕ Close</button>
+    </div>
+    <div class="rim-body" id="rim-body"></div>
+  </div>
+</div>
+
+<!-- ════ APP ════ -->
+<div id="page-app" class="page">
+  <div class="topbar">
+    <div class="tlogo">Hotel De <em>KOKA</em></div>
+    <div class="tsep"></div>
+    <div class="notif-bell" id="notif-bell" onclick="openNotifPanel()" style="display:none">
+      <span class="bell-icon">🔔</span>
+      <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+    </div>
+    <div class="trole"><div class="dot"></div><span id="t-trole">—</span></div>
+    <button class="tbtn" onclick="toggleLang()" style="margin-left:8px">EN/МК</button>
+    <button class="tbtn notif-enable-btn" id="notif-enable-btn" onclick="manualEnableNotif()" style="display:none;background:#c4a046;color:#000;font-weight:700;">🔔 Enable Notifications</button>
+    <button class="tbtn" onclick="doLogout()" id="t-logout" style="margin-left:6px">Sign out</button>
+  </div>
+
+  <!-- NOTIFICATION PANEL -->
+  <div id="notif-panel" class="notif-panel" style="display:none">
+    <div class="notif-panel-header">
+      <span id="t-notif-title">New Reports</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="notif-clear" onclick="playAlertSound();event.stopPropagation();" title="Test sound">🔊</button>
+        <button class="notif-clear" onclick="clearNotifs()">✓ Clear all</button>
+      </div>
+    </div>
+    <div id="notif-list"></div>
+  </div>
+  <div class="demo-bar" id="demo-bar">⚠ Demo mode — local storage only</div>
+  <div class="app-body">
+
+    <!-- HK SHELL -->
+    <div id="shell-hk" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+      <div class="hktabs">
+        <button class="hktab on" id="tab-rooms" onclick="hkTab('rooms')"><span id="t-tabr">Rooms</span></button>
+        <button class="hktab" id="tab-status" onclick="hkTab('status')"><span id="t-tabs">Status</span></button>
+        <button class="hktab" id="tab-manage" onclick="hkTab('manage')"><span id="t-tabm">Checklist</span></button>
+        <button class="hktab super-admin-only" id="tab-reports" onclick="hkTab('reports')" style="display:none"><span id="t-tabadmrep">Reports</span></button>
+      </div>
+      <div class="view on" id="v-rooms"><div id="rooms-cont"></div></div>
+      <div class="view" id="v-checklist">
+        <div class="cl-header">
+          <div class="cl-back" onclick="closeChecklist()">←</div>
+          <div class="cl-room-bar">
+            <h2 id="cl-title">Room 101</h2>
+            <div class="cl-prog" id="cl-prog">0 / 0</div>
+          </div>
+        </div>
+        <div class="cl-grid" id="cl-grid"></div>
+        <div class="cl-submit-bar">
+          <button class="cl-submit-btn" id="sub-btn" onclick="submitChecklist()" disabled>
+            <span id="t-submit">Submit Room Report</span>
+          </button>
+        </div>
+      </div>
+      <div class="view" id="v-status">
+        <div class="sec-title" id="t-stitle">Room Status Overview</div>
+        <div class="legend-row">
+          <div class="lchip"><div class="ldot issue"></div><span id="t-li">Has issues</span></div>
+          <div class="lchip"><div class="ldot checked"></div><span id="t-lc">Checked</span></div>
+          <div class="lchip"><div class="ldot nc"></div><span id="t-ln">Not checked</span></div>
+        </div>
+        <div id="status-cont"></div>
+      </div>
+      <div class="view" id="v-manage">
+        <div class="sec-title" id="t-mtitle">Manage Checklist</div>
+        <div class="add-row">
+          <input type="text" id="new-inp" /><button onclick="addItem()" id="t-addbtn">+ Add</button>
+        </div>
+        <div class="mi-list" id="mi-cont"></div>
+      </div>
+      <div class="view" id="v-reports">
+        <div class="sec-title">Reports</div>
+        <div class="mfilt">
+          <button class="fbtn on" id="admflt-all" onclick="setAdmFlt('all')">All</button>
+          <button class="fbtn" id="admflt-open" onclick="setAdmFlt('open')">Open</button>
+          <button class="fbtn" id="admflt-res" onclick="setAdmFlt('res')">Resolved</button>
+          <button class="fbtn fbtn-wipe" onclick="wipeAllReports()">🗑 Delete ALL</button>
+        </div>
+        <div id="adm-rep-cont"></div>
+      </div>
+    </div>
+
+    <!-- MT / RC SHELL -->
+    <div id="shell-mt" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+      <div class="view on" id="v-maint">
+        <div class="sec-title" id="t-mttitle">Maintenance Reports</div>
+        <div class="mfilt">
+          <button class="fbtn on" id="flt-all" onclick="setFlt('all')"><span id="t-fall">All</span></button>
+          <button class="fbtn" id="flt-open" onclick="setFlt('open')"><span id="t-fopen">Open</span></button>
+          <button class="fbtn" id="flt-res" onclick="setFlt('resolved')"><span id="t-fres">Resolved</span></button>
+          <button class="fbtn fbtn-wipe super-admin-only" id="btn-wipe-all" onclick="wipeAllReports()" style="display:none">🗑 Delete ALL</button>
+        </div>
+        <div id="mt-cont"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ══════════════════════
+// FCM & SERVICE WORKER
+// ══════════════════════
+// FCM VAPID key — fill in after Step 2 of setup
+const FCM_VAPID_KEY = 'BHr_7nfyGe159tMXrSEx9w6r6AO5-yQkF-YGNBeGGO3iGonwlEIgsCbPuHiOQFIwx8YCkM6xlpRa3xEwcD69eTo';
+// FCM Sender ID (from Firebase project settings)
+const FCM_SENDER_ID = '1027092134691';
+
+let swRegistration = null;
+
+function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('/Hotel-De-KOKA-Maintenance/sw.js', {scope:'/Hotel-De-KOKA-Maintenance/'})
+    .then(reg => {
+      swRegistration = reg;
+      console.log('SW registered');
+    })
+    .catch(err => console.log('SW error:', err));
+}
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'denied') return;
+  try {
+    const perm = await Notification.requestPermission();
+    if(perm === 'granted') await subscribeFCM();
+  } catch(e) {}
+}
+
+async function subscribeFCM(){
+  if(!swRegistration) return;
+  if(!FCM_VAPID_KEY || FCM_VAPID_KEY === 'YOUR_VAPID_KEY_HERE') return;
+  try {
+    // Check if already subscribed
+    let sub = await swRegistration.pushManager.getSubscription();
+    if(!sub){
+      sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(FCM_VAPID_KEY)
+      });
+    }
+
+    // Manually extract keys — JSON.stringify doesn't work on PushSubscription
+    const rawKey  = sub.getKey('p256dh');
+    const rawAuth = sub.getKey('auth');
+    const p256dh  = rawKey  ? btoa(String.fromCharCode(...new Uint8Array(rawKey))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'') : null;
+    const auth    = rawAuth ? btoa(String.fromCharCode(...new Uint8Array(rawAuth))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'') : null;
+
+    if(!p256dh || !auth){
+      console.log('FCM: could not extract keys');
+      return;
+    }
+
+    const tokenData = {
+      endpoint:   sub.endpoint,
+      keys: { p256dh, auth },
+      role:       currentUserRole,
+      device:     navigator.userAgent.substring(0,80),
+      updatedAt:  new Date().toISOString()
+    };
+
+    if(db && !demoMode){
+      const docId = btoa(unescape(encodeURIComponent(sub.endpoint))).replace(/[^a-zA-Z0-9]/g,'').substring(0,40);
+      await db.collection('fcmTokens').doc(docId).set(tokenData);
+      console.log('FCM subscription saved:', sub.endpoint.substring(0,50));
+      toast('🔔 Push notifications active');
+    }
+  } catch(e) {
+    console.log('FCM subscribe error:', e.message || e);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// ══════════════════════
+// FIREBASE
+// ══════════════════════
+const FB = {
+  apiKey:"AIzaSyB8epHhc7bsGVx9WYe3akx_0x14lRYbkj4",
+  projectId:"hotel-de-koka-maintenance",
+  appId:"1:1027092134691:web:492a63a9cc16bdd1436a96"
+};
+let db=null, demoMode=false;
+function initFB(){
+  try{
+    firebase.initializeApp(FB);
+    db=firebase.firestore();
+    db.collection('_ping').doc('p').set({t:Date.now()})
+      .catch(()=>{demoMode=true;document.getElementById('demo-bar').classList.add('on');});
+  }catch(e){demoMode=true;document.getElementById('demo-bar').classList.add('on');}
+}
+
+// ══════════════════════
+// DATA
+// ══════════════════════
+const PINS={housekeeper:'1234',maintenance:'5678',reception:'9999',superadmin:'0000'};
+const ROOMS={
+  '1st Floor':['101','102','103','104','105','106','107'],
+  '2nd Floor':['208','209','210','211','212','213','214'],
+  '3rd Floor':['302','303','304','305','306','307','308','309','310','311','312','313','314','315','316','317','318','319','320','321','322','323','324'],
+  '4th Floor':['400','401','402','403','404','405','406','407','408','409','410','411','412','413','414','415','416','417','418']
+};
+
+// Icons for checklist items
+const ICONS={
+  'Linens':'🛏','Pillows':'🛌','Blanket':'🛋','Floor':'🏠','TV':'📺',
+  'AC':'❄️','Curtains':'🪟','Dusting':'🧹','Shower':'🚿','Bathtub':'🛁',
+  'Toilet':'🚽','Shampoo':'🧴','Soap':'🧼','Towels':'🛁','Mirror':'🪞',
+  'Mini-bar':'🍷','Safe':'🔒','Remote':'📱','Door':'🚪','Lamp':'💡',
+  'Bed':'🛏','Desk':'🗒️','Chair':'🪑','Phone':'☎️','Window':'🪟',
+};
+function getIcon(name){
+  const k=Object.keys(ICONS).find(k=>name.toLowerCase().includes(k.toLowerCase()));
+  return k?ICONS[k]:'✅';
+}
+
+const DEF_CL=[
+  'Linens','Pillows','Blanket','Floor','TV','AC','Curtains',
+  'Dusting','Shower','Bathtub','Toilet','Shampoo','Soap','Towels',
+  'Mirror','Mini-bar','Safe','Remote controls','Door lock'
+];
+
+const TXT={
+  en:{
+    tagline:'Room Maintenance System',
+    rhk:'Housekeeper',rmt:'Maintenance',rrc:'Reception',rsa:'Admin',
+    pinlbl:'ENTER PIN',
+    tabr:'Rooms',tabs:'Status',tabm:'Checklist',
+    stitle:'Room Status Overview',mtitle:'Manage Checklist',
+    mttitle:'Maintenance Reports',
+    addbtn:'+ Add',addph:'New checklist item...',
+    submit:'Submit Room Report',
+    ok:'OK',iss:'Issue',edit:'Edit',save:'Save',del:'Delete',
+    resolve:'Resolve',resolved:'Resolved',
+    fall:'All',fopen:'Open',fres:'Resolved',
+    lc:'Checked',li:'Has issues',ln:'Not checked',
+    repAt:'Reported',fixAt:'Fixed',logout:'Sign out',
+    wrongPin:'Incorrect PIN — try again',
+    tSubmit:'Report submitted!',tResolve:'Marked resolved',tUnresolve:'Marked open',
+    tAdd:'Item added',tDel:'Item deleted',tSave:'Item saved',tIssReported:'Issue reported',
+    noRep:'No reports found',
+    clean:'Checked',hasIssues:'Issues',inProgress:'Checked',checked:'Checked',
+    noteDesc:'Describe the issue (optional)',noteCancel:'Cancel',noteConfirm:'Report Issue',
+    demoBanner:'⚠ Demo mode — data saved locally, no sync between devices'
+  },
+  mk:{
+    tagline:'Систем за одржување на соби',
+    rhk:'Собарица',rmt:'Одржување',rrc:'Рецепција',rsa:'Админ',
+    pinlbl:'ВНЕСЕТЕ PIN',
+    tabr:'Соби',tabs:'Статус',tabm:'Листа',
+    stitle:'Преглед на статус на соби',mtitle:'Управување со листата',
+    mttitle:'Пријави за одржување',
+    addbtn:'+ Додај',addph:'Нова ставка...',
+    submit:'Поднеси извештај',
+    ok:'ОК',iss:'Проблем',edit:'Уреди',save:'Зачувај',del:'Избриши',
+    resolve:'Реши',resolved:'Решено',
+    fall:'Сите',fopen:'Отворени',fres:'Решени',
+    lc:'Проверено',li:'Проблеми',ln:'Непроверено',
+    repAt:'Пријавено',fixAt:'Поправено',logout:'Одјава',
+    wrongPin:'Погрешен PIN — обидете се повторно',
+    tSubmit:'Извештајот е поднесен!',tResolve:'Означено решено',tUnresolve:'Означено отворено',
+    tAdd:'Ставката е додадена',tDel:'Ставката е избришана',tSave:'Ставката е зачувана',tIssReported:'Проблемот е пријавен',
+    noRep:'Нема пријави',
+    clean:'Проверено',hasIssues:'Проблеми',inProgress:'Проверено',checked:'Проверено',
+    noteDesc:'Опишете го проблемот (незадолжително)',noteCancel:'Откажи',noteConfirm:'Пријави проблем',
+    demoBanner:'⚠ Демо режим — само локално зачувување'
+  }
+};
+
+// ══════════════════════
+// STATE
+// ══════════════════════
+let lang=localStorage.getItem('hdk_lang')||'en';
+let role='housekeeper';
+let pin='';
+let curRoom=null;
+let clState={};
+let noteItem=null;
+
+let lsCL   = JSON.parse(localStorage.getItem('hdk_cl')||'null')||DEF_CL;
+let lsReps = JSON.parse(localStorage.getItem('hdk_reps')||'[]');
+let lsRSt  = JSON.parse(localStorage.getItem('hdk_rst')||'{}');
+let flt    = 'all';
+
+function T(k){return(TXT[lang]&&TXT[lang][k])||TXT.en[k]||k;}
+
+// ══════════════════════
+// LANG
+// ══════════════════════
+function applyLang(){
+  const ids={
+    't-tagline':'tagline','t-rhk':'rhk','t-rmt':'rmt','t-rrc':'rrc',
+    't-pinlbl':'pinlbl','t-tabr':'tabr','t-tabs':'tabs','t-tabm':'tabm',
+    't-stitle':'stitle','t-mtitle':'mtitle','t-mttitle':'mttitle',
+    't-addbtn':'addbtn','t-logout':'logout',
+    't-lc':'lc','t-li':'li','t-ln':'ln',
+    't-fall':'fall','t-fopen':'fopen','t-fres':'fres',
+    't-trole':'role_label_skip',
+    't-note-desc':'noteDesc','t-note-cancel':'noteCancel','t-note-confirm':'noteConfirm',
+    'demo-bar':'demoBanner'
+  };
+  Object.entries(ids).forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el&&key!=='role_label_skip')el.textContent=T(key);
+  });
+  document.getElementById('new-inp').placeholder=T('addph');
+}
+function toggleLang(){
+  lang=lang==='en'?'mk':'en';
+  localStorage.setItem('hdk_lang',lang);
+  applyLang();
+}
+
+// ══════════════════════
+// PIN — instant via pointerdown
+// ══════════════════════
+let pinLocked=false;
+
+function pkDown(d){
+  if(pinLocked||pin.length>=4)return;
+  pin+=d;
+  // Flash pressed state
+  const pkEl=document.getElementById('pk'+d);
+  if(pkEl){pkEl.classList.add('pressed');setTimeout(()=>pkEl.classList.remove('pressed'),120);}
+  updateDots();
+  if(pin.length===4) checkPin();
+}
+
+function pkDel(){
+  if(pinLocked)return;
+  pin=pin.slice(0,-1);
+  updateDots();
+  document.getElementById('pin-err').textContent='';
+}
+
+function updateDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    d.classList.remove('on','err');
+    if(i<pin.length)d.classList.add('on');
+  }
+}
+
+function checkPin(){
+  if(PINS[role]===pin){
+    pinLocked=false;
+    enterApp(role);
+  }else{
+    pinLocked=true;
+    for(let i=0;i<4;i++){
+      const d=document.getElementById('pd'+i);
+      d.classList.remove('on');d.classList.add('err');
+    }
+    document.getElementById('pin-err').textContent=T('wrongPin');
+    setTimeout(()=>{
+      pin='';pinLocked=false;
+      updateDots();
+      document.getElementById('pin-err').textContent='';
+    },900);
+  }
+}
+
+function selRole(r){
+  role=r;pin='';updateDots();
+  document.getElementById('pin-err').textContent='';
+  ['hk','mt','rc','sa'].forEach(x=>document.getElementById('rc-'+x).classList.remove('sel'));
+  const map={housekeeper:'hk',maintenance:'mt',reception:'rc',superadmin:'sa'};
+  document.getElementById('rc-'+map[r]).classList.add('sel');
+}
+
+// ══════════════════════
+// APP ENTER / LOGOUT
+// ══════════════════════
+function enterApp(r){
+  currentUserRole = r;
+  document.getElementById('page-login').classList.remove('active');
+  document.getElementById('page-app').classList.add('active');
+  const lbl={housekeeper:T('rhk'),maintenance:T('rmt'),reception:T('rrc'),superadmin:'⚙ Admin'};
+  document.getElementById('t-trole').textContent=lbl[r]||r;
+
+  // Show bell for maintenance and admin
+  const bell = document.getElementById('notif-bell');
+  if(isNotifRole(r)){
+    bell.style.display = 'flex';
+    updateBadge();
+    // Register SW first, then request permission after SW is ready
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.ready.then(async reg => {
+        swRegistration = reg;
+        const perm = Notification.permission;
+        if(perm === 'granted'){
+          await subscribeFCM();
+        } else if(perm === 'default'){
+          // Show manual button since auto-popup may be blocked
+          showNotifEnableBtn();
+          const result = await Notification.requestPermission();
+          if(result === 'granted') await subscribeFCM();
+        } else {
+          // Denied — show instructions
+          showNotifEnableBtn(true);
+        }
+      });
+    }
+  } else {
+    bell.style.display = 'none';
+    hideNotifEnableBtn();
+  }
+
+  syncFromFirebase(()=>{
+    if(r==='housekeeper'||r==='reception'||r==='superadmin'||r==='maintenance'){
+      document.getElementById('shell-hk').style.display='flex';
+      document.getElementById('shell-mt').style.display='none';
+      if(r==='superadmin') document.body.classList.add('super-admin-mode');
+      // Show Reports tab for maintenance and admin
+      const repTab=document.getElementById('tab-reports');
+      if(repTab) repTab.style.display=(r==='maintenance'||r==='superadmin')?'flex':'none';
+      hkTab('rooms');
+    }else{
+      document.getElementById('shell-hk').style.display='none';
+      document.getElementById('shell-mt').style.display='flex';
+      document.body.classList.remove('super-admin-mode');
+      loadMaint();
+    }
+    // Start real-time listener for ALL roles
+    startRealtimeListener();
+  });
+}
+
+function syncFromFirebase(callback){
+  if(db&&!demoMode){
+    const p1=db.collection('reports').orderBy('timestamp','desc').get().then(snap=>{
+      const r=[];snap.forEach(d=>r.push(d.data()));
+      lsReps=r;
+      localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+    }).catch(()=>{});
+    const p2=db.collection('roomStatus').get().then(snap=>{
+      // Full replace — not merge — so deleted rooms disappear everywhere
+      const fresh={};
+      snap.forEach(doc=>{fresh[doc.id]=doc.data().status;});
+      lsRSt=fresh;
+      localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+    }).catch(()=>{});
+    const p3=db.collection('config').doc('checklist').get().then(doc=>{
+      if(doc.exists&&doc.data().items&&doc.data().items.length>0){
+        lsCL=doc.data().items;
+        localStorage.setItem('hdk_cl',JSON.stringify(lsCL));
+      }
+    }).catch(()=>{});
+    Promise.all([p1,p2,p3]).finally(()=>callback());
+  }else{
+    callback();
+  }
+}
+
+function doLogout(){
+  pin='';curRoom=null;clState={};pinLocked=false;
+  currentUserRole=null;
+  stopRealtimeListener();
+  updateDots();
+  document.getElementById('pin-err').textContent='';
+  document.getElementById('notif-bell').style.display='none';
+  document.getElementById('notif-panel').style.display='none';
+  notifPanelOpen=false;
+  document.body.classList.remove('super-admin-mode');
+  hideNotifEnableBtn();
+  const repTab=document.getElementById('tab-reports');
+  if(repTab) repTab.style.display='none';
+  selRole('housekeeper');
+  document.getElementById('page-app').classList.remove('active');
+  document.getElementById('page-login').classList.add('active');
+}
+
+// ══════════════════════
+// HK TABS
+// ══════════════════════
+function hkTab(t){
+  ['rooms','checklist','status','manage','reports'].forEach(v=>{
+    document.getElementById('v-'+v).classList.remove('on');
+  });
+  ['rooms','status','manage','reports'].forEach(x=>{
+    const el=document.getElementById('tab-'+x);
+    if(el)el.classList.remove('on');
+  });
+  document.getElementById('v-'+t).classList.add('on');
+  const te=document.getElementById('tab-'+t);
+  if(te)te.classList.add('on');
+  if(t==='rooms')   renderRooms();
+  if(t==='status')  renderStatus();
+  if(t==='manage')  renderManage();
+  if(t==='reports') renderAdmReports();
+}
+
+// ══════════════════════
+// ROOMS
+// ══════════════════════
+function issCount(room){
+  let c=0;
+  lsReps.filter(r=>r.room===room).forEach(r=>r.issues.forEach(i=>{if(!i.resolved)c++;}));
+  return c;
+}
+
+function renderRooms(){
+  const cont=document.getElementById('rooms-cont');
+  cont.innerHTML='';
+  Object.entries(ROOMS).forEach(([floor,rooms])=>{
+    const blk=document.createElement('div');
+    blk.className='floor-block';
+    blk.innerHTML='<div class="floor-lbl">'+floor+'</div>';
+    const grid=document.createElement('div');
+    grid.className='room-grid';
+    rooms.forEach(room=>{
+      const tile=document.createElement('div');
+      tile.className='rtile';
+      const st=lsRSt[room]||null;
+      if(st)tile.classList.add(st);
+      const ic=issCount(room);
+      const stlbl=st?T(st==='issue'?'hasIssues':'checked'):'';
+      tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
+      tile.onclick=()=>openChecklist(room);
+      grid.appendChild(tile);
+    });
+    blk.appendChild(grid);
+    cont.appendChild(blk);
+  });
+}
+
+// ══════════════════════
+// CHECKLIST GRID
+// ══════════════════════
+function openChecklist(room){
+  curRoom=room;
+  clState={};
+  lsCL.forEach(item=>{clState[item]={status:null,note:''};});
+  document.getElementById('cl-title').textContent='Room '+room;
+  hkTab('checklist');
+  renderClGrid();
+}
+
+function closeChecklist(){hkTab('rooms');}
+
+function renderClGrid(){
+  const grid=document.getElementById('cl-grid');
+  grid.innerHTML='';
+  lsCL.forEach(item=>{
+    const tile=document.createElement('div');
+    const s=clState[item]?clState[item].status:null;
+    tile.className='cl-tile'+(s==='ok'?' ok':s==='iss'?' iss':'');
+    tile.id='ct-'+eid(item);
+    tile.innerHTML=buildTileHTML(item,s);
+    grid.appendChild(tile);
+  });
+  updateProg();
+}
+
+function buildTileHTML(item,s){
+  const icon=getIcon(item);
+  return '<div class="ct-icon">'+icon+'</div>'
+    +'<div class="ct-name">'+item+'</div>'
+    +'<div class="ct-btns">'
+    +'<button class="ct-ok'+(s==='ok'?' sel':'')+'" onpointerdown="setOK(\''+escJs(item)+'\')" >✓ '+T('ok')+'</button>'
+    +'<button class="ct-iss'+(s==='iss'?' sel':'')+'" onpointerdown="setISS(\''+escJs(item)+'\')">! '+T('iss')+'</button>'
+    +'</div>';
+}
+
+function escJs(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+function setOK(item){
+  clState[item]={status:'ok',note:''};
+  updateTile(item);
+  updateProg();
+  saveItemInstant(item);
+  toast('✓  '+item+' — OK');
+}
+
+function setISS(item){
+  openNoteModal(item);
+}
+
+function saveItemInstant(item){
+  // Build a lightweight per-item report entry for this room session
+  // We save the full room state every time any item changes
+  saveRoomState();
+}
+
+function saveRoomState(){
+  if(!curRoom)return;
+  const issues=lsCL
+    .filter(i=>clState[i]&&clState[i].status==='iss')
+    .map(i=>({item:i,note:clState[i].note||'',resolved:false,resolvedAt:null}));
+  const checkedCount=lsCL.filter(i=>clState[i]&&clState[i].status!==null).length;
+  if(checkedCount===0)return; // nothing to save yet
+
+  const rst=issues.length>0?'issue':'checked';
+
+  // Update or create today's report for this room
+  const today=new Date().toDateString();
+  let rep=lsReps.find(r=>r.room===curRoom&&new Date(r.timestamp).toDateString()===today);
+  if(rep){
+    rep.issues=issues;rep.status=rst;rep.updatedAt=new Date().toISOString();
+  }else{
+    rep={
+      id:curRoom+'_'+Date.now().toString(),
+      room:curRoom,
+      timestamp:new Date().toISOString(),
+      updatedAt:new Date().toISOString(),
+      issues:issues,status:rst
+    };
+    lsReps.unshift(rep);
+  }
+  localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+  lsRSt[curRoom]=rst;
+  localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+
+  if(db&&!demoMode){
+    db.collection('reports').doc(rep.id).set(rep);
+    db.collection('roomStatus').doc(curRoom).set({status:rst,updatedAt:rep.updatedAt||rep.timestamp});
+  }
+}
+
+function tileTap(item){} // kept for safety, no longer used
+
+function openNoteModal(item){
+  noteItem=item;
+  document.getElementById('note-modal-item').textContent=item;
+  document.getElementById('note-ta').value=clState[item]?clState[item].note||'':'';
+  document.getElementById('note-modal-bg').classList.add('open');
+  setTimeout(()=>document.getElementById('note-ta').focus(),100);
+}
+
+function closeNoteModal(){
+  document.getElementById('note-modal-bg').classList.remove('open');
+  noteItem=null;
+}
+
+function confirmIssue(){
+  if(!noteItem)return;
+  const note=document.getElementById('note-ta').value.trim();
+  clState[noteItem]={status:'iss',note:note};
+  updateTile(noteItem);
+  updateProg();
+  saveRoomState();
+  toast('⚠ '+noteItem+' — '+T('tIssReported'));
+  closeNoteModal();
+}
+
+function updateTile(item){
+  const tile=document.getElementById('ct-'+eid(item));
+  if(!tile)return;
+  const s=clState[item]?clState[item].status:null;
+  tile.className='cl-tile'+(s==='ok'?' ok':s==='iss'?' iss':'');
+  tile.innerHTML=buildTileHTML(item,s);
+}
+
+function updateProg(){
+  const total=lsCL.length;
+  const done=lsCL.filter(i=>clState[i]&&clState[i].status!==null).length;
+  document.getElementById('cl-prog').textContent=done+' / '+total;
+}
+
+function eid(s){return btoa(unescape(encodeURIComponent(s))).replace(/[^a-zA-Z0-9]/g,'');}
+
+// submitChecklist removed — auto-save on every OK/Issue tap via saveRoomState()
+
+// ══════════════════════
+// STATUS
+// ══════════════════════
+function renderStatus(){
+  const cont=document.getElementById('status-cont');
+  cont.innerHTML='';
+  const draw=(data)=>{
+    Object.entries(ROOMS).forEach(([floor,rooms])=>{
+      const blk=document.createElement('div');
+      blk.className='floor-block';
+      blk.innerHTML='<div class="floor-lbl">'+floor+'</div>';
+      const grid=document.createElement('div');
+      grid.className='room-grid';
+      rooms.forEach(room=>{
+        const tile=document.createElement('div');
+        tile.className='rtile';
+        const st=data[room]||null;
+        if(st)tile.classList.add(st);
+        const stlbl=st?T(st==='issue'?'hasIssues':'checked'):'—';
+        // Count open issues
+        const openCount=lsReps
+          .filter(r=>r.room===room)
+          .reduce((n,r)=>n+r.issues.filter(i=>!i.resolved).length,0);
+        tile.innerHTML='<div class="rn">'+room+'</div>'
+          +'<div class="rs">'+stlbl+'</div>'
+          +(openCount>0?'<div class="ibadge">'+openCount+'</div>':'');
+        // All rooms with any status are clickable to show details
+        tile.style.cursor='pointer';
+        tile.onclick=()=>openRoomIssModal(room);
+        grid.appendChild(tile);
+      });
+      blk.appendChild(grid);
+      cont.appendChild(blk);
+    });
+  };
+  if(db&&!demoMode){
+    db.collection('roomStatus').get()
+      .then(snap=>{const d={};snap.forEach(doc=>{d[doc.id]=doc.data().status;});draw(d);})
+      .catch(()=>draw(lsRSt));
+  }else draw(lsRSt);
+}
+
+let admFlt='all';
+function setAdmFlt(f){
+  admFlt=f;
+  ['all','open','res'].forEach(x=>document.getElementById('admflt-'+x).classList.remove('on'));
+  document.getElementById('admflt-'+f).classList.add('on');
+  renderAdmReports();
+}
+function renderAdmReports(){
+  // Reuse renderMaint logic but render into adm-rep-cont
+  if(db&&!demoMode){
+    db.collection('reports').orderBy('timestamp','desc').get()
+      .then(snap=>{const r=[];snap.forEach(d=>r.push(d.data()));_drawAdmReps(r);})
+      .catch(()=>_drawAdmReps(lsReps));
+  }else _drawAdmReps(lsReps);
+}
+function _drawAdmReps(reports){
+  const cont=document.getElementById('adm-rep-cont');
+  if(!cont)return;
+  cont.innerHTML='';
+  let list=reports.filter(r=>r.issues&&r.issues.length>0);
+  if(admFlt==='open')    list=list.filter(r=>r.issues.some(i=>!i.resolved));
+  if(admFlt==='res')     list=list.filter(r=>r.issues.some(i=>i.resolved));
+  if(!list.length){cont.innerHTML='<div class="empty-s"><div class="ei">✅</div><p>No reports</p></div>';return;}
+  list.forEach(rep=>{
+    const allRes=rep.issues.every(i=>i.resolved);
+    const card=document.createElement('div');
+    card.className='rcard'+(allRes?' allres':'');
+    let issH='';
+    // When on 'res' filter, show only resolved issues; otherwise show all
+    const issuesToShow = admFlt==='res'
+      ? rep.issues.map((iss,idx)=>({iss,idx})).filter(({iss})=>iss.resolved)
+      : rep.issues.map((iss,idx)=>({iss,idx}));
+    issuesToShow.forEach(({iss,idx})=>{
+      const bClass=iss.resolved?'res':'open';
+      const bTxt=iss.resolved?T('resolved'):'Open';
+      const btnClass=iss.resolved?'done':'open';
+      const btnTxt=iss.resolved?'✓ '+T('resolved'):T('resolve');
+      const btnOnclick=iss.resolved?'':'onclick="resolveIss(\''+rep.id+'\','+idx+')"';
+      const btnDisabled=iss.resolved?'style="cursor:default;opacity:0.7;"':'';
+      const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>':'';
+      issH+='<div class="rirow"><div class="riinfo">'
+        +'<div class="riname">'+iss.item+'</div>'
+        +(iss.note?'<div class="rinote">📝 '+iss.note+'</div>':'')
+        +'<div class="rits"><div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+'</div>'+fixLine+'</div>'
+        +'</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'
+        +'<span class="ribadge '+bClass+'">'+bTxt+'</span>'
+        +'<button class="resbtn '+btnClass+'" '+btnOnclick+' '+btnDisabled+'>'+btnTxt+'</button>'
+        +'</div></div>';
+    });
+    card.innerHTML='<div class="rcard-top"><div class="rnum">Room '+rep.room+'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div class="rmeta"><div class="mlbl">REPORTED</div><div class="mval">'+fmtDT(rep.timestamp)+'</div></div>'
+      +'<button class="delbtn-report" style="display:block!important" onclick="deleteReport(\''+rep.id+'\')">🗑</button>'
+      +'</div></div><div class="rissues">'+issH+'</div>';
+    cont.appendChild(card);
+  });
+}
+
+function openRoomIssModal(room){
+  document.getElementById('rim-title').textContent='Room '+room+' — Issues';
+  const body=document.getElementById('rim-body');
+  body.innerHTML='';
+  const allIssues=[];
+  lsReps.filter(r=>r.room===room).forEach(rep=>{
+    rep.issues.forEach((iss,issIdx)=>{
+      allIssues.push({...iss, reportedAt:rep.timestamp, repId:rep.id, issIdx:issIdx});
+    });
+  });
+  if(allIssues.length===0){
+    body.innerHTML='<div class="rim-empty">No issues reported for this room.</div>';
+  }else{
+    const canResolve = currentUserRole==='maintenance'||currentUserRole==='superadmin';
+    allIssues.forEach(iss=>{
+      const row=document.createElement('div');
+      row.className='rim-issue-row';
+      const badge=iss.resolved
+        ?'<span class="rim-issue-badge res">✓ '+T('resolved')+'</span>'
+        :'<span class="rim-issue-badge open">⚠ Open</span>';
+      const fixedLine=iss.resolvedAt
+        ?'<div class="rim-issue-ts">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>'
+        :'';
+      const resolveBtn = canResolve && !iss.resolved
+        ? '<button class="resbtn open" style="margin-top:8px;width:100%;" onclick="resolveFromModal(\''+iss.repId+'\','+iss.issIdx+')">🔧 '+T('resolve')+'</button>'
+        : (canResolve && iss.resolved ? '<div class="rim-issue-ts" style="margin-top:6px;color:#27ae60;font-weight:700;">✅ '+T('resolved')+'</div>' : '');
+      row.innerHTML=badge
+        +'<div class="rim-issue-name">'+iss.item+'</div>'
+        +(iss.note?'<div class="rim-issue-note">📝 '+iss.note+'</div>':'')
+        +'<div class="rim-issue-ts">📋 '+T('repAt')+': '+fmtDT(iss.reportedAt)+'</div>'
+        +fixedLine
+        +resolveBtn;
+      body.appendChild(row);
+    });
+  }
+  const bg=document.getElementById('room-iss-bg');
+  bg.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:32px 24px;';
+  document.getElementById('rim-close-btn').onclick=closeRoomIssFn;
+}
+
+function resolveFromModal(repId, issIdx){
+  resolveIss(repId, issIdx);
+  // Refresh the modal after resolving
+  const rep = lsReps.find(r=>r.id===repId);
+  if(rep) openRoomIssModal(rep.room);
+}
+
+function closeRoomIssFn(){
+  document.getElementById('room-iss-bg').style.display='none';
+}
+
+function closeRoomIssModal(e){
+  if(e&&e.target!==document.getElementById('room-iss-bg'))return;
+  closeRoomIssFn();
+}
+
+// ══════════════════════
+// MANAGE
+// ══════════════════════
+function renderManage(){
+  const cont=document.getElementById('mi-cont');
+  cont.innerHTML='';
+  lsCL.forEach((item,idx)=>{
+    const div=document.createElement('div');
+    div.className='mi';div.id='mi-'+idx;
+    div.innerHTML=
+      '<span class="mn">'+item+'</span>'
+      +'<input class="minp" id="minp-'+idx+'" value="'+item.replace(/"/g,'&quot;')+'" />'
+      +'<div style="display:flex;gap:6px">'
+      +'<button class="edbtn" onclick="startEdit('+idx+')">'+T('edit')+'</button>'
+      +'<button class="savbtn" onclick="saveEdit('+idx+')">'+T('save')+'</button>'
+      +'<button class="delbtn" onclick="delItem('+idx+')">'+T('del')+'</button>'
+      +'</div>';
+    cont.appendChild(div);
+  });
+}
+function startEdit(i){
+  document.getElementById('mi-'+i).classList.add('editing');
+  const inp=document.getElementById('minp-'+i);
+  inp.focus();inp.select();
+  inp.onkeydown=e=>{if(e.key==='Enter')saveEdit(i);if(e.key==='Escape')cancelEdit(i);};
+}
+function cancelEdit(i){document.getElementById('mi-'+i).classList.remove('editing');document.getElementById('minp-'+i).value=lsCL[i];}
+function saveEdit(i){
+  const v=document.getElementById('minp-'+i).value.trim();
+  if(!v)return;
+  lsCL[i]=v;saveCL();renderManage();toast(T('tSave'));
+}
+function addItem(){
+  const inp=document.getElementById('new-inp');
+  const v=inp.value.trim();if(!v)return;
+  lsCL.push(v);saveCL();inp.value='';renderManage();toast(T('tAdd'));
+}
+function delItem(i){lsCL.splice(i,1);saveCL();renderManage();toast(T('tDel'));}
+function saveCL(){
+  localStorage.setItem('hdk_cl',JSON.stringify(lsCL));
+  if(db&&!demoMode)db.collection('config').doc('checklist').set({items:lsCL});
+}
+
+// ══════════════════════
+// MAINTENANCE
+// ══════════════════════
+function setFlt(f){
+  flt=f;
+  ['all','open','res'].forEach(x=>document.getElementById('flt-'+x).classList.remove('on'));
+  document.getElementById('flt-'+f).classList.add('on');
+  loadMaint();
+}
+function loadMaint(){
+  if(db&&!demoMode){
+    db.collection('reports').orderBy('timestamp','desc').get()
+      .then(snap=>{const r=[];snap.forEach(d=>r.push(d.data()));renderMaint(r);})
+      .catch(()=>renderMaint(lsReps));
+  }else renderMaint(lsReps);
+}
+function fmtDT(iso){
+  if(!iso)return'';
+  const d=new Date(iso);
+  return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+function renderMaint(reps){
+  const cont=document.getElementById('mt-cont');
+  cont.innerHTML='';
+  let list=reps.filter(r=>r.issues&&r.issues.length>0);
+  if(flt==='open')list=list.filter(r=>r.issues.some(i=>!i.resolved));
+  if(flt==='resolved')list=list.filter(r=>r.issues.every(i=>i.resolved));
+  if(!list.length){
+    cont.innerHTML='<div class="empty-s"><div class="ei">✅</div><p>'+T('noRep')+'</p></div>';
+    return;
+  }
+  list.forEach(rep=>{
+    const allRes=rep.issues.every(i=>i.resolved);
+    const card=document.createElement('div');
+    card.className='rcard'+(allRes?' allres':'');
+    let issH='';
+    rep.issues.forEach((iss,idx)=>{
+      const bClass=iss.resolved?'res':'open';
+      const bTxt=iss.resolved?T('resolved'):'Open';
+      const btnClass=iss.resolved?'done':'open';
+      const btnTxt=iss.resolved?T('resolved'):T('resolve');
+      const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>':'';
+      issH+=
+        '<div class="rirow">'
+        +'<div class="riinfo">'
+        +'<div class="riname">'+iss.item+'</div>'
+        +(iss.note?'<div class="rinote">📝 '+iss.note+'</div>':'')
+        +'<div class="rits">'
+        +'<div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+'</div>'
+        +fixLine+'</div></div>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'
+        +'<span class="ribadge '+bClass+'">'+bTxt+'</span>'
+        +'<button class="resbtn '+btnClass+'" '+(iss.resolved?'style="cursor:default;opacity:0.7;"':'onclick="resolveIss(\''+rep.id+'\','+idx+')"')+'>'+btnTxt+'</button>'
+        +'</div></div>';
+    });
+    card.innerHTML=
+      '<div class="rcard-top">'
+      +'<div class="rnum">Room '+rep.room+'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div class="rmeta"><div class="mlbl">REPORTED</div><div class="mval">'+fmtDT(rep.timestamp)+'</div></div>'
+      +'<button class="delbtn-report" onclick="deleteReport(\''+rep.id+'\')" title="Delete report">🗑</button>'
+      +'</div>'
+      +'</div><div class="rissues">'+issH+'</div>';
+    cont.appendChild(card);
+  });
+}
+
+function refreshReports(){
+  // Refresh whichever reports view is currently visible
+  const admView = document.getElementById('v-reports');
+  const mtView  = document.getElementById('v-maint');
+  if(admView && admView.classList.contains('on')) renderAdmReports();
+  else if(mtView && mtView.classList.contains('on')) loadMaint();
+  else { renderAdmReports(); loadMaint(); }
+}
+
+function deleteReport(repId){
+  if(!document.body.classList.contains('super-admin-mode'))return;
+  const rep=lsReps.find(r=>r.id===repId);
+  const room=rep?rep.room:null;
+  lsReps=lsReps.filter(r=>r.id!==repId);
+  if(room) delete lsRSt[room];
+  localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+  localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+  if(db&&!demoMode){
+    db.collection('reports').doc(repId).delete().catch(()=>{});
+    if(room) db.collection('roomStatus').doc(room).delete().catch(()=>{});
+  }
+  toast('🗑 Report deleted');
+  refreshReports();
+}
+
+function wipeAllReports(){
+  if(!document.body.classList.contains('super-admin-mode'))return;
+  if(!confirm('Delete ALL reports and reset ALL room statuses? This cannot be undone.'))return;
+  const repsCopy=[...lsReps];
+  const roomsCopy=Object.keys(lsRSt);
+  lsReps=[];
+  lsRSt={};
+  localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+  localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+  if(db&&!demoMode){
+    const batch=db.batch();
+    repsCopy.forEach(r=>{ batch.delete(db.collection('reports').doc(r.id)); });
+    roomsCopy.forEach(room=>{ batch.delete(db.collection('roomStatus').doc(room)); });
+    batch.commit().catch(()=>{
+      repsCopy.forEach(r=>db.collection('reports').doc(r.id).delete().catch(()=>{}));
+      roomsCopy.forEach(room=>db.collection('roomStatus').doc(room).delete().catch(()=>{}));
+    });
+  }
+  toast('🗑 All reports deleted');
+  refreshReports();
+}
+
+function resolveIss(repId,issIdx){
+  // ONE-WAY: can only resolve, never un-resolve
+  const rep=lsReps.find(r=>r.id===repId);
+  if(rep && rep.issues[issIdx].resolved) return; // already resolved, do nothing
+  const now=new Date().toISOString();
+  if(rep){
+    rep.issues[issIdx].resolved=true;
+    rep.issues[issIdx].resolvedAt=now;
+    if(!rep.issues.some(i=>!i.resolved)){lsRSt[rep.room]='checked';localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));}
+    localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
+    toast(T('tResolve'));
+  }
+  resolvingLock = true; // block snapshot re-render while Firestore write is in flight
+  if(db&&!demoMode){
+    db.collection('reports').doc(repId).get().then(doc=>{
+      if(!doc.exists)return;
+      const data=doc.data();
+      // Merge resolved state — never downgrade
+      data.issues.forEach((iss,i)=>{
+        if(rep && rep.issues[i] && rep.issues[i].resolved){
+          data.issues[i].resolved=true;
+          data.issues[i].resolvedAt=rep.issues[i].resolvedAt;
+        }
+      });
+      const p1=db.collection('reports').doc(repId).update({issues:data.issues});
+      const p2=!data.issues.some(i=>!i.resolved)
+        ?db.collection('roomStatus').doc(data.room).set({status:'checked',updatedAt:now})
+        :Promise.resolve();
+      return Promise.all([p1,p2]);
+    }).catch(()=>{}).finally(()=>{
+      resolvingLock=false;
+      refreshReports();
+    });
+  }else{
+    resolvingLock=false;
+    refreshReports();
+  }
+}
+
+// ══════════════════════
+// NOTIFICATION SOUND
+// ══════════════════════
+let audioCtx = null;
+let audioUnlocked = false;
+
+function unlockAudio(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended'){
+      audioCtx.resume().then(()=>{ audioUnlocked = true; });
+    } else {
+      audioUnlocked = true;
+    }
+  }catch(e){}
+}
+
+// Re-unlock on every interaction — browsers can suspend again after idle
+document.addEventListener('pointerdown', unlockAudio);
+document.addEventListener('click', unlockAudio);
+
+function playAlertSound(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const resume = audioCtx.state === 'suspended' ? audioCtx.resume() : Promise.resolve();
+    resume.then(()=>{
+      const now = audioCtx.currentTime;
+      // Louder 4-tone alert
+      const tones = [
+        {freq:1046, start:0.0,  dur:0.18},
+        {freq:784,  start:0.22, dur:0.14},
+        {freq:1046, start:0.40, dur:0.18},
+        {freq:1318, start:0.62, dur:0.35},
+      ];
+      tones.forEach(t=>{
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(t.freq, now + t.start);
+        gain.gain.setValueAtTime(0.0,  now + t.start);
+        gain.gain.linearRampToValueAtTime(0.8, now + t.start + 0.03);
+        gain.gain.linearRampToValueAtTime(0.0, now + t.start + t.dur);
+        osc.start(now + t.start);
+        osc.stop(now + t.start + t.dur + 0.1);
+      });
+    });
+  }catch(e){ console.warn('Audio error:', e); }
+}
+
+// ══════════════════════
+// NOTIFICATIONS
+// ══════════════════════
+let notifList = JSON.parse(localStorage.getItem('hdk_notifs') || '[]');
+let unsubscribeSnapshot = null;
+let unsubscribeRoomStatus = null;
+let notifPanelOpen = false;
+let currentUserRole = null;
+let resolvingLock = false; // prevents snapshot from re-rendering during resolve write
+
+function showNotifEnableBtn(denied){
+  const btn = document.getElementById('notif-enable-btn');
+  if(!btn) return;
+  if(denied){
+    btn.textContent = '🔕 Notifications blocked';
+    btn.style.background = '#e74c3c';
+    btn.style.color = '#fff';
+    btn.onclick = () => alert('Notifications are blocked. Go to Chrome Settings → Site Settings → Notifications → find this site → Allow.');
+  } else {
+    btn.textContent = '🔔 Enable Notifications';
+    btn.style.background = '#c4a046';
+    btn.style.color = '#000';
+  }
+  btn.style.display = 'block';
+}
+
+function hideNotifEnableBtn(){
+  const btn = document.getElementById('notif-enable-btn');
+  if(btn) btn.style.display = 'none';
+}
+
+async function manualEnableNotif(){
+  try {
+    const perm = await Notification.requestPermission();
+    if(perm === 'granted'){
+      toast('✅ Notifications enabled!');
+      hideNotifEnableBtn();
+      if(swRegistration) await subscribeFCM();
+    } else {
+      showNotifEnableBtn(true);
+    }
+  } catch(e) {
+    toast('Could not enable notifications');
+  }
+}
+
+function isNotifRole(r){ return r === 'maintenance' || r === 'superadmin'; }
+
+function startRealtimeListener(){
+  if(!db || demoMode) return;
+  if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  if(unsubscribeRoomStatus){ unsubscribeRoomStatus(); unsubscribeRoomStatus = null; }
+
+  const knownIds = new Set(lsReps.map(r => r.id));
+
+  // Listen to new reports — for ALL roles
+  unsubscribeSnapshot = db.collection('reports')
+    .orderBy('timestamp','desc')
+    .onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if(change.type === 'added'){
+          const rep = change.doc.data();
+          if(!knownIds.has(rep.id)){
+            knownIds.add(rep.id);
+            if(rep.issues && rep.issues.length > 0 && isNotifRole(currentUserRole)){
+              addNotification(rep);
+              sendBrowserNotif(rep);
+            }
+            if(!lsReps.find(r => r.id === rep.id)){
+              lsReps.unshift(rep);
+              localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
+            }
+            if(rep.status) lsRSt[rep.room] = rep.status;
+          }
+        }
+        if(change.type === 'modified'){
+          const rep = change.doc.data();
+          const idx = lsReps.findIndex(r => r.id === rep.id);
+          if(idx >= 0){
+            // Merge: never downgrade a resolved issue back to unresolved
+            if(lsReps[idx].issues && rep.issues){
+              rep.issues.forEach((iss,i)=>{
+                if(lsReps[idx].issues[i] && lsReps[idx].issues[i].resolved && !iss.resolved){
+                  // Local says resolved, Firestore says not yet — keep local resolved state
+                  rep.issues[i].resolved = true;
+                  rep.issues[i].resolvedAt = lsReps[idx].issues[i].resolvedAt;
+                }
+              });
+            }
+            lsReps[idx] = rep;
+          } else {
+            lsReps.unshift(rep);
+          }
+          localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
+          if(rep.status) lsRSt[rep.room] = rep.status;
+        }
+        if(change.type === 'removed'){
+          const rep = change.doc.data();
+          lsReps = lsReps.filter(r => r.id !== rep.id);
+          localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
+        }
+      });
+      // Re-render rooms view if visible
+      if(!resolvingLock){
+        const vRooms = document.getElementById('v-rooms');
+        if(vRooms && vRooms.classList.contains('on')) renderRooms();
+      }
+    }, () => {});
+
+  // Listen to roomStatus changes — re-render rooms live for ALL roles
+  unsubscribeRoomStatus = db.collection('roomStatus')
+    .onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if(change.type === 'added' || change.type === 'modified'){
+          lsRSt[change.doc.id] = change.doc.data().status;
+        }
+        if(change.type === 'removed'){
+          delete lsRSt[change.doc.id];
+        }
+      });
+      localStorage.setItem('hdk_rst', JSON.stringify(lsRSt));
+      // Re-render rooms view if visible
+      const vRooms = document.getElementById('v-rooms');
+      if(vRooms && vRooms.classList.contains('on')) renderRooms();
+      // Re-render status view if visible
+      const vStatus = document.getElementById('v-status');
+      if(vStatus && vStatus.classList.contains('on')) renderStatus();
+    }, () => {});
+}
+
+function stopRealtimeListener(){
+  if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  if(unsubscribeRoomStatus){ unsubscribeRoomStatus(); unsubscribeRoomStatus = null; }
+}
+
+function addNotification(rep){
+  const notif = {
+    id: rep.id,
+    room: rep.room,
+    count: rep.issues.length,
+    timestamp: rep.timestamp,
+    read: false
+  };
+  if(notifList.find(n => n.id === rep.id)) return;
+  notifList.unshift(notif);
+  if(notifList.length > 50) notifList = notifList.slice(0, 50);
+  localStorage.setItem('hdk_notifs', JSON.stringify(notifList));
+  updateBadge();
+  shakeBell();
+  playAlertSound();
+  if(currentUserRole === 'maintenance' || currentUserRole === 'superadmin'){
+    refreshReports();
+  }
+}
+
+function sendBrowserNotif(rep){
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  const issCount = rep.issues.length;
+  const title = '🔔 Hotel De KOKA — New Report';
+  const opts = {
+    body: 'Room ' + rep.room + ': ' + issCount + ' issue' + (issCount > 1 ? 's' : '') + ' reported',
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%230d1628"/><text y="44" x="8" font-size="40" fill="%23c4a046">K</text></svg>',
+    tag: 'hdk-report-' + rep.id,
+    requireInteraction: true,
+    vibrate: [200, 100, 200]
+  };
+  // Use SW registration if available — works in background
+  if(swRegistration && swRegistration.showNotification){
+    swRegistration.showNotification(title, opts);
+  } else {
+    new Notification(title, opts);
+  }
+}
+
+function updateBadge(){
+  const unread = notifList.filter(n => !n.read).length;
+  const badge = document.getElementById('notif-badge');
+  const bell = document.getElementById('notif-bell');
+  if(!badge || !bell) return;
+  if(unread > 0){
+    badge.textContent = unread > 99 ? '99+' : unread;
+    badge.style.display = 'flex';
+    bell.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function shakeBell(){
+  const bell = document.getElementById('notif-bell');
+  if(!bell) return;
+  bell.classList.remove('bell-shake');
+  void bell.offsetWidth;
+  bell.classList.add('bell-shake');
+  setTimeout(() => bell.classList.remove('bell-shake'), 600);
+}
+
+function openNotifPanel(){
+  notifPanelOpen = !notifPanelOpen;
+  const panel = document.getElementById('notif-panel');
+  if(notifPanelOpen){
+    panel.style.display = 'block';
+    renderNotifPanel();
+    // Mark all as read
+    notifList.forEach(n => n.read = true);
+    localStorage.setItem('hdk_notifs', JSON.stringify(notifList));
+    updateBadge();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notif-panel');
+  const bell = document.getElementById('notif-bell');
+  if(notifPanelOpen && panel && bell && !panel.contains(e.target) && !bell.contains(e.target)){
+    notifPanelOpen = false;
+    panel.style.display = 'none';
+  }
+});
+
+function renderNotifPanel(){
+  const list = document.getElementById('notif-list');
+  if(!list) return;
+  if(notifList.length === 0){
+    list.innerHTML = '<div class="notif-empty">No notifications</div>';
+    return;
+  }
+  list.innerHTML = notifList.slice(0, 20).map(n => {
+    const dt = new Date(n.timestamp);
+    const dtStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    return '<div class="notif-item' + (n.read ? '' : ' unread') + '">'
+      + '<div class="notif-dot' + (n.read ? ' read' : '') + '"></div>'
+      + '<div class="notif-text">'
+      + '<strong>Room ' + n.room + ' — ' + n.count + ' issue' + (n.count > 1 ? 's' : '') + '</strong>'
+      + '<span>' + dtStr + '</span>'
+      + '</div></div>';
+  }).join('');
+}
+
+function clearNotifs(){
+  notifList = [];
+  localStorage.setItem('hdk_notifs', JSON.stringify(notifList));
+  updateBadge();
+  renderNotifPanel();
+  notifPanelOpen = false;
+  document.getElementById('notif-panel').style.display = 'none';
+}
+
+// ══════════════════════
+// TOAST
+// ══════════════════════
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),2400);
+}
+
+// ══════════════════════
+// INIT
+// ══════════════════════
+initFB();
+applyLang();
+registerServiceWorker();
+</script>
+</body>
+</html>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
