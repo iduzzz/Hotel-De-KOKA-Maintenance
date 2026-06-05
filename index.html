@@ -588,6 +588,7 @@ body{background:#0a0e1a;color:#fff;}
     </div>
     <div class="trole"><div class="dot"></div><span id="t-trole">—</span></div>
     <button class="tbtn" onclick="toggleLang()" style="margin-left:8px">EN/МК</button>
+    <button class="tbtn notif-enable-btn" id="notif-enable-btn" onclick="manualEnableNotif()" style="display:none;background:#c4a046;color:#000;font-weight:700;">🔔 Enable Notifications</button>
     <button class="tbtn" onclick="doLogout()" id="t-logout" style="margin-left:6px">Sign out</button>
   </div>
 
@@ -951,11 +952,28 @@ function enterApp(r){
   const bell = document.getElementById('notif-bell');
   if(isNotifRole(r)){
     bell.style.display = 'flex';
-    requestNotifPermission();
-    registerServiceWorker();
     updateBadge();
+    // Register SW first, then request permission after SW is ready
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.ready.then(async reg => {
+        swRegistration = reg;
+        const perm = Notification.permission;
+        if(perm === 'granted'){
+          await subscribeFCM();
+        } else if(perm === 'default'){
+          // Show manual button since auto-popup may be blocked
+          showNotifEnableBtn();
+          const result = await Notification.requestPermission();
+          if(result === 'granted') await subscribeFCM();
+        } else {
+          // Denied — show instructions
+          showNotifEnableBtn(true);
+        }
+      });
+    }
   } else {
     bell.style.display = 'none';
+    hideNotifEnableBtn();
   }
 
   syncFromFirebase(()=>{
@@ -1014,6 +1032,7 @@ function doLogout(){
   document.getElementById('notif-panel').style.display='none';
   notifPanelOpen=false;
   document.body.classList.remove('super-admin-mode');
+  hideNotifEnableBtn();
   const repTab=document.getElementById('tab-reports');
   if(repTab) repTab.style.display='none';
   selRole('housekeeper');
@@ -1624,6 +1643,42 @@ let unsubscribeRoomStatus = null;
 let notifPanelOpen = false;
 let currentUserRole = null;
 let resolvingLock = false; // prevents snapshot from re-rendering during resolve write
+
+function showNotifEnableBtn(denied){
+  const btn = document.getElementById('notif-enable-btn');
+  if(!btn) return;
+  if(denied){
+    btn.textContent = '🔕 Notifications blocked';
+    btn.style.background = '#e74c3c';
+    btn.style.color = '#fff';
+    btn.onclick = () => alert('Notifications are blocked. Go to Chrome Settings → Site Settings → Notifications → find this site → Allow.');
+  } else {
+    btn.textContent = '🔔 Enable Notifications';
+    btn.style.background = '#c4a046';
+    btn.style.color = '#000';
+  }
+  btn.style.display = 'block';
+}
+
+function hideNotifEnableBtn(){
+  const btn = document.getElementById('notif-enable-btn');
+  if(btn) btn.style.display = 'none';
+}
+
+async function manualEnableNotif(){
+  try {
+    const perm = await Notification.requestPermission();
+    if(perm === 'granted'){
+      toast('✅ Notifications enabled!');
+      hideNotifEnableBtn();
+      if(swRegistration) await subscribeFCM();
+    } else {
+      showNotifEnableBtn(true);
+    }
+  } catch(e) {
+    toast('Could not enable notifications');
+  }
+}
 
 function isNotifRole(r){ return r === 'maintenance' || r === 'superadmin'; }
 
