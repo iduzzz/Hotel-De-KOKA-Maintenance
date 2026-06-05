@@ -681,25 +681,14 @@ body{background:#0a0e1a;color:#fff;}
 // ══════════════════════
 function registerServiceWorker(){
   if(!('serviceWorker' in navigator)) return;
-  // Inline SW as blob — single file approach
-  const swCode = [
-    "self.addEventListener('push',e=>{",
-    "  const d=e.data?e.data.json():{};",
-    "  e.waitUntil(self.registration.showNotification(d.title||'Hotel De KOKA',{",
-    "    body:d.body||'New report',tag:d.tag||'hdk',requireInteraction:false",
-    "  }));",
-    "});",
-    "self.addEventListener('notificationclick',e=>{",
-    "  e.notification.close();",
-    "  e.waitUntil(clients.openWindow(self.location.origin+'/Hotel-De-KOKA-Maintenance/'));",
-    "});"
-  ].join('\n');
-  try{
-    const blob = new Blob([swCode],{type:'application/javascript'});
-    const url = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(url,{scope:'/'}).catch(()=>{});
-  }catch(e){}
+  navigator.serviceWorker.register('/Hotel-De-KOKA-Maintenance/sw.js', {scope:'/Hotel-De-KOKA-Maintenance/'})
+    .then(reg => {
+      console.log('SW registered:', reg.scope);
+      swRegistration = reg;
+    })
+    .catch(err => console.log('SW error:', err));
 }
+let swRegistration = null;
 
 // ══════════════════════
 // FIREBASE
@@ -1704,12 +1693,20 @@ function sendBrowserNotif(rep){
   if(!('Notification' in window)) return;
   if(Notification.permission !== 'granted') return;
   const issCount = rep.issues.length;
-  new Notification('🔔 Hotel De KOKA — New Report', {
+  const title = '🔔 Hotel De KOKA — New Report';
+  const opts = {
     body: 'Room ' + rep.room + ': ' + issCount + ' issue' + (issCount > 1 ? 's' : '') + ' reported',
     icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%230d1628"/><text y="44" x="8" font-size="40" fill="%23c4a046">K</text></svg>',
     tag: 'hdk-report-' + rep.id,
-    requireInteraction: false
-  });
+    requireInteraction: true,
+    vibrate: [200, 100, 200]
+  };
+  // Use SW registration if available — works in background
+  if(swRegistration && swRegistration.showNotification){
+    swRegistration.showNotification(title, opts);
+  } else {
+    new Notification(title, opts);
+  }
 }
 
 function updateBadge(){
