@@ -710,24 +710,42 @@ async function subscribeFCM(){
   if(!swRegistration) return;
   if(!FCM_VAPID_KEY || FCM_VAPID_KEY === 'YOUR_VAPID_KEY_HERE') return;
   try {
-    // Get FCM push subscription
-    const sub = await swRegistration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(FCM_VAPID_KEY)
-    });
-    // Save subscription endpoint + keys to Firestore under fcmTokens collection
+    // Check if already subscribed
+    let sub = await swRegistration.pushManager.getSubscription();
+    if(!sub){
+      sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(FCM_VAPID_KEY)
+      });
+    }
+
+    // Manually extract keys — JSON.stringify doesn't work on PushSubscription
+    const rawKey  = sub.getKey('p256dh');
+    const rawAuth = sub.getKey('auth');
+    const p256dh  = rawKey  ? btoa(String.fromCharCode(...new Uint8Array(rawKey))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'') : null;
+    const auth    = rawAuth ? btoa(String.fromCharCode(...new Uint8Array(rawAuth))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'') : null;
+
+    if(!p256dh || !auth){
+      console.log('FCM: could not extract keys');
+      return;
+    }
+
+    const tokenData = {
+      endpoint:   sub.endpoint,
+      keys: { p256dh, auth },
+      role:       currentUserRole,
+      device:     navigator.userAgent.substring(0,80),
+      updatedAt:  new Date().toISOString()
+    };
+
     if(db && !demoMode){
-      const tokenData = JSON.parse(JSON.stringify(sub));
-      tokenData.role = currentUserRole;
-      tokenData.device = navigator.userAgent.substring(0,80);
-      tokenData.updatedAt = new Date().toISOString();
-      // Use a hash of the endpoint as the doc ID
-      const docId = btoa(sub.endpoint).replace(/[^a-zA-Z0-9]/g,'').substring(0,40);
+      const docId = btoa(unescape(encodeURIComponent(sub.endpoint))).replace(/[^a-zA-Z0-9]/g,'').substring(0,40);
       await db.collection('fcmTokens').doc(docId).set(tokenData);
-      console.log('FCM subscription saved');
+      console.log('FCM subscription saved:', sub.endpoint.substring(0,50));
+      toast('🔔 Push notifications active');
     }
   } catch(e) {
-    console.log('FCM subscribe error:', e);
+    console.log('FCM subscribe error:', e.message || e);
   }
 }
 
