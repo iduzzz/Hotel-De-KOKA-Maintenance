@@ -375,6 +375,7 @@ body{background:#0a0e1a;color:#fff;}
 }
 .delbtn-report:active{transform:scale(0.95);}
 .super-admin-mode .delbtn-report{display:block;}
+.delbtn-report[style*="display:block"]{display:block!important;}
 
 .empty-s{text-align:center;padding:50px 20px;color:#9a9690;}
 .empty-s .ei{font-size:44px;margin-bottom:12px;}
@@ -649,7 +650,7 @@ body{background:#0a0e1a;color:#fff;}
         <div class="mfilt">
           <button class="fbtn on" id="admflt-all" onclick="setAdmFlt('all')">All</button>
           <button class="fbtn" id="admflt-open" onclick="setAdmFlt('open')">Open</button>
-          <button class="fbtn" id="admflt-res" onclick="setAdmFlt('resolved')">Resolved</button>
+          <button class="fbtn" id="admflt-res" onclick="setAdmFlt('res')">Resolved</button>
           <button class="fbtn fbtn-wipe" onclick="wipeAllReports()">🗑 Delete ALL</button>
         </div>
         <div id="adm-rep-cont"></div>
@@ -1245,7 +1246,9 @@ function _drawAdmReps(reports){
       const bClass=iss.resolved?'res':'open';
       const bTxt=iss.resolved?T('resolved'):'Open';
       const btnClass=iss.resolved?'done':'open';
-      const btnTxt=iss.resolved?T('resolved'):T('resolve');
+      const btnTxt=iss.resolved?'✓ '+T('resolved'):T('resolve');
+      const btnOnclick=iss.resolved?'':'onclick="resolveIss(\''+rep.id+'\','+idx+')"';
+      const btnDisabled=iss.resolved?'style="cursor:default;opacity:0.7;"':'';
       const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>':'';
       issH+='<div class="rirow"><div class="riinfo">'
         +'<div class="riname">'+iss.item+'</div>'
@@ -1253,7 +1256,7 @@ function _drawAdmReps(reports){
         +'<div class="rits"><div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+'</div>'+fixLine+'</div>'
         +'</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'
         +'<span class="ribadge '+bClass+'">'+bTxt+'</span>'
-        +'<button class="resbtn '+btnClass+'" onclick="resolveIss(\''+rep.id+'\','+idx+')">'+btnTxt+'</button>'
+        +'<button class="resbtn '+btnClass+'" '+btnOnclick+' '+btnDisabled+'>'+btnTxt+'</button>'
         +'</div></div>';
     });
     card.innerHTML='<div class="rcard-top"><div class="rnum">Room '+rep.room+'</div>'
@@ -1404,7 +1407,7 @@ function renderMaint(reps){
         +fixLine+'</div></div>'
         +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'
         +'<span class="ribadge '+bClass+'">'+bTxt+'</span>'
-        +'<button class="resbtn '+btnClass+'" onclick="resolveIss(\''+rep.id+'\','+idx+')">'+btnTxt+'</button>'
+        +'<button class="resbtn '+btnClass+'" '+(iss.resolved?'style="cursor:default;opacity:0.7;"':'onclick="resolveIss(\''+rep.id+'\','+idx+')"')+'>'+btnTxt+'</button>'
         +'</div></div>';
     });
     card.innerHTML=
@@ -1467,21 +1470,24 @@ function wipeAllReports(){
 }
 
 function resolveIss(repId,issIdx){
-  const now=new Date().toISOString();
+  // ONE-WAY: can only resolve, never un-resolve by clicking again
   const rep=lsReps.find(r=>r.id===repId);
+  if(rep && rep.issues[issIdx].resolved) return; // already resolved, do nothing
+  const now=new Date().toISOString();
   if(rep){
-    const was=rep.issues[issIdx].resolved;
-    rep.issues[issIdx].resolved=!was;
-    rep.issues[issIdx].resolvedAt=was?null:now;
+    rep.issues[issIdx].resolved=true;
+    rep.issues[issIdx].resolvedAt=now;
     if(!rep.issues.some(i=>!i.resolved)){lsRSt[rep.room]='checked';localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));}
     localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
-    toast(rep.issues[issIdx].resolved?T('tResolve'):T('tUnresolve'));
+    toast(T('tResolve'));
   }
   if(db&&!demoMode){
     db.collection('reports').doc(repId).get().then(doc=>{
       if(!doc.exists)return;
-      const data=doc.data();const was=data.issues[issIdx].resolved;
-      data.issues[issIdx].resolved=!was;data.issues[issIdx].resolvedAt=was?null:now;
+      const data=doc.data();
+      if(data.issues[issIdx].resolved) return; // already resolved in Firestore too
+      data.issues[issIdx].resolved=true;
+      data.issues[issIdx].resolvedAt=now;
       const p1=db.collection('reports').doc(repId).update({issues:data.issues});
       const p2=!data.issues.some(i=>!i.resolved)
         ?db.collection('roomStatus').doc(data.room).set({status:'checked',updatedAt:now})
