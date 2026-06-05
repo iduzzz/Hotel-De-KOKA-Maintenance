@@ -1234,15 +1234,19 @@ function _drawAdmReps(reports){
   if(!cont)return;
   cont.innerHTML='';
   let list=reports.filter(r=>r.issues&&r.issues.length>0);
-  if(admFlt==='open') list=list.filter(r=>r.issues.some(i=>!i.resolved));
-  if(admFlt==='res')  list=list.filter(r=>r.issues.every(i=>i.resolved));
+  if(admFlt==='open')    list=list.filter(r=>r.issues.some(i=>!i.resolved));
+  if(admFlt==='res')     list=list.filter(r=>r.issues.some(i=>i.resolved));
   if(!list.length){cont.innerHTML='<div class="empty-s"><div class="ei">✅</div><p>No reports</p></div>';return;}
   list.forEach(rep=>{
     const allRes=rep.issues.every(i=>i.resolved);
     const card=document.createElement('div');
     card.className='rcard'+(allRes?' allres':'');
     let issH='';
-    rep.issues.forEach((iss,idx)=>{
+    // When on 'res' filter, show only resolved issues; otherwise show all
+    const issuesToShow = admFlt==='res'
+      ? rep.issues.map((iss,idx)=>({iss,idx})).filter(({iss})=>iss.resolved)
+      : rep.issues.map((iss,idx)=>({iss,idx}));
+    issuesToShow.forEach(({iss,idx})=>{
       const bClass=iss.resolved?'res':'open';
       const bTxt=iss.resolved?T('resolved'):'Open';
       const btnClass=iss.resolved?'done':'open';
@@ -1262,7 +1266,7 @@ function _drawAdmReps(reports){
     card.innerHTML='<div class="rcard-top"><div class="rnum">Room '+rep.room+'</div>'
       +'<div style="display:flex;align-items:center;gap:10px">'
       +'<div class="rmeta"><div class="mlbl">REPORTED</div><div class="mval">'+fmtDT(rep.timestamp)+'</div></div>'
-      +'<button class="delbtn-report" style="display:block" onclick="deleteReport(\''+rep.id+'\')">🗑</button>'
+      +'<button class="delbtn-report" style="display:block!important" onclick="deleteReport(\''+rep.id+'\')">🗑</button>'
       +'</div></div><div class="rissues">'+issH+'</div>';
     cont.appendChild(card);
   });
