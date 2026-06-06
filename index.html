@@ -39,9 +39,9 @@ body{background:#0a0e1a;color:#fff;}
 .hotel-logo h1 em{color:#c4a046;font-style:normal;}
 .hotel-logo .sub{font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-top:8px;}
 
-.role-row{display:flex;gap:10px;width:100%;margin-bottom:28px;}
+.role-row{display:flex;gap:8px;width:100%;margin-bottom:28px;flex-wrap:wrap;justify-content:center;}
 .role-card{
-  flex:1;padding:14px 10px;text-align:center;
+  flex:0 0 calc(33% - 6px);padding:12px 8px;text-align:center;
   background:rgba(255,255,255,0.04);
   border:1.5px solid rgba(255,255,255,0.08);
   border-radius:14px;cursor:pointer;transition:all 0.15s;
@@ -532,16 +532,25 @@ body{background:#0a0e1a;color:#fff;}
     </div>
     <div class="role-row">
       <div class="role-card sel" id="rc-hk" onclick="selRole('housekeeper')">
-        <div class="ri">🧹</div><div class="rn" id="t-rhk">Housekeeper</div>
+        <div class="ri">🧹</div><div class="rn">Elma</div>
       </div>
       <div class="role-card" id="rc-mt" onclick="selRole('maintenance')">
-        <div class="ri">🔧</div><div class="rn" id="t-rmt">Maintenance</div>
+        <div class="ri">🔧</div><div class="rn">Enis</div>
       </div>
       <div class="role-card" id="rc-rc" onclick="selRole('reception')">
-        <div class="ri">🛎</div><div class="rn" id="t-rrc">Reception</div>
+        <div class="ri">🛎</div><div class="rn">Dafina</div>
+      </div>
+      <div class="role-card" id="rc-jasna" onclick="selRole('jasna')">
+        <div class="ri">🛎</div><div class="rn">Jasna</div>
+      </div>
+      <div class="role-card" id="rc-simona" onclick="selRole('simona')">
+        <div class="ri">🛎</div><div class="rn">Simona</div>
+      </div>
+      <div class="role-card" id="rc-altin" onclick="selRole('altin')">
+        <div class="ri">🛎</div><div class="rn">Altin</div>
       </div>
       <div class="role-card" id="rc-sa" onclick="selRole('superadmin')">
-        <div class="ri">🔑</div><div class="rn" id="t-rsa">Admin</div>
+        <div class="ri">🔑</div><div class="rn">Admin</div>
       </div>
     </div>
     <div class="pin-lbl" id="t-pinlbl">ENTER PIN</div>
@@ -782,7 +791,7 @@ function initFB(){
 // ══════════════════════
 // DATA
 // ══════════════════════
-const PINS={housekeeper:'1234',maintenance:'5678',reception:'9999',superadmin:'0000'};
+const PINS={housekeeper:'1111',maintenance:'2222',reception:'3333',jasna:'4444',simona:'5555',altin:'6666',superadmin:'0000'};
 const ROOMS={
   '1st Floor':['101','102','103','104','105','106','107'],
   '2nd Floor':['208','209','210','211','212','213','214'],
@@ -952,8 +961,8 @@ function checkPin(){
 function selRole(r){
   role=r;pin='';updateDots();
   document.getElementById('pin-err').textContent='';
-  ['hk','mt','rc','sa'].forEach(x=>document.getElementById('rc-'+x).classList.remove('sel'));
-  const map={housekeeper:'hk',maintenance:'mt',reception:'rc',superadmin:'sa'};
+  ['hk','mt','rc','jasna','simona','altin','sa'].forEach(x=>document.getElementById('rc-'+x).classList.remove('sel'));
+  const map={housekeeper:'hk',maintenance:'mt',reception:'rc',jasna:'jasna',simona:'simona',altin:'altin',superadmin:'sa'};
   document.getElementById('rc-'+map[r]).classList.add('sel');
 }
 
@@ -964,7 +973,7 @@ function enterApp(r){
   currentUserRole = r;
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-app').classList.add('active');
-  const lbl={housekeeper:T('rhk'),maintenance:T('rmt'),reception:T('rrc'),superadmin:'⚙ Admin'};
+  const lbl={housekeeper:'Elma',maintenance:'Enis',reception:'Dafina',jasna:'Jasna',simona:'Simona',altin:'Altin',superadmin:'⚙ Admin'};
   document.getElementById('t-trole').textContent=lbl[r]||r;
 
   // Show bell for maintenance and admin
@@ -996,7 +1005,7 @@ function enterApp(r){
   }
 
   syncFromFirebase(()=>{
-    if(r==='housekeeper'||r==='reception'||r==='superadmin'||r==='maintenance'){
+    if(r==='housekeeper'||r==='reception'||r==='superadmin'||r==='maintenance'||r==='jasna'||r==='simona'||r==='altin'){
       document.getElementById('shell-hk').style.display='flex';
       document.getElementById('shell-mt').style.display='none';
       if(r==='superadmin') document.body.classList.add('super-admin-mode');
