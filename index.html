@@ -135,7 +135,7 @@ body{background:#0a0e1a;color:#fff;}
 
 /* ── VIEWS ── */
 .view{display:none;}
-.view.on{display:block;height:100%;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px;}
+.view.on{display:block;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px;height:calc(100vh - 110px);}
 
 /* ════════════════════════════════
    ROOMS VIEW
@@ -607,7 +607,7 @@ body{background:#0a0e1a;color:#fff;}
   <div class="app-body">
 
     <!-- HK SHELL -->
-    <div id="shell-hk" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;height:100%;">
+    <div id="shell-hk" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
       <div class="hktabs">
         <button class="hktab on" id="tab-rooms" onclick="hkTab('rooms')"><span id="t-tabr">Rooms</span></button>
         <button class="hktab" id="tab-status" onclick="hkTab('status')"><span id="t-tabs">Status</span></button>
@@ -659,8 +659,8 @@ body{background:#0a0e1a;color:#fff;}
     </div>
 
     <!-- MT / RC SHELL -->
-    <div id="shell-mt" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;height:100%;">
-      <div class="view on" id="v-maint">
+    <div id="shell-mt" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+      <div class="view on" id="v-maint" style="height:calc(100vh - 58px)!important;">
         <div class="sec-title" id="t-mttitle">Maintenance Reports</div>
         <div class="mfilt">
           <button class="fbtn on" id="flt-all" onclick="setFlt('all')"><span id="t-fall">All</span></button>
