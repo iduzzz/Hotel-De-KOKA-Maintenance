@@ -1134,7 +1134,7 @@ function openChecklist(room){
   const existingRep=lsReps.find(r=>r.room===room&&new Date(r.timestamp).toDateString()===today);
   if(existingRep){
     existingRep.issues.forEach(iss=>{
-      if(clState[iss.item]!==undefined){
+      if(clState[iss.item]!==undefined && !iss.resolved){
         clState[iss.item]={status:'iss',note:iss.note||''};
       }
     });
@@ -1162,7 +1162,15 @@ function renderClGrid(){
 
 function buildTileHTML(item,s){
   const icon=getIcon(item);
+  // Show NOT FIXED badge if this item has an open unresolved issue
+  const hasOpenIssue=lsReps.some(r=>
+    r.room===curRoom&&r.issues.some(i=>i.item===item&&!i.resolved)
+  );
+  const badge=hasOpenIssue
+    ?'<div style="font-size:10px;font-weight:800;color:#fff;background:#e74c3c;padding:2px 7px;border-radius:6px;margin-bottom:3px;">⚠ NOT FIXED</div>'
+    :'';
   return '<div class="ct-icon">'+icon+'</div>'
+    +badge
     +'<div class="ct-name">'+item+'</div>'
     +'<div class="ct-btns">'
     +'<button class="ct-ok'+(s==='ok'?' sel':'')+'" onpointerdown="setOK(\''+escJs(item)+'\')" >✓ '+T('ok')+'</button>'
