@@ -1129,6 +1129,16 @@ function openChecklist(room){
   curRoom=room;
   clState={};
   lsCL.forEach(item=>{clState[item]={status:null,note:''};});
+  // Load existing reported issues for this room from today's report
+  const today=new Date().toDateString();
+  const existingRep=lsReps.find(r=>r.room===room&&new Date(r.timestamp).toDateString()===today);
+  if(existingRep){
+    existingRep.issues.forEach(iss=>{
+      if(clState[iss.item]!==undefined){
+        clState[iss.item]={status:'iss',note:iss.note||''};
+      }
+    });
+  }
   document.getElementById('cl-title').textContent='Room '+room;
   hkTab('checklist');
   renderClGrid();
