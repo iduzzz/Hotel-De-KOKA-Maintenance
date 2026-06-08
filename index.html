@@ -558,10 +558,6 @@ body{background:#0a0e1a;color:#fff;}
       <div class="pd" id="pd0"></div><div class="pd" id="pd1"></div>
       <div class="pd" id="pd2"></div><div class="pd" id="pd3"></div>
     </div>
-    <!-- Hidden input to capture keyboard typing -->
-    <input type="tel" id="pin-keyboard-input" maxlength="4"
-      style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"
-      inputmode="numeric" autocomplete="off" />
     <div class="pin-grid">
       <div class="pk" id="pk1" onpointerdown="pkDown('1')">1</div>
       <div class="pk" id="pk2" onpointerdown="pkDown('2')">2</div>
@@ -934,34 +930,7 @@ function pkDel(){
   document.getElementById('pin-err').textContent='';
 }
 
-// Keyboard support for PIN
-function initPinKeyboard(){
-  const inp=document.getElementById('pin-keyboard-input');
-  if(!inp)return;
-  // Focus the hidden input when login page is active
-  inp.addEventListener('input',function(){
-    const val=this.value.replace(/[^0-9]/g,'');
-    this.value='';
-    for(let i=0;i<val.length;i++){
-      if(pin.length<4) pkDown(val[i]);
-    }
-  });
-  inp.addEventListener('keydown',function(e){
-    if(e.key==='Backspace') pkDel();
-  });
-}
-
-function focusPinInput(){
-  const inp=document.getElementById('pin-keyboard-input');
-  if(inp) inp.focus();
-}
-
-// Focus pin input when clicking anywhere on login page
-document.addEventListener('click',function(e){
-  if(document.getElementById('page-login').classList.contains('active')){
-    focusPinInput();
-  }
-});
+// PIN is entered via on-screen pad only (no keyboard)
 
 function updateDots(){
   for(let i=0;i<4;i++){
@@ -1098,7 +1067,6 @@ function doLogout(){
   selRole('housekeeper');
   document.getElementById('page-app').classList.remove('active');
   document.getElementById('page-login').classList.add('active');
-  setTimeout(focusPinInput,100);
 }
 
 // ══════════════════════
@@ -1979,8 +1947,7 @@ function toast(msg){
 initFB();
 applyLang();
 registerServiceWorker();
-initPinKeyboard();
-setTimeout(focusPinInput, 300);
+
 </script>
 </body>
 </html>
