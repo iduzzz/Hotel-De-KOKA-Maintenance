@@ -980,20 +980,27 @@ function enterApp(r){
   if(isNotifRole(r)){
     bell.style.display = 'flex';
     updateBadge();
-    // Register SW first, then request permission after SW is ready
+    // Register SW first, then subscribe automatically
     if('serviceWorker' in navigator){
       navigator.serviceWorker.ready.then(async reg => {
         swRegistration = reg;
         const perm = Notification.permission;
         if(perm === 'granted'){
+          // Already granted — subscribe silently and refresh token
           await subscribeFCM();
+          hideNotifEnableBtn();
         } else if(perm === 'default'){
-          // Show manual button since auto-popup may be blocked
+          // Need to ask — show button AND try auto-request
           showNotifEnableBtn();
-          const result = await Notification.requestPermission();
-          if(result === 'granted') await subscribeFCM();
+          try {
+            const result = await Notification.requestPermission();
+            if(result === 'granted'){
+              await subscribeFCM();
+              hideNotifEnableBtn();
+            }
+          } catch(e) {}
         } else {
-          // Denied — show instructions
+          // Denied
           showNotifEnableBtn(true);
         }
       });
