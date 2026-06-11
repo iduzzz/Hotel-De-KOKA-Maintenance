@@ -721,16 +721,18 @@ async function subscribeFCM(){
   if(!swRegistration) return;
   if(!FCM_VAPID_KEY || FCM_VAPID_KEY === 'YOUR_VAPID_KEY_HERE') return;
   try {
-    // Unsubscribe existing to force fresh token
+    // Try to get existing subscription first
     let sub = await swRegistration.pushManager.getSubscription();
-    if(sub){ await sub.unsubscribe(); sub=null; }
-    await new Promise(r=>setTimeout(r,300));
 
-    // New subscription
-    sub = await swRegistration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(FCM_VAPID_KEY)
-    });
+    // Only subscribe if no existing subscription
+    if(!sub){
+      sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(FCM_VAPID_KEY)
+      });
+    }
+
+    if(!sub){ toast('⚠ Could not get push subscription'); return; }
 
     const rawKey  = sub.getKey('p256dh');
     const rawAuth = sub.getKey('auth');
@@ -748,9 +750,10 @@ async function subscribeFCM(){
     };
 
     if(db && !demoMode){
-      // Use role as document ID — one token per role, always overwrites old one
       await db.collection('fcmTokens').doc(currentUserRole).set(tokenData);
       toast('🔔 Notifications active ✓');
+    } else {
+      toast('⚠ DB not ready');
     }
   } catch(e) {
     toast('⚠ ' + (e.message||String(e)).substring(0,50));
@@ -1108,9 +1111,11 @@ function hkTab(t){
 // ROOMS
 // ══════════════════════
 function issCount(room){
-  let c=0;
-  lsReps.filter(r=>r.room===room).forEach(r=>r.issues.forEach(i=>{if(!i.resolved)c++;}));
-  return c;
+  // Only count open issues from the most recent report for this room
+  const reps = lsReps.filter(r=>r.room===room);
+  if(!reps.length) return 0;
+  const latest = reps[0]; // lsReps is sorted newest first
+  return latest.issues.filter(i=>!i.resolved).length;
 }
 
 function renderRooms(){
