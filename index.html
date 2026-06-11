@@ -982,15 +982,22 @@ function enterApp(r){
   if(isNotifRole(r)){
     bell.style.display = 'flex';
     updateBadge();
-    // Subscribe to push notifications — with debug toasts
-    const hasSW = 'serviceWorker' in navigator;
-    const hasPM = 'PushManager' in window;
-    const hasNotif = 'Notification' in window;
-    toast('SW:'+hasSW+' PM:'+hasPM+' N:'+hasNotif+' P:'+( hasNotif?Notification.permission:'n/a'));
-    if(hasSW && hasPM){
-      navigator.serviceWorker.ready.then(async reg => {
+    // Subscribe to push notifications
+    if('serviceWorker' in navigator && 'PushManager' in window){
+      try {
+        // Use getRegistration instead of ready — avoids hanging on Android
+        let reg = await navigator.serviceWorker.getRegistration('/Hotel-De-KOKA-Maintenance/');
+        if(!reg){
+          reg = await navigator.serviceWorker.register('/Hotel-De-KOKA-Maintenance/sw.js', {scope:'/Hotel-De-KOKA-Maintenance/'});
+          // Wait for it to activate
+          await new Promise(resolve=>{
+            if(reg.active){ resolve(); return; }
+            const sw = reg.installing || reg.waiting;
+            if(sw){ sw.addEventListener('statechange', e=>{ if(e.target.state==='activated') resolve(); }); }
+            else { setTimeout(resolve, 2000); }
+          });
+        }
         swRegistration = reg;
-        toast('SW ready ✓ perm:'+Notification.permission);
         const perm = Notification.permission;
         if(perm === 'granted'){
           await subscribeFCM();
@@ -999,19 +1006,17 @@ function enterApp(r){
           showNotifEnableBtn();
           try {
             const result = await Notification.requestPermission();
-            toast('Perm result:'+result);
             if(result === 'granted'){
               await subscribeFCM();
               hideNotifEnableBtn();
             }
-          } catch(e) { toast('Perm err:'+e.message); }
+          } catch(e) {}
         } else {
           showNotifEnableBtn(true);
-          toast('Notif blocked - check Chrome settings');
         }
-      }).catch(e => toast('SW ready err:'+e.message));
-    } else {
-      toast('Push not supported: SW='+hasSW+' PM='+hasPM);
+      } catch(e){
+        toast('⚠ SW error: '+(e.message||e).substring(0,40));
+      }
     }
   } else {
     bell.style.display = 'none';
