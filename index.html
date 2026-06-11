@@ -721,9 +721,14 @@ async function subscribeFCM(){
   if(!swRegistration) return;
   if(!FCM_VAPID_KEY || FCM_VAPID_KEY === 'YOUR_VAPID_KEY_HERE') return;
   try {
-    // Always get fresh subscription — unsubscribe old one first to prevent expiry issues
+    // Force unsubscribe first to get a truly fresh token
     let sub = await swRegistration.pushManager.getSubscription();
-    if(sub){ await sub.unsubscribe(); }
+    if(sub){ await sub.unsubscribe(); sub=null; }
+
+    // Small delay to ensure unsubscribe completes
+    await new Promise(r=>setTimeout(r,500));
+
+    // Get fresh subscription
     sub = await swRegistration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(FCM_VAPID_KEY)
@@ -734,7 +739,10 @@ async function subscribeFCM(){
     const p256dh  = rawKey  ? btoa(String.fromCharCode(...new Uint8Array(rawKey))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'') : null;
     const auth    = rawAuth ? btoa(String.fromCharCode(...new Uint8Array(rawAuth))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'') : null;
 
-    if(!p256dh || !auth){ console.log('FCM: could not extract keys'); return; }
+    if(!p256dh || !auth){
+      toast('❌ Could not get push keys');
+      return;
+    }
 
     const tokenData = {
       endpoint:  sub.endpoint,
@@ -745,13 +753,21 @@ async function subscribeFCM(){
     };
 
     if(db && !demoMode){
+      // Delete ALL old tokens for this role first
+      const snap = await db.collection('fcmTokens').where('role','==',currentUserRole).get();
+      const batch = db.batch();
+      snap.forEach(doc=>batch.delete(doc.ref));
+      await batch.commit();
+
+      // Save new token
       const docId = btoa(unescape(encodeURIComponent(sub.endpoint))).replace(/[^a-zA-Z0-9]/g,'').substring(0,40);
       await db.collection('fcmTokens').doc(docId).set(tokenData);
-      console.log('FCM subscription refreshed');
-      toast('🔔 Notifications active');
+      toast('🔔 Notifications active ✓');
+      console.log('FCM token saved, endpoint:', sub.endpoint.substring(0,60));
     }
   } catch(e) {
-    console.log('FCM subscribe error:', e.message || e);
+    toast('⚠ Notif error: ' + (e.message||e).substring(0,40));
+    console.log('FCM error:', e.message || e);
   }
 }
 
