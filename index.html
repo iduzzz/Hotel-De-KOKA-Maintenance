@@ -703,7 +703,7 @@ function registerServiceWorker(){
   navigator.serviceWorker.register('/Hotel-De-KOKA-Maintenance/sw.js', {scope:'/Hotel-De-KOKA-Maintenance/'})
     .then(reg => {
       swRegistration = reg;
-      console.log('SW registered');
+      console.log('SW registered:', reg.scope);
     })
     .catch(err => console.log('SW error:', err));
 }
@@ -982,17 +982,15 @@ function enterApp(r){
   if(isNotifRole(r)){
     bell.style.display = 'flex';
     updateBadge();
-    // Register SW first, then subscribe automatically
-    if('serviceWorker' in navigator){
+    // Subscribe to push notifications
+    if('serviceWorker' in navigator && 'PushManager' in window){
       navigator.serviceWorker.ready.then(async reg => {
         swRegistration = reg;
         const perm = Notification.permission;
         if(perm === 'granted'){
-          // Already granted — subscribe silently and refresh token
           await subscribeFCM();
           hideNotifEnableBtn();
         } else if(perm === 'default'){
-          // Need to ask — show button AND try auto-request
           showNotifEnableBtn();
           try {
             const result = await Notification.requestPermission();
@@ -1000,12 +998,13 @@ function enterApp(r){
               await subscribeFCM();
               hideNotifEnableBtn();
             }
-          } catch(e) {}
+          } catch(e) { console.log('Permission error:',e); }
         } else {
-          // Denied
           showNotifEnableBtn(true);
         }
-      });
+      }).catch(e => console.log('SW ready error:',e));
+    } else {
+      console.log('Push not supported on this device');
     }
   } else {
     bell.style.display = 'none';
