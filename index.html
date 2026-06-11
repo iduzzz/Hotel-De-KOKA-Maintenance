@@ -982,10 +982,15 @@ function enterApp(r){
   if(isNotifRole(r)){
     bell.style.display = 'flex';
     updateBadge();
-    // Subscribe to push notifications
-    if('serviceWorker' in navigator && 'PushManager' in window){
+    // Subscribe to push notifications — with debug toasts
+    const hasSW = 'serviceWorker' in navigator;
+    const hasPM = 'PushManager' in window;
+    const hasNotif = 'Notification' in window;
+    toast('SW:'+hasSW+' PM:'+hasPM+' N:'+hasNotif+' P:'+( hasNotif?Notification.permission:'n/a'));
+    if(hasSW && hasPM){
       navigator.serviceWorker.ready.then(async reg => {
         swRegistration = reg;
+        toast('SW ready ✓ perm:'+Notification.permission);
         const perm = Notification.permission;
         if(perm === 'granted'){
           await subscribeFCM();
@@ -994,17 +999,19 @@ function enterApp(r){
           showNotifEnableBtn();
           try {
             const result = await Notification.requestPermission();
+            toast('Perm result:'+result);
             if(result === 'granted'){
               await subscribeFCM();
               hideNotifEnableBtn();
             }
-          } catch(e) { console.log('Permission error:',e); }
+          } catch(e) { toast('Perm err:'+e.message); }
         } else {
           showNotifEnableBtn(true);
+          toast('Notif blocked - check Chrome settings');
         }
-      }).catch(e => console.log('SW ready error:',e));
+      }).catch(e => toast('SW ready err:'+e.message));
     } else {
-      console.log('Push not supported on this device');
+      toast('Push not supported: SW='+hasSW+' PM='+hasPM);
     }
   } else {
     bell.style.display = 'none';
