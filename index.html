@@ -969,16 +969,16 @@ function selRole(r){
 // ══════════════════════
 // APP ENTER / LOGOUT
 // ══════════════════════
-function enterApp(r){
-  currentUserRole = r;
+function enterApp(key, baseRole, name){
+  currentUserRole = key;       // unique account identity (for display/audit)
+  currentBaseRole = baseRole;  // permission level: housekeeper/maintenance/reception/superadmin
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-app').classList.add('active');
-  const lbl={housekeeper:'Elma',maintenance:'Enis',reception:'Dafina',jasna:'Jasna',simona:'Simona',altin:'Altin',superadmin:'⚙ Admin'};
-  document.getElementById('t-trole').textContent=lbl[r]||r;
+  document.getElementById('t-trole').textContent = (baseRole==='superadmin'?'⚙ ':'') + name;
 
   // Show bell for maintenance and admin
   const bell = document.getElementById('notif-bell');
-  if(isNotifRole(r)){
+  if(isNotifRole(baseRole)){
     bell.style.display = 'flex';
     updateBadge();
     // Subscribe to push notifications
@@ -1020,22 +1020,17 @@ function enterApp(r){
   }
 
   syncFromFirebase(()=>{
-    if(r==='housekeeper'||r==='reception'||r==='superadmin'||r==='maintenance'||r==='jasna'||r==='simona'||r==='altin'){
-      document.getElementById('shell-hk').style.display='flex';
-      document.getElementById('shell-mt').style.display='none';
-      if(r==='superadmin') document.body.classList.add('super-admin-mode');
-      // Show Reports tab for maintenance and admin
-      const repTab=document.getElementById('tab-reports');
-      if(repTab) repTab.style.display=(r==='maintenance'||r==='superadmin')?'flex':'none';
-      const accTab=document.getElementById('tab-accounts');
-      if(accTab) accTab.style.display=(r==='superadmin')?'flex':'none';
-      hkTab('rooms');
-    }else{
-      document.getElementById('shell-hk').style.display='none';
-      document.getElementById('shell-mt').style.display='flex';
-      document.body.classList.remove('super-admin-mode');
-      loadMaint();
-    }
+    // All base roles use the housekeeper shell except none (mt shell is now unused but kept for safety)
+    document.getElementById('shell-hk').style.display='flex';
+    document.getElementById('shell-mt').style.display='none';
+    if(baseRole==='superadmin') document.body.classList.add('super-admin-mode');
+    else document.body.classList.remove('super-admin-mode');
+    // Show Reports tab for maintenance and admin
+    const repTab=document.getElementById('tab-reports');
+    if(repTab) repTab.style.display=(baseRole==='maintenance'||baseRole==='superadmin')?'flex':'none';
+    const accTab=document.getElementById('tab-accounts');
+    if(accTab) accTab.style.display=(baseRole==='superadmin')?'flex':'none';
+    hkTab('rooms');
     // Start real-time listener for ALL roles
     startRealtimeListener();
   });
@@ -1191,7 +1186,7 @@ function buildTileHTML(item,s){
   const badge=hasOpenIssue
     ?'<div style="font-size:10px;font-weight:800;color:#fff;background:#e74c3c;padding:2px 7px;border-radius:6px;margin-bottom:3px;">⚠ NOT FIXED</div>'
     :'';
-  const isMaintAdmin = currentUserRole==='maintenance' || currentUserRole==='superadmin';
+  const isMaintAdmin = currentBaseRole==='maintenance' || currentBaseRole==='superadmin';
 
   let btnsHTML;
   if(isMaintAdmin){
@@ -1458,7 +1453,7 @@ function openRoomIssModal(room){
   if(allIssues.length===0){
     body.innerHTML='<div class="rim-empty">No issues reported for this room.</div>';
   }else{
-    const canResolve = currentUserRole==='maintenance'||currentUserRole==='superadmin';
+    const canResolve = currentBaseRole==='maintenance'||currentBaseRole==='superadmin';
     allIssues.forEach(iss=>{
       const row=document.createElement('div');
       row.className='rim-issue-row';
@@ -1758,7 +1753,6 @@ let notifList = JSON.parse(localStorage.getItem('hdk_notifs') || '[]');
 let unsubscribeSnapshot = null;
 let unsubscribeRoomStatus = null;
 let notifPanelOpen = false;
-let currentUserRole = null;
 let resolvingLock = false; // prevents snapshot from re-rendering during resolve write
 
 function showNotifEnableBtn(denied){
@@ -1815,7 +1809,7 @@ function startRealtimeListener(){
           const rep = change.doc.data();
           if(!knownIds.has(rep.id)){
             knownIds.add(rep.id);
-            if(rep.issues && rep.issues.length > 0 && isNotifRole(currentUserRole)){
+            if(rep.issues && rep.issues.length > 0 && isNotifRole(currentBaseRole)){
               addNotification(rep);
               sendBrowserNotif(rep);
             }
@@ -1901,7 +1895,7 @@ function addNotification(rep){
   updateBadge();
   shakeBell();
   playAlertSound();
-  if(currentUserRole === 'maintenance' || currentUserRole === 'superadmin'){
+  if(currentBaseRole === 'maintenance' || currentBaseRole === 'superadmin'){
     refreshReports();
   }
 }
