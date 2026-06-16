@@ -540,29 +540,7 @@ body{background:#0a0e1a;color:#fff;}
       <h1>Hotel De <em>KOKA</em></h1>
       <div class="sub" id="t-tagline">Room Maintenance System</div>
     </div>
-    <div class="role-row">
-      <div class="role-card sel" id="rc-hk" onclick="selRole('housekeeper')">
-        <div class="ri">🧹</div><div class="rn">Elma</div>
-      </div>
-      <div class="role-card" id="rc-mt" onclick="selRole('maintenance')">
-        <div class="ri">🔧</div><div class="rn">Enis</div>
-      </div>
-      <div class="role-card" id="rc-rc" onclick="selRole('reception')">
-        <div class="ri">🛎</div><div class="rn">Dafina</div>
-      </div>
-      <div class="role-card" id="rc-jasna" onclick="selRole('jasna')">
-        <div class="ri">🛎</div><div class="rn">Jasna</div>
-      </div>
-      <div class="role-card" id="rc-simona" onclick="selRole('simona')">
-        <div class="ri">🛎</div><div class="rn">Simona</div>
-      </div>
-      <div class="role-card" id="rc-altin" onclick="selRole('altin')">
-        <div class="ri">🛎</div><div class="rn">Altin</div>
-      </div>
-      <div class="role-card" id="rc-sa" onclick="selRole('superadmin')">
-        <div class="ri">🔑</div><div class="rn">Admin</div>
-      </div>
-    </div>
+    <div class="role-row" id="role-row"></div>
     <div class="pin-lbl" id="t-pinlbl">ENTER PIN</div>
     <div class="pin-dots">
       <div class="pd" id="pd0"></div><div class="pd" id="pd1"></div>
@@ -807,7 +785,7 @@ function initFB(){
 // ══════════════════════
 // DATA
 // ══════════════════════
-const PINS={housekeeper:'1111',maintenance:'2222',reception:'2255',jasna:'172404',simona:'5555',altin:'24434',superadmin:'0000'};
+// PINS now managed dynamically via ACCOUNTS array (see Account Management section below)
 const ROOMS={
   '1st Floor':['101','102','103','104','105','106','107'],
   '2nd Floor':['208','209','210','211','212','213','214'],
@@ -887,6 +865,7 @@ const TXT={
 let lang=localStorage.getItem('hdk_lang')||'en';
 let role='housekeeper';
 let pin='';
+let currentUserName=null;
 let curRoom=null;
 let clState={};
 let noteItem=null;
@@ -936,7 +915,8 @@ function pkDown(d){
   const pkEl=document.getElementById('pk'+d);
   if(pkEl){pkEl.classList.add('pressed');setTimeout(()=>pkEl.classList.remove('pressed'),120);}
   updateDots();
-  if(pin.length===PINS[role].length) checkPin();
+  const acc=findAccount(role);
+  if(acc && pin.length===acc.pin.length) checkPin();
 }
 
 function pkDel(){
@@ -958,9 +938,10 @@ function updateDots(){
 }
 
 function checkPin(){
-  if(PINS[role]===pin){
+  const acc=findAccount(role);
+  if(acc && acc.pin===pin){
     pinLocked=false;
-    enterApp(role);
+    enterApp(acc.key, acc.baseRole, acc.name);
   }else{
     pinLocked=true;
     for(let i=0;i<6;i++){
@@ -2022,75 +2003,180 @@ function clearNotifs(){
 }
 
 // ══════════════════════
-// ACCOUNT MANAGEMENT
+// ACCOUNT MANAGEMENT (dynamic, synced to Firestore)
 // ══════════════════════
-const ACCOUNT_DEFS = [
-  {key:'housekeeper', name:'Elma',   role:'Housekeeper'},
-  {key:'maintenance', name:'Enis',   role:'Maintenance'},
-  {key:'reception',   name:'Dafina', role:'Reception'},
-  {key:'jasna',       name:'Jasna',  role:'Reception'},
-  {key:'simona',      name:'Simona', role:'Reception'},
-  {key:'altin',       name:'Altin',  role:'Reception'},
-  {key:'superadmin',  name:'Admin',  role:'Admin'}
+// Each account: {key, name, baseRole, pin}
+// baseRole is one of: housekeeper, maintenance, reception, superadmin
+// All permission checks in the app key off baseRole (stored as currentUserRole)
+const ROLE_ICONS = {housekeeper:'🧹', maintenance:'🔧', reception:'🛎', superadmin:'🔑'};
+const ROLE_LABELS = {housekeeper:'Housekeeper', maintenance:'Maintenance', reception:'Reception', superadmin:'Admin'};
+
+let ACCOUNTS = [
+  {key:'housekeeper', name:'Elma',   baseRole:'housekeeper', pin:'1111',   core:true},
+  {key:'maintenance', name:'Enis',   baseRole:'maintenance', pin:'2222',   core:true},
+  {key:'reception',   name:'Dafina', baseRole:'reception',   pin:'2255',   core:true},
+  {key:'jasna',       name:'Jasna',  baseRole:'reception',   pin:'172404', core:false},
+  {key:'simona',      name:'Simona', baseRole:'reception',   pin:'5555',   core:false},
+  {key:'altin',       name:'Altin',  baseRole:'reception',   pin:'24434',  core:false},
+  {key:'superadmin',  name:'Admin',  baseRole:'superadmin',  pin:'0000',   core:true}
 ];
 
+function findAccount(key){ return ACCOUNTS.find(a=>a.key===key); }
+
+function getDisplayName(role){
+  // role here is actually the account key (kept for backward compatibility)
+  const acc = findAccount(role);
+  return acc ? acc.name : (role||'Unknown');
+}
+
+function persistAccounts(){
+  localStorage.setItem('hdk_accounts', JSON.stringify(ACCOUNTS));
+  if(db && !demoMode){
+    db.collection('config').doc('accounts').set({list:ACCOUNTS}).catch(()=>{});
+  }
+}
+
+function loadSavedPins(){
+  // Load accounts list from localStorage first (instant)
+  try{
+    const local = JSON.parse(localStorage.getItem('hdk_accounts')||'null');
+    if(local && Array.isArray(local) && local.length) ACCOUNTS = local;
+  }catch(e){}
+  renderLoginCards();
+  // Then sync from Firestore (source of truth across devices)
+  if(db && !demoMode){
+    db.collection('config').doc('accounts').get().then(doc=>{
+      if(doc.exists && doc.data().list && doc.data().list.length){
+        ACCOUNTS = doc.data().list;
+        localStorage.setItem('hdk_accounts', JSON.stringify(ACCOUNTS));
+        renderLoginCards();
+        if(document.getElementById('v-accounts')) renderAccounts();
+      }
+    }).catch(()=>{});
+  }
+}
+
+// ── LOGIN SCREEN: render account cards dynamically ──
+function renderLoginCards(){
+  const cont = document.getElementById('role-row');
+  if(!cont) return;
+  cont.innerHTML = '';
+  ACCOUNTS.forEach((acc,idx)=>{
+    const card = document.createElement('div');
+    card.className = 'role-card'+(idx===0?' sel':'');
+    card.id = 'rc-'+acc.key;
+    card.onclick = ()=>selRole(acc.key);
+    card.innerHTML = '<div class="ri">'+(ROLE_ICONS[acc.baseRole]||'👤')+'</div><div class="rn">'+acc.name+'</div>';
+    cont.appendChild(card);
+  });
+  if(ACCOUNTS.length) role = ACCOUNTS[0].key;
+}
+
+function selRole(r){
+  role=r;pin='';updateDots();
+  document.getElementById('pin-err').textContent='';
+  ACCOUNTS.forEach(acc=>{
+    const el=document.getElementById('rc-'+acc.key);
+    if(el) el.classList.remove('sel');
+  });
+  const sel=document.getElementById('rc-'+r);
+  if(sel) sel.classList.add('sel');
+}
+
+// ── ACCOUNTS TAB (Admin only) ──
 function renderAccounts(){
   const cont = document.getElementById('accounts-list');
   if(!cont) return;
-  cont.innerHTML = '';
-  ACCOUNT_DEFS.forEach(acc => {
+  cont.innerHTML =
+    '<div class="acc-add-card">'
+    +'<div class="sec-title" style="font-size:15px;margin-bottom:10px;">➕ Add New Account</div>'
+    +'<input type="text" id="new-acc-name" placeholder="Name (e.g. Marko)" style="width:100%;padding:10px 12px;border:1.5px solid #e0dbd0;border-radius:10px;font-size:15px;margin-bottom:8px;background:#f8f5f0;" />'
+    +'<select id="new-acc-role" style="width:100%;padding:10px 12px;border:1.5px solid #e0dbd0;border-radius:10px;font-size:15px;margin-bottom:8px;background:#f8f5f0;">'
+    +'<option value="reception">Reception</option>'
+    +'<option value="housekeeper">Housekeeper</option>'
+    +'<option value="maintenance">Maintenance</option>'
+    +'</select>'
+    +'<input type="text" id="new-acc-pin" placeholder="PIN (4-6 digits)" inputmode="numeric" style="width:100%;padding:10px 12px;border:1.5px solid #e0dbd0;border-radius:10px;font-size:15px;margin-bottom:10px;background:#f8f5f0;" />'
+    +'<button class="btn-save-pin" style="width:100%;" onclick="addAccount()">+ Add Account</button>'
+    +'</div>';
+
+  ACCOUNTS.forEach(acc => {
     const card = document.createElement('div');
     card.className = 'acc-card';
+    const delBtn = acc.core
+      ? ''
+      : '<button class="btn-del-acc" onclick="deleteAccount(\''+acc.key+'\',\''+acc.name+'\')">🗑 Delete</button>';
     card.innerHTML =
       '<div class="acc-card-top">'
-      +'<span class="acc-name">'+acc.name+'</span>'
-      +'<span class="acc-role">'+acc.role+'</span>'
+      +'<span class="acc-name">'+(ROLE_ICONS[acc.baseRole]||'👤')+' '+acc.name+'</span>'
+      +'<span class="acc-role">'+ROLE_LABELS[acc.baseRole]+'</span>'
       +'</div>'
       +'<div class="acc-pin-row">'
       +'<input type="password" id="pin-inp-'+acc.key+'" placeholder="New PIN" inputmode="numeric" />'
       +'<button class="btn-save-pin" onclick="savePin(\''+acc.key+'\',\''+acc.name+'\')">Save PIN</button>'
       +'</div>'
+      +delBtn
       +'<div class="acc-saved" id="pin-saved-'+acc.key+'">✓ PIN updated!</div>';
     cont.appendChild(card);
   });
 }
 
+function addAccount(){
+  const nameInp = document.getElementById('new-acc-name');
+  const roleInp = document.getElementById('new-acc-role');
+  const pinInp  = document.getElementById('new-acc-pin');
+  const name = nameInp.value.trim();
+  const baseRole = roleInp.value;
+  const pinVal = pinInp.value.trim();
+
+  if(!name){ toast('Enter a name'); return; }
+  if(!pinVal || pinVal.length<4 || pinVal.length>6 || !/^\d+$/.test(pinVal)){
+    toast('PIN must be 4-6 digits'); return;
+  }
+  // Generate a unique key from name
+  let key = name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(!key) key = 'acc'+Date.now();
+  let suffix=1;
+  while(findAccount(key)){ key = key+suffix; suffix++; }
+
+  ACCOUNTS.push({key, name, baseRole, pin:pinVal, core:false});
+  persistAccounts();
+  renderAccounts();
+  renderLoginCards();
+  nameInp.value=''; pinInp.value='';
+  toast('✓ '+name+' added');
+}
+
+function deleteAccount(key, name){
+  if(!confirm('Delete account "'+name+'"? This cannot be undone.')) return;
+  ACCOUNTS = ACCOUNTS.filter(a=>a.key!==key);
+  persistAccounts();
+  renderAccounts();
+  renderLoginCards();
+  toast('🗑 '+name+' deleted');
+}
+
 function savePin(key, name){
   const inp = document.getElementById('pin-inp-'+key);
   const val = inp ? inp.value.trim() : '';
-  if(!val || val.length < 4){
-    toast('PIN must be at least 4 digits');
+  if(!val || val.length < 4 || val.length > 6){
+    toast('PIN must be 4-6 digits');
     return;
   }
   if(!/^\d+$/.test(val)){
     toast('PIN must contain numbers only');
     return;
   }
-  PINS[key] = val;
-  // Save to Firestore so it persists across sessions
-  if(db && !demoMode){
-    db.collection('config').doc('pins').set(PINS).catch(()=>{});
-  }
-  // Save to localStorage as backup
-  localStorage.setItem('hdk_pins', JSON.stringify(PINS));
+  const acc = findAccount(key);
+  if(!acc) return;
+  acc.pin = val;
+  persistAccounts();
   inp.value = '';
   const saved = document.getElementById('pin-saved-'+key);
   if(saved){ saved.style.display='block'; setTimeout(()=>saved.style.display='none', 2000); }
   toast('✓ '+name+' PIN updated');
 }
 
-// Load saved PINs on startup
-function loadSavedPins(){
-  // Try localStorage first
-  const local = JSON.parse(localStorage.getItem('hdk_pins')||'null');
-  if(local) Object.assign(PINS, local);
-  // Then try Firestore
-  if(db && !demoMode){
-    db.collection('config').doc('pins').get().then(doc=>{
-      if(doc.exists) Object.assign(PINS, doc.data());
-    }).catch(()=>{});
-  }
-}
 // ══════════════════════
 function toast(msg){
   const el=document.getElementById('toast');
