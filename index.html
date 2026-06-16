@@ -136,7 +136,7 @@ body{background:#0a0e1a;color:#fff;}
 
 /* ── VIEWS ── */
 .view{display:none;}
-.view.on{display:block;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px;height:calc(100vh - 110px);}
+.view.on{display:block;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px;height:calc(100vh - 125px);}
 
 /* ════════════════════════════════
    ROOMS VIEW
@@ -382,6 +382,16 @@ body{background:#0a0e1a;color:#fff;}
 .empty-s .ei{font-size:44px;margin-bottom:12px;}
 .empty-s p{font-size:14px;}
 
+.acc-card{background:#fff;border:1.5px solid #e8e3da;border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+.acc-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.acc-name{font-size:17px;font-weight:700;color:#0d1628;}
+.acc-role{font-size:12px;color:#9a9690;background:#f0ede6;padding:3px 9px;border-radius:10px;}
+.acc-pin-row{display:flex;align-items:center;gap:8px;}
+.acc-pin-row input{flex:1;padding:10px 12px;border:1.5px solid #e0dbd0;border-radius:10px;font-size:15px;font-family:inherit;background:#f8f5f0;color:#1a1a1a;}
+.acc-pin-row input:focus{outline:none;border-color:#c4a046;}
+.btn-save-pin{padding:10px 16px;background:#0d1628;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-save-pin:active{background:#1a3a5c;}
+.acc-saved{font-size:12px;color:#27ae60;margin-top:6px;display:none;}
 .sec-title{font-size:19px;font-weight:800;color:#0d1628;margin-bottom:18px;letter-spacing:-0.3px;}
 
 /* ── NOTIFICATIONS ── */
@@ -624,6 +634,7 @@ body{background:#0a0e1a;color:#fff;}
         <button class="hktab" id="tab-status" onclick="hkTab('status')"><span id="t-tabs">Status</span></button>
         <button class="hktab" id="tab-manage" onclick="hkTab('manage')"><span id="t-tabm">Checklist</span></button>
         <button class="hktab super-admin-only" id="tab-reports" onclick="hkTab('reports')" style="display:none"><span id="t-tabadmrep">Reports</span></button>
+        <button class="hktab super-admin-only" id="tab-accounts" onclick="hkTab('accounts')" style="display:none">👥 Accounts</button>
       </div>
       <div class="view on" id="v-rooms"><div id="rooms-cont"></div></div>
       <div class="view" id="v-checklist">
@@ -666,6 +677,10 @@ body{background:#0a0e1a;color:#fff;}
           <button class="fbtn fbtn-wipe" onclick="wipeAllReports()">🗑 Delete ALL</button>
         </div>
         <div id="adm-rep-cont"></div>
+      </div>
+      <div class="view" id="v-accounts">
+        <div class="sec-title">👥 Account Management</div>
+        <div id="accounts-list"></div>
       </div>
     </div>
 
@@ -1031,6 +1046,8 @@ function enterApp(r){
       // Show Reports tab for maintenance and admin
       const repTab=document.getElementById('tab-reports');
       if(repTab) repTab.style.display=(r==='maintenance'||r==='superadmin')?'flex':'none';
+      const accTab=document.getElementById('tab-accounts');
+      if(accTab) accTab.style.display=(r==='superadmin')?'flex':'none';
       hkTab('rooms');
     }else{
       document.getElementById('shell-hk').style.display='none';
@@ -1082,6 +1099,8 @@ function doLogout(){
   hideNotifEnableBtn();
   const repTab=document.getElementById('tab-reports');
   if(repTab) repTab.style.display='none';
+  const accTab=document.getElementById('tab-accounts');
+  if(accTab) accTab.style.display='none';
   selRole('housekeeper');
   document.getElementById('page-app').classList.remove('active');
   document.getElementById('page-login').classList.add('active');
@@ -1091,20 +1110,23 @@ function doLogout(){
 // HK TABS
 // ══════════════════════
 function hkTab(t){
-  ['rooms','checklist','status','manage','reports'].forEach(v=>{
-    document.getElementById('v-'+v).classList.remove('on');
+  ['rooms','checklist','status','manage','reports','accounts'].forEach(v=>{
+    const el=document.getElementById('v-'+v);
+    if(el)el.classList.remove('on');
   });
-  ['rooms','status','manage','reports'].forEach(x=>{
+  ['rooms','status','manage','reports','accounts'].forEach(x=>{
     const el=document.getElementById('tab-'+x);
     if(el)el.classList.remove('on');
   });
-  document.getElementById('v-'+t).classList.add('on');
+  const view=document.getElementById('v-'+t);
+  if(view)view.classList.add('on');
   const te=document.getElementById('tab-'+t);
   if(te)te.classList.add('on');
   if(t==='rooms')   renderRooms();
   if(t==='status')  renderStatus();
   if(t==='manage')  renderManage();
   if(t==='reports') renderAdmReports();
+  if(t==='accounts') renderAccounts();
 }
 
 // ══════════════════════
@@ -1221,9 +1243,10 @@ function saveItemInstant(item){
 
 function saveRoomState(){
   if(!curRoom)return;
+  const reporterName = getDisplayName(currentUserRole);
   const issues=lsCL
     .filter(i=>clState[i]&&clState[i].status==='iss')
-    .map(i=>({item:i,note:clState[i].note||'',resolved:false,resolvedAt:null}));
+    .map(i=>({item:i,note:clState[i].note||'',resolved:false,resolvedAt:null,reportedBy:reporterName}));
   const checkedCount=lsCL.filter(i=>clState[i]&&clState[i].status!==null).length;
   if(checkedCount===0)return; // nothing to save yet
 
@@ -1233,14 +1256,26 @@ function saveRoomState(){
   const today=new Date().toDateString();
   let rep=lsReps.find(r=>r.room===curRoom&&new Date(r.timestamp).toDateString()===today);
   if(rep){
+    // Preserve reportedBy on issues that already existed and were already resolved
+    issues.forEach(newIss=>{
+      const oldIss=rep.issues.find(o=>o.item===newIss.item);
+      if(oldIss && oldIss.resolved){
+        newIss.resolved=oldIss.resolved;
+        newIss.resolvedAt=oldIss.resolvedAt;
+        newIss.resolvedBy=oldIss.resolvedBy;
+        newIss.reportedBy=oldIss.reportedBy;
+      }
+    });
     rep.issues=issues;rep.status=rst;rep.updatedAt=new Date().toISOString();
+    rep.reportedBy=reporterName;
   }else{
     rep={
       id:curRoom+'_'+Date.now().toString(),
       room:curRoom,
       timestamp:new Date().toISOString(),
       updatedAt:new Date().toISOString(),
-      issues:issues,status:rst
+      issues:issues,status:rst,
+      reportedBy:reporterName
     };
     lsReps.unshift(rep);
   }
@@ -1252,6 +1287,11 @@ function saveRoomState(){
     db.collection('reports').doc(rep.id).set(rep);
     db.collection('roomStatus').doc(curRoom).set({status:rst,updatedAt:rep.updatedAt||rep.timestamp});
   }
+}
+
+function getDisplayName(role){
+  const names={housekeeper:'Elma',maintenance:'Enis',reception:'Dafina',jasna:'Jasna',simona:'Simona',altin:'Altin',superadmin:'Admin'};
+  return names[role]||role||'Unknown';
 }
 
 function tileTap(item){} // kept for safety, no longer used
@@ -1379,11 +1419,11 @@ function _drawAdmReps(reports){
       const btnTxt=iss.resolved?'✓ '+T('resolved'):T('resolve');
       const btnOnclick=iss.resolved?'':'onclick="resolveIss(\''+rep.id+'\','+idx+')"';
       const btnDisabled=iss.resolved?'style="cursor:default;opacity:0.7;"':'';
-      const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>':'';
+      const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+(iss.resolvedBy?' — '+iss.resolvedBy:'')+'</div>':'';
       issH+='<div class="rirow"><div class="riinfo">'
         +'<div class="riname">'+iss.item+'</div>'
         +(iss.note?'<div class="rinote">📝 '+iss.note+'</div>':'')
-        +'<div class="rits"><div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+'</div>'+fixLine+'</div>'
+        +'<div class="rits"><div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+(iss.reportedBy?' — '+iss.reportedBy:'')+'</div>'+fixLine+'</div>'
         +'</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'
         +'<span class="ribadge '+bClass+'">'+bTxt+'</span>'
         +'<button class="resbtn '+btnClass+'" '+btnOnclick+' '+btnDisabled+'>'+btnTxt+'</button>'
@@ -1419,7 +1459,7 @@ function openRoomIssModal(room){
         ?'<span class="rim-issue-badge res">✓ '+T('resolved')+'</span>'
         :'<span class="rim-issue-badge open">⚠ Open</span>';
       const fixedLine=iss.resolvedAt
-        ?'<div class="rim-issue-ts">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>'
+        ?'<div class="rim-issue-ts">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+(iss.resolvedBy?' — '+iss.resolvedBy:'')+'</div>'
         :'';
       const resolveBtn = canResolve && !iss.resolved
         ? '<button class="resbtn open" style="margin-top:8px;width:100%;" onclick="resolveFromModal(\''+iss.repId+'\','+iss.issIdx+')">🔧 '+T('resolve')+'</button>'
@@ -1427,7 +1467,7 @@ function openRoomIssModal(room){
       row.innerHTML=badge
         +'<div class="rim-issue-name">'+iss.item+'</div>'
         +(iss.note?'<div class="rim-issue-note">📝 '+iss.note+'</div>':'')
-        +'<div class="rim-issue-ts">📋 '+T('repAt')+': '+fmtDT(iss.reportedAt)+'</div>'
+        +'<div class="rim-issue-ts">📋 '+T('repAt')+': '+fmtDT(iss.reportedAt)+(iss.reportedBy?' — '+iss.reportedBy:'')+'</div>'
         +fixedLine
         +resolveBtn;
       body.appendChild(row);
@@ -1538,14 +1578,14 @@ function renderMaint(reps){
       const bTxt=iss.resolved?T('resolved'):'Open';
       const btnClass=iss.resolved?'done':'open';
       const btnTxt=iss.resolved?T('resolved'):T('resolve');
-      const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+'</div>':'';
+      const fixLine=iss.resolvedAt?'<div class="rit fix">✅ '+T('fixAt')+': '+fmtDT(iss.resolvedAt)+(iss.resolvedBy?' — '+iss.resolvedBy:'')+'</div>':'';
       issH+=
         '<div class="rirow">'
         +'<div class="riinfo">'
         +'<div class="riname">'+iss.item+'</div>'
         +(iss.note?'<div class="rinote">📝 '+iss.note+'</div>':'')
         +'<div class="rits">'
-        +'<div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+'</div>'
+        +'<div class="rit rep">📋 '+T('repAt')+': '+fmtDT(rep.timestamp)+(iss.reportedBy?' — '+iss.reportedBy:'')+'</div>'
         +fixLine+'</div></div>'
         +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">'
         +'<span class="ribadge '+bClass+'">'+bTxt+'</span>'
@@ -1616,9 +1656,11 @@ function resolveIss(repId,issIdx){
   const rep=lsReps.find(r=>r.id===repId);
   if(rep && rep.issues[issIdx].resolved) return; // already resolved, do nothing
   const now=new Date().toISOString();
+  const resolverName=getDisplayName(currentUserRole);
   if(rep){
     rep.issues[issIdx].resolved=true;
     rep.issues[issIdx].resolvedAt=now;
+    rep.issues[issIdx].resolvedBy=resolverName;
     if(!rep.issues.some(i=>!i.resolved)){lsRSt[rep.room]='checked';localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));}
     localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
     toast(T('tResolve'));
@@ -1633,6 +1675,7 @@ function resolveIss(repId,issIdx){
         if(rep && rep.issues[i] && rep.issues[i].resolved){
           data.issues[i].resolved=true;
           data.issues[i].resolvedAt=rep.issues[i].resolvedAt;
+          data.issues[i].resolvedBy=rep.issues[i].resolvedBy;
         }
       });
       const p1=db.collection('reports').doc(repId).update({issues:data.issues});
@@ -1953,7 +1996,75 @@ function clearNotifs(){
 }
 
 // ══════════════════════
-// TOAST
+// ACCOUNT MANAGEMENT
+// ══════════════════════
+const ACCOUNT_DEFS = [
+  {key:'housekeeper', name:'Elma',   role:'Housekeeper'},
+  {key:'maintenance', name:'Enis',   role:'Maintenance'},
+  {key:'reception',   name:'Dafina', role:'Reception'},
+  {key:'jasna',       name:'Jasna',  role:'Reception'},
+  {key:'simona',      name:'Simona', role:'Reception'},
+  {key:'altin',       name:'Altin',  role:'Reception'},
+  {key:'superadmin',  name:'Admin',  role:'Admin'}
+];
+
+function renderAccounts(){
+  const cont = document.getElementById('accounts-list');
+  if(!cont) return;
+  cont.innerHTML = '';
+  ACCOUNT_DEFS.forEach(acc => {
+    const card = document.createElement('div');
+    card.className = 'acc-card';
+    card.innerHTML =
+      '<div class="acc-card-top">'
+      +'<span class="acc-name">'+acc.name+'</span>'
+      +'<span class="acc-role">'+acc.role+'</span>'
+      +'</div>'
+      +'<div class="acc-pin-row">'
+      +'<input type="password" id="pin-inp-'+acc.key+'" placeholder="New PIN" inputmode="numeric" />'
+      +'<button class="btn-save-pin" onclick="savePin(\''+acc.key+'\',\''+acc.name+'\')">Save PIN</button>'
+      +'</div>'
+      +'<div class="acc-saved" id="pin-saved-'+acc.key+'">✓ PIN updated!</div>';
+    cont.appendChild(card);
+  });
+}
+
+function savePin(key, name){
+  const inp = document.getElementById('pin-inp-'+key);
+  const val = inp ? inp.value.trim() : '';
+  if(!val || val.length < 4){
+    toast('PIN must be at least 4 digits');
+    return;
+  }
+  if(!/^\d+$/.test(val)){
+    toast('PIN must contain numbers only');
+    return;
+  }
+  PINS[key] = val;
+  // Save to Firestore so it persists across sessions
+  if(db && !demoMode){
+    db.collection('config').doc('pins').set(PINS).catch(()=>{});
+  }
+  // Save to localStorage as backup
+  localStorage.setItem('hdk_pins', JSON.stringify(PINS));
+  inp.value = '';
+  const saved = document.getElementById('pin-saved-'+key);
+  if(saved){ saved.style.display='block'; setTimeout(()=>saved.style.display='none', 2000); }
+  toast('✓ '+name+' PIN updated');
+}
+
+// Load saved PINs on startup
+function loadSavedPins(){
+  // Try localStorage first
+  const local = JSON.parse(localStorage.getItem('hdk_pins')||'null');
+  if(local) Object.assign(PINS, local);
+  // Then try Firestore
+  if(db && !demoMode){
+    db.collection('config').doc('pins').get().then(doc=>{
+      if(doc.exists) Object.assign(PINS, doc.data());
+    }).catch(()=>{});
+  }
+}
 // ══════════════════════
 function toast(msg){
   const el=document.getElementById('toast');
@@ -1967,6 +2078,7 @@ function toast(msg){
 initFB();
 applyLang();
 registerServiceWorker();
+setTimeout(loadSavedPins, 1500);
 
 </script>
 </body>
