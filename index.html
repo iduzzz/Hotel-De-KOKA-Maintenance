@@ -1205,20 +1205,46 @@ function renderClGrid(){
 
 function buildTileHTML(item,s){
   const icon=getIcon(item);
-  // Show NOT FIXED badge if this item has an open unresolved issue
-  const hasOpenIssue=lsReps.some(r=>
-    r.room===curRoom&&r.issues.some(i=>i.item===item&&!i.resolved)
-  );
+  const openIssue=findOpenIssue(curRoom,item);
+  const hasOpenIssue=!!openIssue;
   const badge=hasOpenIssue
     ?'<div style="font-size:10px;font-weight:800;color:#fff;background:#e74c3c;padding:2px 7px;border-radius:6px;margin-bottom:3px;">⚠ NOT FIXED</div>'
     :'';
+  const isMaintAdmin = currentUserRole==='maintenance' || currentUserRole==='superadmin';
+
+  let btnsHTML;
+  if(isMaintAdmin){
+    const resolveDisabled = !hasOpenIssue;
+    btnsHTML =
+      '<button class="ct-iss'+(s==='iss'?' sel':'')+'" onpointerdown="setISS(\''+escJs(item)+'\')">! '+T('iss')+'</button>'
+      +'<button class="ct-ok'+(resolveDisabled?'':' sel')+'" '+(resolveDisabled?'style="opacity:0.4;cursor:default;"':'onpointerdown="resolveTileIssue(\''+escJs(item)+'\')"')+'>✓ '+T('resolve')+'</button>';
+  } else {
+    btnsHTML =
+      '<button class="ct-iss'+(s==='iss'?' sel':'')+'" style="width:100%;" onpointerdown="setISS(\''+escJs(item)+'\')">! '+T('iss')+'</button>';
+  }
+
   return '<div class="ct-icon">'+icon+'</div>'
     +badge
     +'<div class="ct-name">'+item+'</div>'
     +'<div class="ct-btns">'
-    +'<button class="ct-ok'+(s==='ok'?' sel':'')+'" onpointerdown="setOK(\''+escJs(item)+'\')" >✓ '+T('ok')+'</button>'
-    +'<button class="ct-iss'+(s==='iss'?' sel':'')+'" onpointerdown="setISS(\''+escJs(item)+'\')">! '+T('iss')+'</button>'
+    +btnsHTML
     +'</div>';
+}
+
+function findOpenIssue(room,item){
+  const rep=lsReps.find(r=>r.room===room && r.issues.some(i=>i.item===item && !i.resolved));
+  if(!rep)return null;
+  const idx=rep.issues.findIndex(i=>i.item===item && !i.resolved);
+  return idx>=0 ? {repId:rep.id, issIdx:idx} : null;
+}
+
+function resolveTileIssue(item){
+  const found=findOpenIssue(curRoom,item);
+  if(!found)return;
+  resolveIss(found.repId, found.issIdx);
+  if(clState[item]) clState[item]={status:null,note:''};
+  updateTile(item);
+  updateProg();
 }
 
 function escJs(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
