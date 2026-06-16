@@ -18,20 +18,22 @@ body{background:#0a0e1a;color:#fff;}
 /* ── PAGES ── */
 .page{position:fixed;top:0;left:0;right:0;bottom:0;display:none;flex-direction:column;overflow:hidden;}
 .page.active{display:flex;}
+#page-login.active{overflow-y:auto;overflow-x:hidden;}
 
 /* ════════════════════════════════
    LOGIN
 ════════════════════════════════ */
 #page-login{
   background:linear-gradient(150deg,#0d1628 0%,#0a1520 50%,#0d1a2e 100%);
-  align-items:center;justify-content:center;
+  align-items:center;justify-content:flex-start;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
 .login-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
 .login-bg span{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(196,160,70,0.07) 0%,transparent 70%);}
 .login-bg span:nth-child(1){width:700px;height:700px;top:-250px;right:-200px;}
 .login-bg span:nth-child(2){width:500px;height:500px;bottom:-150px;left:-150px;}
 
-.login-wrap{position:relative;z-index:1;width:100%;max-width:420px;padding:32px 28px;display:flex;flex-direction:column;align-items:center;}
+.login-wrap{position:relative;z-index:1;width:100%;max-width:420px;padding:32px 28px 80px 28px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;margin:auto 0;}
 
 .hotel-logo{text-align:center;margin-bottom:36px;}
 .hotel-logo .pre{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:rgba(196,160,70,0.6);margin-bottom:6px;}
@@ -392,6 +394,9 @@ body{background:#0a0e1a;color:#fff;}
 .btn-save-pin{padding:10px 16px;background:#0d1628;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;}
 .btn-save-pin:active{background:#1a3a5c;}
 .acc-saved{font-size:12px;color:#27ae60;margin-top:6px;display:none;}
+.btn-del-acc{margin-top:8px;width:100%;padding:9px;background:#fdf0ef;color:#e74c3c;border:1.5px solid #f5d4d1;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-del-acc:active{background:#e74c3c;color:#fff;}
+.acc-add-card{background:#fbf8f3;border:1.5px dashed #c4a046;border-radius:14px;padding:16px;margin-bottom:18px;}
 .sec-title{font-size:19px;font-weight:800;color:#0d1628;margin-bottom:18px;letter-spacing:-0.3px;}
 
 /* ── NOTIFICATIONS ── */
@@ -1065,6 +1070,7 @@ function syncFromFirebase(callback){
 function doLogout(){
   pin='';curRoom=null;clState={};pinLocked=false;
   currentUserRole=null;
+  currentBaseRole=null;
   stopRealtimeListener();
   updateDots();
   document.getElementById('pin-err').textContent='';
@@ -1077,7 +1083,7 @@ function doLogout(){
   if(repTab) repTab.style.display='none';
   const accTab=document.getElementById('tab-accounts');
   if(accTab) accTab.style.display='none';
-  selRole('housekeeper');
+  if(ACCOUNTS.length) selRole(ACCOUNTS[0].key);
   document.getElementById('page-app').classList.remove('active');
   document.getElementById('page-login').classList.add('active');
 }
@@ -2184,7 +2190,7 @@ function toast(msg){
 initFB();
 applyLang();
 registerServiceWorker();
-setTimeout(loadSavedPins, 1500);
+loadSavedPins();
 
 </script>
 </body>
