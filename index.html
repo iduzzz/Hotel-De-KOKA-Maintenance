@@ -136,7 +136,7 @@ body{background:#0a0e1a;color:#fff;}
 
 /* ── VIEWS ── */
 .view{display:none;}
-.view.on{display:block;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px;height:calc(100vh - 125px);}
+.view.on{display:block;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px 20px 100px 20px;height:calc(100vh - 110px);}
 
 /* ════════════════════════════════
    ROOMS VIEW
@@ -686,7 +686,7 @@ body{background:#0a0e1a;color:#fff;}
 
     <!-- MT / RC SHELL -->
     <div id="shell-mt" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
-      <div class="view on" id="v-maint" style="height:calc(100vh - 58px)!important;">
+      <div class="view on" id="v-maint" style="height:calc(100vh - 58px)!important;padding-bottom:100px!important;overflow-y:scroll!important;-webkit-overflow-scrolling:touch;">
         <div class="sec-title" id="t-mttitle">Maintenance Reports</div>
         <div class="mfilt">
           <button class="fbtn on" id="flt-all" onclick="setFlt('all')"><span id="t-fall">All</span></button>
