@@ -748,7 +748,14 @@ async function subscribeFCM(){
     };
 
     if(db && !demoMode){
-      await db.collection('fcmTokens').doc(currentUserRole).set(tokenData);
+      // Use a stable per-device ID derived from the endpoint, NOT the role.
+      // This way each device (PC, tablet, phone) keeps its own token slot,
+      // and logging in on one device never overwrites another device's token.
+      const docId = (currentUserRole+'_'+sub.endpoint).split('').reduce((h,c)=>{
+        h=((h<<5)-h+c.charCodeAt(0))|0; return h;
+      },0);
+      const safeId = currentUserRole+'_'+Math.abs(docId).toString(36);
+      await db.collection('fcmTokens').doc(safeId).set(tokenData);
       toast('🔔 Notifications active ✓');
     } else {
       toast('⚠ DB not ready');
