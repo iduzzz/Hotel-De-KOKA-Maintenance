@@ -1837,19 +1837,37 @@ function startRealtimeListener(){
           const rep = change.doc.data();
           const idx = lsReps.findIndex(r => r.id === rep.id);
           if(idx >= 0){
+            const oldIssues = lsReps[idx].issues || [];
+            const oldKeys = new Set(oldIssues.map(i=>i.item+'|'+(i.reportedAt||i.note||'')));
+            // Detect issues present in the new snapshot that weren't in our local copy at all —
+            // these are genuinely NEW issues added to an existing report (e.g. 2nd issue same day)
+            const newlyAdded = (rep.issues||[]).filter(i=>{
+              const key=i.item+'|'+(i.reportedAt||i.note||'');
+              const existsByItem = oldIssues.some(o=>o.item===i.item);
+              return !existsByItem;
+            });
             // Merge: never downgrade a resolved issue back to unresolved
-            if(lsReps[idx].issues && rep.issues){
+            if(oldIssues && rep.issues){
               rep.issues.forEach((iss,i)=>{
-                if(lsReps[idx].issues[i] && lsReps[idx].issues[i].resolved && !iss.resolved){
+                if(oldIssues[i] && oldIssues[i].resolved && !iss.resolved){
                   // Local says resolved, Firestore says not yet — keep local resolved state
                   rep.issues[i].resolved = true;
-                  rep.issues[i].resolvedAt = lsReps[idx].issues[i].resolvedAt;
+                  rep.issues[i].resolvedAt = oldIssues[i].resolvedAt;
                 }
               });
             }
             lsReps[idx] = rep;
+            // Fire notification for newly added issues, same as a brand-new report
+            if(newlyAdded.length > 0 && isNotifRole(currentBaseRole)){
+              addNotification({...rep, issues:newlyAdded});
+              sendBrowserNotif({...rep, issues:newlyAdded});
+            }
           } else {
             lsReps.unshift(rep);
+            if(rep.issues && rep.issues.length > 0 && isNotifRole(currentBaseRole)){
+              addNotification(rep);
+              sendBrowserNotif(rep);
+            }
           }
           localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
           if(rep.status) lsRSt[rep.room] = rep.status;
