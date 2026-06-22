@@ -165,10 +165,7 @@ body{background:#0a0e1a;color:#fff;}
 .rtile:active{transform:scale(0.92);}
 .rtile .rn{font-size:18px;font-weight:800;color:#0d1628;}
 .rtile .rs{font-size:9px;color:#b0aaa0;margin-top:1px;font-weight:500;text-align:center;padding:0 4px;}
-.rtile.corridor{grid-column:1/-1;background:#f0ede6;border-color:#c4a046;border-width:2px;flex-direction:row;justify-content:flex-start;gap:10px;padding:12px 16px;min-height:48px;}
-.rtile.corridor .rn{font-size:15px;font-weight:700;color:#7a6020;}
-.rtile.corridor.issue{background:#fef0ef;border-color:#e74c3c;}
-.rtile.corridor.issue .rn{color:#c0392b;}
+.rtile.corridor{}
 .rtile.clean .rn{color:#2471a3;}
 .rtile.issue{border-color:#e74c3c;background:#fef5f5;}
 .rtile.issue .rn{color:#c0392b;}
@@ -1144,13 +1141,13 @@ function renderRooms(){
     rooms.forEach(room=>{
       const tile=document.createElement('div');
       const isCorridor=room.startsWith('Corridor');
-      tile.className='rtile'+(isCorridor?' corridor':'');
+      tile.className='rtile';
       const st=lsRSt[room]||null;
-      if(st)tile.classList.add(st==='issue'?'issue':st==='checked'?'clean':'');
+      if(st)tile.classList.add(st);
       const ic=issCount(room);
       const stlbl=st?T(st==='issue'?'hasIssues':'checked'):'';
-      const icon=isCorridor?'🚪 ':'';
-      tile.innerHTML='<div class="rn">'+icon+room+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
+      const icon=isCorridor?'':'';
+      tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
       tile.onclick=()=>openChecklist(room);
       grid.appendChild(tile);
     });
