@@ -164,6 +164,7 @@ body{background:#0a0e1a;color:#fff;}
 }
 .rtile:active{transform:scale(0.92);}
 .rtile .rn{font-size:18px;font-weight:800;color:#0d1628;}
+.rtile.corridor .rn{font-size:11px;font-weight:700;color:#0d1628;}
 .rtile .rs{font-size:9px;color:#b0aaa0;margin-top:1px;font-weight:500;text-align:center;padding:0 4px;}
 .rtile.corridor{}
 .rtile.clean .rn{color:#2471a3;}
@@ -1169,19 +1170,18 @@ function renderRooms(){
 // ══════════════════════
 function openChecklist(room){
   const isCorridor = room.startsWith('Corridor');
-  // Corridors: only Admin can open them
-  if(isCorridor && currentUserRole !== 'superadmin'){
-    toast('Admin only');
+  if(isCorridor && lsCORR.length === 0){
+    if(currentUserRole === 'superadmin'){
+      toast('No corridor checklist items yet — add them in Admin → 👥 Accounts tab');
+    } else {
+      toast('Corridor checklist not set up yet');
+    }
     return;
   }
   isCorridorMode = isCorridor;
   curRoom = room;
   clState = {};
   const items = isCorridor ? lsCORR : lsCL;
-  if(items.length === 0 && isCorridor){
-    toast('No corridor checklist items yet — add them in Admin → 👥 Accounts tab');
-    return;
-  }
   items.forEach(item=>{clState[item]={status:null,note:''};});
   // Load existing reported issues for this room from today's report
   const today=new Date().toDateString();
