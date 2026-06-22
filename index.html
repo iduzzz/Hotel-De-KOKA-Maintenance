@@ -799,10 +799,10 @@ function initFB(){
 // ══════════════════════
 // PINS now managed dynamically via ACCOUNTS array (see Account Management section below)
 const ROOMS={
-  '1st Floor':['Corridor 1st Floor','101','102','103','104','105','106','107'],
-  '2nd Floor':['Corridor 2nd Floor','208','209','210','211','212','213','214'],
-  '3rd Floor':['Corridor 3rd Floor','302','303','304','305','306','307','308','309','310','311','312','313','314','315','316','317','318','319','320','321','322','323','324'],
-  '4th Floor':['Corridor 4th Floor','400','401','402','403','404','405','406','407','408','409','410','411','412','413','414','415','416','417','418']
+  '1st Floor':['101','102','103','104','105','106','107','Corridor 1st Floor'],
+  '2nd Floor':['208','209','210','211','212','213','214','Corridor 2nd Floor'],
+  '3rd Floor':['302','303','304','305','306','307','308','309','310','311','312','313','314','315','316','317','318','319','320','321','322','323','324','Corridor 3rd Floor'],
+  '4th Floor':['400','401','402','403','404','405','406','407','408','409','410','411','412','413','414','415','416','417','418','Corridor 4th Floor']
 };
 
 // Icons for checklist items
@@ -883,8 +883,10 @@ let clState={};
 let noteItem=null;
 
 let lsCL   = JSON.parse(localStorage.getItem('hdk_cl')||'null')||DEF_CL;
+let lsCORR = JSON.parse(localStorage.getItem('hdk_corr')||'null')||[];
 let lsReps = JSON.parse(localStorage.getItem('hdk_reps')||'[]');
 let lsRSt  = JSON.parse(localStorage.getItem('hdk_rst')||'{}');
+let isCorridorMode = false; // true when checklist view is open for a corridor
 let flt    = 'all';
 
 function T(k){return(TXT[lang]&&TXT[lang][k])||TXT.en[k]||k;}
@@ -1068,7 +1070,13 @@ function syncFromFirebase(callback){
         localStorage.setItem('hdk_cl',JSON.stringify(lsCL));
       }
     }).catch(()=>{});
-    Promise.all([p1,p2,p3]).finally(()=>callback());
+    const p4=db.collection('config').doc('corridorChecklist').get().then(doc=>{
+      if(doc.exists&&doc.data().items){
+        lsCORR=doc.data().items;
+        localStorage.setItem('hdk_corr',JSON.stringify(lsCORR));
+      }
+    }).catch(()=>{});
+    Promise.all([p1,p2,p3,p4]).finally(()=>callback());
   }else{
     callback();
   }
@@ -1160,9 +1168,21 @@ function renderRooms(){
 // CHECKLIST GRID
 // ══════════════════════
 function openChecklist(room){
-  curRoom=room;
-  clState={};
-  lsCL.forEach(item=>{clState[item]={status:null,note:''};});
+  const isCorridor = room.startsWith('Corridor');
+  // Corridors: only Admin can open them
+  if(isCorridor && currentUserRole !== 'superadmin'){
+    toast('Admin only');
+    return;
+  }
+  isCorridorMode = isCorridor;
+  curRoom = room;
+  clState = {};
+  const items = isCorridor ? lsCORR : lsCL;
+  if(items.length === 0 && isCorridor){
+    toast('No corridor checklist items yet — add them in Admin → 👥 Accounts tab');
+    return;
+  }
+  items.forEach(item=>{clState[item]={status:null,note:''};});
   // Load existing reported issues for this room from today's report
   const today=new Date().toDateString();
   const existingRep=lsReps.find(r=>r.room===room&&new Date(r.timestamp).toDateString()===today);
@@ -1173,7 +1193,7 @@ function openChecklist(room){
       }
     });
   }
-  document.getElementById('cl-title').textContent=(curRoom.startsWith('Corridor')?'':T('room')+' ')+curRoom;
+  document.getElementById('cl-title').textContent=(isCorridor?'':T('room')+' ')+room;
   hkTab('checklist');
   renderClGrid();
 }
@@ -1183,7 +1203,8 @@ function closeChecklist(){hkTab('rooms');}
 function renderClGrid(){
   const grid=document.getElementById('cl-grid');
   grid.innerHTML='';
-  lsCL.forEach(item=>{
+  const items = isCorridorMode ? lsCORR : lsCL;
+  items.forEach(item=>{
     const tile=document.createElement('div');
     const s=clState[item]?clState[item].status:null;
     tile.className='cl-tile'+(s==='ok'?' ok':s==='iss'?' iss':'');
@@ -1261,10 +1282,11 @@ function saveItemInstant(item){
 function saveRoomState(){
   if(!curRoom)return;
   const reporterName = getDisplayName(currentUserRole);
-  const issues=lsCL
+  const activeItems = isCorridorMode ? lsCORR : lsCL;
+  const issues=activeItems
     .filter(i=>clState[i]&&clState[i].status==='iss')
     .map(i=>({item:i,note:clState[i].note||'',resolved:false,resolvedAt:null,reportedBy:reporterName}));
-  const checkedCount=lsCL.filter(i=>clState[i]&&clState[i].status!==null).length;
+  const checkedCount=activeItems.filter(i=>clState[i]&&clState[i].status!==null).length;
   if(checkedCount===0)return; // nothing to save yet
 
   const rst=issues.length>0?'issue':'checked';
@@ -1346,8 +1368,9 @@ function updateTile(item){
 }
 
 function updateProg(){
-  const total=lsCL.length;
-  const done=lsCL.filter(i=>clState[i]&&clState[i].status!==null).length;
+  const items = isCorridorMode ? lsCORR : lsCL;
+  const total=items.length;
+  const done=items.filter(i=>clState[i]&&clState[i].status!==null).length;
   document.getElementById('cl-prog').textContent=done+' / '+total;
 }
 
@@ -2146,6 +2169,64 @@ function renderAccounts(){
       +'<div class="acc-saved" id="pin-saved-'+acc.key+'">✓ PIN updated!</div>';
     cont.appendChild(card);
   });
+
+  // ── Corridor Checklist Section ──────────────────────────────
+  const corrSection = document.createElement('div');
+  corrSection.style.cssText = 'margin-top:24px;';
+  corrSection.innerHTML =
+    '<div class="sec-title" style="font-size:16px;margin-bottom:12px;">🚪 Corridor Checklist Items</div>'
+    +'<div class="add-row" style="margin-bottom:14px;">'
+    +'<input type="text" id="corr-inp" placeholder="New item (e.g. Lights)" style="flex:1;padding:10px 12px;border:1.5px solid #e0dbd0;border-radius:10px;font-size:15px;background:#f8f5f0;" />'
+    +'<button onclick="addCorrItem()" style="padding:10px 16px;background:#0d1628;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-left:8px;">+ Add</button>'
+    +'</div>'
+    +'<div id="corr-items-list"></div>';
+  cont.appendChild(corrSection);
+  renderCorrItems();
+}
+
+function renderCorrItems(){
+  const list = document.getElementById('corr-items-list');
+  if(!list) return;
+  if(lsCORR.length === 0){
+    list.innerHTML = '<div style="color:#9a9690;font-size:13px;padding:8px 0;">No items yet. Add your first corridor checklist item above.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  lsCORR.forEach((item,idx)=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border:1.5px solid #e8e3da;border-radius:10px;margin-bottom:8px;';
+    row.innerHTML =
+      '<span style="font-size:14px;font-weight:600;color:#1a1a1a;">'+item+'</span>'
+      +'<button onclick="deleteCorrItem('+idx+')" style="background:#fef0ef;color:#e74c3c;border:1.5px solid #e74c3c;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;">🗑 Delete</button>';
+    list.appendChild(row);
+  });
+}
+
+function addCorrItem(){
+  const inp = document.getElementById('corr-inp');
+  const val = inp ? inp.value.trim() : '';
+  if(!val){ toast('Enter an item name'); return; }
+  if(lsCORR.includes(val)){ toast('Item already exists'); return; }
+  lsCORR.push(val);
+  saveCorrChecklist();
+  inp.value = '';
+  renderCorrItems();
+  toast('✓ "'+val+'" added to corridor checklist');
+}
+
+function deleteCorrItem(idx){
+  const name = lsCORR[idx];
+  lsCORR.splice(idx,1);
+  saveCorrChecklist();
+  renderCorrItems();
+  toast('🗑 "'+name+'" removed');
+}
+
+function saveCorrChecklist(){
+  localStorage.setItem('hdk_corr', JSON.stringify(lsCORR));
+  if(db && !demoMode){
+    db.collection('config').doc('corridorChecklist').set({items:lsCORR}).catch(()=>{});
+  }
 }
 
 function addAccount(){
