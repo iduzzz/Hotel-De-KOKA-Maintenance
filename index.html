@@ -165,7 +165,10 @@ body{background:#0a0e1a;color:#fff;}
 .rtile:active{transform:scale(0.92);}
 .rtile .rn{font-size:18px;font-weight:800;color:#0d1628;}
 .rtile .rs{font-size:9px;color:#b0aaa0;margin-top:1px;font-weight:500;text-align:center;padding:0 4px;}
-.rtile.clean{border-color:#7fb3d3;background:#f0f6fb;}
+.rtile.corridor{grid-column:1/-1;background:#f0ede6;border-color:#c4a046;border-width:2px;flex-direction:row;justify-content:flex-start;gap:10px;padding:12px 16px;min-height:48px;}
+.rtile.corridor .rn{font-size:15px;font-weight:700;color:#7a6020;}
+.rtile.corridor.issue{background:#fef0ef;border-color:#e74c3c;}
+.rtile.corridor.issue .rn{color:#c0392b;}
 .rtile.clean .rn{color:#2471a3;}
 .rtile.issue{border-color:#e74c3c;background:#fef5f5;}
 .rtile.issue .rn{color:#c0392b;}
@@ -799,10 +802,10 @@ function initFB(){
 // ══════════════════════
 // PINS now managed dynamically via ACCOUNTS array (see Account Management section below)
 const ROOMS={
-  '1st Floor':['101','102','103','104','105','106','107'],
-  '2nd Floor':['208','209','210','211','212','213','214'],
-  '3rd Floor':['302','303','304','305','306','307','308','309','310','311','312','313','314','315','316','317','318','319','320','321','322','323','324'],
-  '4th Floor':['400','401','402','403','404','405','406','407','408','409','410','411','412','413','414','415','416','417','418']
+  '1st Floor':['Corridor 1st Floor','101','102','103','104','105','106','107'],
+  '2nd Floor':['Corridor 2nd Floor','208','209','210','211','212','213','214'],
+  '3rd Floor':['Corridor 3rd Floor','302','303','304','305','306','307','308','309','310','311','312','313','314','315','316','317','318','319','320','321','322','323','324'],
+  '4th Floor':['Corridor 4th Floor','400','401','402','403','404','405','406','407','408','409','410','411','412','413','414','415','416','417','418']
 };
 
 // Icons for checklist items
@@ -1140,12 +1143,14 @@ function renderRooms(){
     grid.className='room-grid';
     rooms.forEach(room=>{
       const tile=document.createElement('div');
-      tile.className='rtile';
+      const isCorridor=room.startsWith('Corridor');
+      tile.className='rtile'+(isCorridor?' corridor':'');
       const st=lsRSt[room]||null;
-      if(st)tile.classList.add(st);
+      if(st)tile.classList.add(st==='issue'?'issue':st==='checked'?'clean':'');
       const ic=issCount(room);
       const stlbl=st?T(st==='issue'?'hasIssues':'checked'):'';
-      tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
+      const icon=isCorridor?'🚪 ':'';
+      tile.innerHTML='<div class="rn">'+icon+room+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
       tile.onclick=()=>openChecklist(room);
       grid.appendChild(tile);
     });
@@ -1171,7 +1176,7 @@ function openChecklist(room){
       }
     });
   }
-  document.getElementById('cl-title').textContent='Room '+room;
+  document.getElementById('cl-title').textContent=(curRoom.startsWith('Corridor')?'':T('room')+' ')+curRoom;
   hkTab('checklist');
   renderClGrid();
 }
