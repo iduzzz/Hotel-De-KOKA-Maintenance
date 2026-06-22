@@ -1720,7 +1720,14 @@ function resolveIss(repId,issIdx){
     rep.issues[issIdx].resolved=true;
     rep.issues[issIdx].resolvedAt=now;
     rep.issues[issIdx].resolvedBy=resolverName;
-    if(!rep.issues.some(i=>!i.resolved)){lsRSt[rep.room]='checked';localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));}
+    if(!rep.issues.some(i=>!i.resolved)){
+      rep.status='checked'; // keep local rep.status consistent
+      lsRSt[rep.room]='checked';
+      localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+      // Immediately update room tile — don't wait for Firestore roundtrip
+      const vRooms=document.getElementById('v-rooms');
+      if(vRooms && vRooms.classList.contains('on')) renderRooms();
+    }
     localStorage.setItem('hdk_reps',JSON.stringify(lsReps));
     toast(T('tResolve'));
   }
@@ -1874,7 +1881,11 @@ function startRealtimeListener(){
               lsReps.unshift(rep);
               localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
             }
-            if(rep.status) lsRSt[rep.room] = rep.status;
+            if(rep.issues){
+              lsRSt[rep.room] = rep.issues.some(i=>!i.resolved) ? 'issue' : 'checked';
+            } else if(rep.status){
+              lsRSt[rep.room] = rep.status;
+            }
           }
         }
         if(change.type === 'modified'){
@@ -1914,7 +1925,14 @@ function startRealtimeListener(){
             }
           }
           localStorage.setItem('hdk_reps', JSON.stringify(lsReps));
-          if(rep.status) lsRSt[rep.room] = rep.status;
+          // Derive room status from actual resolved state of issues, not rep.status
+          // (rep.status is set at report creation time and may be stale after resolving)
+          if(rep.issues){
+            const hasOpen = rep.issues.some(i=>!i.resolved);
+            lsRSt[rep.room] = hasOpen ? 'issue' : 'checked';
+          } else if(rep.status){
+            lsRSt[rep.room] = rep.status;
+          }
         }
         if(change.type === 'removed'){
           const rep = change.doc.data();
