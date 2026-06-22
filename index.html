@@ -846,7 +846,11 @@ const TXT={
     noRep:'No reports found',
     clean:'Checked',hasIssues:'Issues',inProgress:'Checked',checked:'Checked',
     noteDesc:'Describe the issue (optional)',noteCancel:'Cancel',noteConfirm:'Report Issue',
-    demoBanner:'⚠ Demo mode — data saved locally, no sync between devices'
+    demoBanner:'⚠ Demo mode — data saved locally, no sync between devices',
+    'Corridor 1st Floor':'Corridor 1st Floor',
+    'Corridor 2nd Floor':'Corridor 2nd Floor',
+    'Corridor 3rd Floor':'Corridor 3rd Floor',
+    'Corridor 4th Floor':'Corridor 4th Floor'
   },
   mk:{
     tagline:'Систем за одржување на соби',
@@ -868,7 +872,11 @@ const TXT={
     noRep:'Нема пријави',
     clean:'Проверено',hasIssues:'Проблеми',inProgress:'Проверено',checked:'Проверено',
     noteDesc:'Опишете го проблемот (незадолжително)',noteCancel:'Откажи',noteConfirm:'Пријави проблем',
-    demoBanner:'⚠ Демо режим — само локално зачувување'
+    demoBanner:'⚠ Демо режим — само локално зачувување',
+    'Corridor 1st Floor':'Ходник 1-ви кат',
+    'Corridor 2nd Floor':'Ходник 2-ри кат',
+    'Corridor 3rd Floor':'Ходник 3-ти кат',
+    'Corridor 4th Floor':'Ходник 4-ти кат'
   }
 };
 
@@ -1096,7 +1104,26 @@ function syncFromFirebase(callback){
         localStorage.setItem('hdk_corr',JSON.stringify(lsCORR));
       }
     }).catch(()=>{});
-    Promise.all([p1,p2,p3,p4]).finally(()=>callback());
+    Promise.all([p1,p2,p3,p4]).then(()=>{
+      // Reconcile: if roomStatus says 'issue' but all issues in the latest report
+      // are actually resolved, correct it both locally and in Firestore.
+      // This fixes rooms that stay red after Enis resolves issues.
+      if(db && !demoMode){
+        const today = new Date().toDateString();
+        Object.keys(lsRSt).forEach(room=>{
+          if(lsRSt[room]==='issue'){
+            // Find the most recent report for this room
+            const rep = lsReps.find(r=>r.room===room);
+            if(rep && rep.issues && rep.issues.length>0 && !rep.issues.some(i=>!i.resolved)){
+              // All issues resolved — fix the status
+              lsRSt[room]='checked';
+              db.collection('roomStatus').doc(room).set({status:'checked',updatedAt:new Date().toISOString()}).catch(()=>{});
+            }
+          }
+        });
+        localStorage.setItem('hdk_rst',JSON.stringify(lsRSt));
+      }
+    }).finally(()=>callback());
   }else{
     callback();
   }
@@ -1175,7 +1202,7 @@ function renderRooms(){
       const ic=issCount(room);
       const stlbl=st?T(st==='issue'?'hasIssues':'checked'):'';
       const icon=isCorridor?'':'';
-      tile.innerHTML='<div class="rn">'+room+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
+      tile.innerHTML='<div class="rn">'+T(room)+'</div><div class="rs">'+stlbl+'</div>'+(ic>0?'<div class="ibadge">'+ic+'</div>':'');
       tile.onclick=()=>openChecklist(room);
       grid.appendChild(tile);
     });
@@ -1212,7 +1239,7 @@ function openChecklist(room){
       }
     });
   }
-  document.getElementById('cl-title').textContent=(isCorridor?'':T('room')+' ')+room;
+  document.getElementById('cl-title').textContent=(isCorridor?T(room):(T('room')+' '+room));
   hkTab('checklist');
   renderClGrid();
 }
