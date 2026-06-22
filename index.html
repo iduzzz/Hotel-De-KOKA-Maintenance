@@ -911,12 +911,31 @@ function applyLang(){
     const el=document.getElementById(id);
     if(el&&key!=='role_label_skip')el.textContent=T(key);
   });
-  document.getElementById('new-inp').placeholder=T('addph');
+  const inp=document.getElementById('new-inp');
+  if(inp) inp.placeholder=T('addph');
 }
 function toggleLang(){
   lang=lang==='en'?'mk':'en';
   localStorage.setItem('hdk_lang',lang);
   applyLang();
+  // Re-render login cards if on login page
+  if(document.getElementById('page-login').classList.contains('active')){
+    renderLoginCards();
+  }
+  // Re-render the active app view so dynamic content also updates
+  const views=['rooms','status','checklist','manage','reports','accounts'];
+  for(const v of views){
+    const el=document.getElementById('v-'+v);
+    if(el && el.classList.contains('on')){
+      if(v==='rooms')    renderRooms();
+      if(v==='status')   renderStatus();
+      if(v==='manage')   renderManage();
+      if(v==='reports')  renderAdmReports();
+      if(v==='accounts') renderAccounts();
+      if(v==='checklist') renderClGrid();
+      break;
+    }
+  }
 }
 
 // ══════════════════════
