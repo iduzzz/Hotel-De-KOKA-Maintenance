@@ -164,7 +164,7 @@ body{background:#0a0e1a;color:#fff;}
 }
 .rtile:active{transform:scale(0.92);}
 .rtile .rn{font-size:18px;font-weight:800;color:#0d1628;}
-.rtile.corridor .rn{font-size:11px;font-weight:700;color:#0d1628;}
+.rtile.corridor .rn{font-size:10px;font-weight:700;color:#0d1628;line-height:1.2;text-align:center;}
 .rtile .rs{font-size:9px;color:#b0aaa0;margin-top:1px;font-weight:500;text-align:center;padding:0 4px;}
 .rtile.corridor{}
 .rtile.clean .rn{color:#2471a3;}
@@ -1150,7 +1150,7 @@ function renderRooms(){
     rooms.forEach(room=>{
       const tile=document.createElement('div');
       const isCorridor=room.startsWith('Corridor');
-      tile.className='rtile';
+      tile.className='rtile'+(isCorridor?' corridor':'');
       const st=lsRSt[room]||null;
       if(st)tile.classList.add(st);
       const ic=issCount(room);
